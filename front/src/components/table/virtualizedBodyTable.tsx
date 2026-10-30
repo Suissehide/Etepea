@@ -209,7 +209,12 @@ export function VirtualizedBodyTable<TData extends RowData>({
                     ) {
                       return
                     }
-                    onRowClick(row.original)
+                    // Une ligne à sous-lignes se déplie.
+                    if (row.subRows.length > 0) {
+                      row.toggleExpanded()
+                    } else {
+                      onRowClick(row.original)
+                    }
                   }
                 : undefined
             }

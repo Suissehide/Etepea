@@ -167,11 +167,11 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
     capacity: slot.slotTemplate?.capacity ?? 1,
     canBook: bookable && hasSlotAvailability(slot),
   }
-  if (!isIndividual || appointments.length < 2) {
+  if (!isIndividual || appointments.length === 0) {
     return row
   }
 
-  // Plusieurs rendez-vous sur un créneau individuel : un sous-tableau, où l'on
+  // Rendez-vous sur un créneau individuel : un sous-tableau, où l'on
   // prend rendez-vous sur les intervalles libres.
   const empty = {
     thematic: '',

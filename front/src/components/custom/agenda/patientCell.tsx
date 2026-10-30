@@ -88,11 +88,13 @@ export default function PatientCell({ row, onAddPatient }: PatientCellProps) {
   )
 
   if (row.kind === 'free') {
-    return (
-      <div className="flex items-center gap-2 text-text-light">
-        Libre
-        {addButton}
-      </div>
+    return row.canBook ? (
+      <Button variant="outline" size="sm" onClick={() => onAddPatient(row)}>
+        <Plus className="w-3 h-3" />
+        Prendre un rendez-vous
+      </Button>
+    ) : (
+      <span className="text-text-light">Libre</span>
     )
   }
 

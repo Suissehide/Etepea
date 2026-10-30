@@ -70,7 +70,7 @@ describe('buildDaySlotRows', () => {
 })
 
 describe('buildDaySlotRows, créneau individuel', () => {
-  it('à partir de deux rendez-vous, un sous-tableau avec les intervalles libres', () => {
+  it('dès un rendez-vous, un sous-tableau avec les intervalles libres', () => {
     const at = (h: string) => `2026-03-02T${h}:00.000Z`
     const [row] = buildDaySlotRows(
       [
@@ -107,5 +107,18 @@ describe('buildDaySlotRows, créneau individuel', () => {
       ['appointment', '11:00', false],
       ['free', '11:30', true],
     ])
+  })
+
+  it('sans rendez-vous, une ligne simple', () => {
+    const [row] = buildDaySlotRows(
+      [
+        slot('ind', '2026-03-02T10:00:00.000Z', {
+          slotTemplate: { soignants: [], isIndividual: true },
+        } as unknown as Partial<Slot>),
+      ],
+      dayjs.utc('2026-03-02'),
+    )
+
+    expect(row.subRows).toBeUndefined()
   })
 })
