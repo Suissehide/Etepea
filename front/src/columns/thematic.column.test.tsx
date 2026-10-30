@@ -36,15 +36,13 @@ const roleCell = () => {
 describe('colonne Role de la thematique', () => {
   it('affiche le libelle du role quand defini', () => {
     const cell = roleCell()
-    render(
-      <>{cell({ row: { original: thematic('BILAN_DE_FIN') } } as never)}</>,
-    )
+    render(cell({ row: { original: thematic('BILAN_DE_FIN') } } as never))
     expect(screen.getByText('Bilan de fin')).toBeTruthy()
   })
 
   it('affiche un tiret quand le role est nul', () => {
     const cell = roleCell()
-    render(<>{cell({ row: { original: thematic(null) } } as never)}</>)
+    render(cell({ row: { original: thematic(null) } } as never))
     expect(screen.getByText('—')).toBeTruthy()
   })
 })

@@ -15,7 +15,7 @@ export function ColorLegend({
 }: ColorLegendProps) {
   const { pathwayTemplates } = usePathwayTemplateQueries()
 
-  if (!pathwayTemplates || !pathwayTemplates.length) {
+  if (!pathwayTemplates?.length) {
     return null
   }
 

@@ -248,9 +248,7 @@ function WeekPage({ week }: { week: PlanningWeek }) {
 
       {week.isClosed && (
         <View style={styles.closureBlock}>
-          <Text style={styles.closureText}>
-            Service fermé
-          </Text>
+          <Text style={styles.closureText}>Service fermé</Text>
         </View>
       )}
 

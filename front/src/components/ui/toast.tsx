@@ -42,7 +42,7 @@ const toastProgressVariants = cva('h-full w-full transition-none', {
 })
 
 const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  return createPortal(<>{children}</>, document.body)
+  return createPortal(children, document.body)
 }
 
 const Toast = React.forwardRef<

@@ -88,13 +88,11 @@ describe('choiceColumn', () => {
     const cellule = colonne.cell as (ctx: {
       getValue: () => string | undefined
     }) => ReactNode
-    const { container, rerender } = render(
-      <>{cellule({ getValue: () => 'AOMI' })}</>,
-    )
+    const { container, rerender } = render(cellule({ getValue: () => 'AOMI' }))
     expect(screen.getByText('Aomi')).toBeTruthy()
-    rerender(<>{cellule({ getValue: () => undefined })}</>)
+    rerender(cellule({ getValue: () => undefined }))
     expect(container.textContent).toBe('')
-    rerender(<>{cellule({ getValue: () => 'INCONNU' })}</>)
+    rerender(cellule({ getValue: () => 'INCONNU' }))
     expect(screen.getByText('INCONNU')).toBeTruthy()
   })
 })

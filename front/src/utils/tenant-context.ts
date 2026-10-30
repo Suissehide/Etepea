@@ -74,7 +74,7 @@ export const resolveEstablishmentContext = (
   params: Pick<Params, 'establishmentId'>,
 ): TenantContext | null => {
   const establishment = establishmentOf(user, params.establishmentId)
-  if (!establishment || establishment.role !== 'ADMIN') {
+  if (establishment?.role !== 'ADMIN') {
     return null
   }
   return {
