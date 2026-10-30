@@ -239,13 +239,14 @@ function Calendar({
 
       if (!layout || layout.totalColumns <= 1) {
         element.style.width = ''
-        element.style.left = ''
+        element.style.marginLeft = ''
         continue
       }
 
+      // La v7 fige `inset: 0 !important` sur l'événement de fond : on décale par la marge, pas par `left`.
       const width = 100 / layout.totalColumns
       element.style.width = `${width}%`
-      element.style.left = `${layout.column * width}%`
+      element.style.marginLeft = `${layout.column * width}%`
     }
   }, [slotLayout])
 
