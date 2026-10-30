@@ -132,6 +132,8 @@ export type DaySlotRow = {
   capacity: number
   // Un patient peut encore y prendre rendez-vous.
   canBook: boolean
+  // Pourquoi on n'y prend plus rendez-vous, quoi qu'il reste de libre.
+  closed?: 'locked' | 'archived'
 }
 
 const toRowPatients = (appointments: Appointment[]) =>
@@ -166,6 +168,7 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
     isIndividual,
     capacity: slot.slotTemplate?.capacity ?? 1,
     canBook: bookable && hasSlotAvailability(slot),
+    closed: slot.archivedAt ? 'archived' : slot.locked ? 'locked' : undefined,
   }
   if (!isIndividual || appointments.length === 0) {
     return row

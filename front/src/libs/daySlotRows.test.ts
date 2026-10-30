@@ -66,6 +66,7 @@ describe('buildDaySlotRows', () => {
 
     expect(rows.map((r) => r.id)).toEqual(['archive-avec-patient'])
     expect(rows[0].canBook).toBe(false)
+    expect(rows[0].closed).toBe('archived')
   })
 })
 
