@@ -29,7 +29,7 @@ src/
 
 - `npm run dev` — Vite dev server on port 4270.
 - `npm run build` — `tsc -b` then `vite build`.
-- `npm run lint` — Biome on `src`. Zero errors on `main` since 2026-10-31 (warnings remain: cognitive complexity, one `any`); keep it that way.
+- `npm run lint` — Biome on `src`. Zero errors and zero warnings on `main` since 2026-10-31; keep it that way.
 - `npm test` / `npm run test:watch` — Vitest (`vitest.config.ts`, jsdom, `src/test/setup.ts`).
 
 The `@/` alias resolves to `src/` (`tsconfig.app.json` `paths`, mirrored in `vite.config.ts` and `vitest.config.ts` — the three must stay in sync, nothing enforces it automatically).
