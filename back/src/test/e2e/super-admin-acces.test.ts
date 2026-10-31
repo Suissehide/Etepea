@@ -33,6 +33,27 @@ const GROUP_RE = new RegExp(
 
 type ParsedRoute = { method: string; url: string }
 
+// Retire les connecteurs de tête d'une ligne et les compte.
+const stripConnectors = (line: string): { groups: number; rest: string } => {
+  let rest = line
+  let groups = 0
+  let match = rest.match(GROUP_RE)
+  while (match) {
+    rest = rest.slice(match[0].length)
+    groups += 1
+    match = rest.match(GROUP_RE)
+  }
+  return { groups, rest }
+}
+
+// HEAD est ajouté automatiquement par Fastify pour toute route GET, avec le même
+// gestionnaire : le tester séparément n'exercerait rien de plus.
+const testedMethods = (methodsRaw: string): string[] =>
+  methodsRaw
+    .split(',')
+    .map((m) => m.trim())
+    .filter((method) => method !== 'HEAD')
+
 const parsePrintedRoutes = (printed: string): ParsedRoute[] => {
   const routes: ParsedRoute[] = []
   const pathStack: string[] = []
@@ -40,14 +61,7 @@ const parsePrintedRoutes = (printed: string): ParsedRoute[] => {
     if (!rawLine.trim()) {
       continue
     }
-    let rest = rawLine
-    let groups = 0
-    let match = rest.match(GROUP_RE)
-    while (match) {
-      rest = rest.slice(match[0].length)
-      groups += 1
-      match = rest.match(GROUP_RE)
-    }
+    const { groups, rest } = stripConnectors(rawLine)
     const level = groups - 1
     if (level < 0) {
       continue
@@ -62,12 +76,7 @@ const parsePrintedRoutes = (printed: string): ParsedRoute[] => {
     if (!methodsRaw) {
       continue
     }
-    for (const method of methodsRaw.split(',').map((m) => m.trim())) {
-      // HEAD est ajouté automatiquement par Fastify pour toute route GET, avec le même
-      // gestionnaire : le tester séparément n'exercerait rien de plus.
-      if (method === 'HEAD') {
-        continue
-      }
+    for (const method of testedMethods(methodsRaw)) {
       routes.push({ method, url: fullPath })
     }
   }

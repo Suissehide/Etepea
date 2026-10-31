@@ -40,6 +40,26 @@ const includedRelationKeys = (args: Record<string, unknown>): string[] => [
   ...Object.keys((args.select as object) ?? {}),
 ]
 
+const reponseParDefaut = (
+  op: string,
+  args: Record<string, unknown>,
+): unknown => {
+  if (op === 'findMany' || op === 'groupBy') {
+    return []
+  }
+  if (op === 'count') {
+    return 0
+  }
+  const row: Record<string, unknown> = {
+    id: 'x',
+    ...(args.data as object),
+  }
+  for (const relationKey of includedRelationKeys(args)) {
+    row[relationKey] = []
+  }
+  return row
+}
+
 // Faux client : chaque `prisma.<model>.<op>(args)` est enregistré et renvoie
 // une valeur neutre (ou celle fournie dans `responses`, indexée par
 // `<model>.<op>`, pour les tests qui ont besoin de faire boucler le
@@ -57,20 +77,7 @@ const buildFakePrisma = (responses: Partial<Record<string, unknown>> = {}) => {
           if (key in responses) {
             return Promise.resolve(responses[key])
           }
-          if (op === 'findMany' || op === 'groupBy') {
-            return Promise.resolve([])
-          }
-          if (op === 'count') {
-            return Promise.resolve(0)
-          }
-          const row: Record<string, unknown> = {
-            id: 'x',
-            ...(args.data as object),
-          }
-          for (const relationKey of includedRelationKeys(args)) {
-            row[relationKey] = []
-          }
-          return Promise.resolve(row)
+          return Promise.resolve(reponseParDefaut(op, args))
         },
       },
     )

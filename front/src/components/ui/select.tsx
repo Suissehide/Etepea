@@ -47,6 +47,55 @@ const ColorDot = ({ color }: { color?: string | string[] }) => {
   ) : null
 }
 
+// Options filtrees du mode recherche, un trait entre deux groupes.
+function SearchableOptions({
+  options,
+  emptyMessage,
+  value,
+  onSelect,
+}: {
+  options: SelectOption[]
+  emptyMessage: string
+  value?: string | number
+  onSelect: (value: string) => void
+}) {
+  if (options.length === 0) {
+    return (
+      <li className="px-2 py-1.5 text-sm text-text-light">{emptyMessage}</li>
+    )
+  }
+  return options.map((option, idx) => {
+    const prevGroup = idx > 0 ? options[idx - 1].group : undefined
+    const showSeparator = idx > 0 && option.group !== prevGroup
+
+    return (
+      <React.Fragment key={option.value}>
+        {showSeparator && <hr className="my-1 border-t border-border" />}
+        <li className="relative flex select-none items-center rounded text-sm hover:bg-primary/20">
+          <button
+            type="button"
+            onClick={() => onSelect(option.value.toString())}
+            className="cursor-pointer flex w-full items-center justify-between gap-2 rounded px-2 py-1.5"
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <ColorDot color={option.color} />
+              <span className="truncate">{option.label}</span>
+            </span>
+            {option.hint && (
+              <span className="ml-auto text-xs text-text-light shrink-0">
+                {option.hint}
+              </span>
+            )}
+            {option.value.toString() === value?.toString() && (
+              <Check className="h-4 w-4 text-primary shrink-0" />
+            )}
+          </button>
+        </li>
+      </React.Fragment>
+    )
+  })
+}
+
 export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
   (
     {
@@ -158,47 +207,14 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
               </div>
 
               <ul className="p-1 max-h-52 overflow-y-auto">
-                {filteredOptions.length === 0 ? (
-                  <li className="px-2 py-1.5 text-sm text-text-light">
-                    {options.length === 0 ? emptyMessage : 'Aucun résultat'}
-                  </li>
-                ) : (
-                  filteredOptions.map((option, idx) => {
-                    const prevGroup =
-                      idx > 0 ? filteredOptions[idx - 1].group : undefined
-                    const showSeparator = idx > 0 && option.group !== prevGroup
-
-                    return (
-                      <React.Fragment key={option.value}>
-                        {showSeparator && (
-                          <hr className="my-1 border-t border-border" />
-                        )}
-                        <li className="relative flex select-none items-center rounded text-sm hover:bg-primary/20">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleSelect(option.value.toString())
-                            }
-                            className="cursor-pointer flex w-full items-center justify-between gap-2 rounded px-2 py-1.5"
-                          >
-                            <span className="flex items-center gap-2 min-w-0">
-                              <ColorDot color={option.color} />
-                              <span className="truncate">{option.label}</span>
-                            </span>
-                            {option.hint && (
-                              <span className="ml-auto text-xs text-text-light shrink-0">
-                                {option.hint}
-                              </span>
-                            )}
-                            {option.value.toString() === value?.toString() && (
-                              <Check className="h-4 w-4 text-primary shrink-0" />
-                            )}
-                          </button>
-                        </li>
-                      </React.Fragment>
-                    )
-                  })
-                )}
+                <SearchableOptions
+                  options={filteredOptions}
+                  emptyMessage={
+                    options.length === 0 ? emptyMessage : 'Aucun résultat'
+                  }
+                  value={value}
+                  onSelect={handleSelect}
+                />
               </ul>
             </Popover.Content>
           </Popover.Portal>

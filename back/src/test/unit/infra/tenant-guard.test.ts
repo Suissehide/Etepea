@@ -31,6 +31,70 @@ const adminStore: TenantStore = {
   },
 }
 
+// Forme minimale d'arguments par operation, pour balayer une liste blanche de modeles globaux.
+const argsMinimauxGlobaux = (operation: string): Record<string, unknown> => {
+  if (operation === 'create') {
+    return { data: {} }
+  }
+  if (operation === 'update' || operation === 'updateMany') {
+    return { where: { id: 'x1' }, data: {} }
+  }
+  if (operation === 'findUnique' || operation === 'findUniqueOrThrow') {
+    return { where: { id: 'x1' } }
+  }
+  return {}
+}
+
+const TOUTES_LES_OPERATIONS = [
+  'findMany',
+  'findFirst',
+  'findFirstOrThrow',
+  'findUnique',
+  'findUniqueOrThrow',
+  'count',
+  'aggregate',
+  'groupBy',
+  'create',
+  'createMany',
+  'createManyAndReturn',
+  'update',
+  'updateMany',
+  'updateManyAndReturn',
+  'upsert',
+  'delete',
+  'deleteMany',
+]
+
+type Verdict = { passe: true } | { passe: false; erreur: unknown }
+
+const verdictMinimal = (
+  model: string,
+  operation: string,
+  contexte: TenantStore | undefined,
+): Verdict => {
+  try {
+    assertTenantScope(
+      { model, operation, args: argsMinimauxGlobaux(operation) },
+      contexte,
+    )
+    return { passe: true }
+  } catch (erreur) {
+    return { passe: false, erreur }
+  }
+}
+
+const couplesDeclares = (table: Record<string, readonly string[]>) =>
+  Object.entries(table).flatMap(([model, operations]) =>
+    operations.map((operation) => ({ model, operation })),
+  )
+
+const couplesNonDeclares = (table: Record<string, readonly string[]>) =>
+  Object.entries(table).flatMap(([model, operations]) =>
+    TOUTES_LES_OPERATIONS.filter((op) => !operations.includes(op)).map(
+      (operation) => ({ model, operation }),
+    ),
+  )
+
 describe('assertTenantScope', () => {
   it('laisse passer un modele global sans filtre', () => {
     expect(() =>
@@ -2638,75 +2702,26 @@ describe('ecritures declarees sur un modele global sous superadmin', () => {
   // doit le tenir couple par couple. `count`/`aggregate`/`groupBy` et les ecritures prennent des
   // arguments differents, d'ou la forme minimale construite par operation.
   it('laisse passer chaque couple declare de SUPERADMIN_GLOBAL_OPERATIONS, et rien d autre sur ces modeles', () => {
-    const argsMinimaux = (operation: string): Record<string, unknown> => {
-      if (operation === 'create') {
-        return { data: {} }
-      }
-      if (operation === 'update' || operation === 'updateMany') {
-        return { where: { id: 'x1' }, data: {} }
-      }
-      if (operation === 'findUnique' || operation === 'findUniqueOrThrow') {
-        return { where: { id: 'x1' } }
-      }
-      return {}
-    }
-    const refusesATort: string[] = []
-    for (const [model, operations] of Object.entries(
-      SUPERADMIN_GLOBAL_OPERATIONS,
-    )) {
-      for (const operation of operations) {
-        try {
-          assertTenantScope(
-            { model, operation, args: argsMinimaux(operation) },
-            store,
-          )
-        } catch {
-          refusesATort.push(`${model}.${operation}`)
-        }
-      }
-    }
+    const refusesATort = couplesDeclares(SUPERADMIN_GLOBAL_OPERATIONS)
+      .filter(
+        ({ model, operation }) =>
+          !verdictMinimal(model, operation, store).passe,
+      )
+      .map(({ model, operation }) => `${model}.${operation}`)
     expect(refusesATort).toEqual([])
 
     // Le complement : toute operation connue de Prisma absente de la declaration d'un modele
     // declare reste refusee — c'est ce qui fait de cette table une liste blanche et non une
     // simple documentation.
-    const toutesLesOperations = [
-      'findMany',
-      'findFirst',
-      'findFirstOrThrow',
-      'findUnique',
-      'findUniqueOrThrow',
-      'count',
-      'aggregate',
-      'groupBy',
-      'create',
-      'createMany',
-      'createManyAndReturn',
-      'update',
-      'updateMany',
-      'updateManyAndReturn',
-      'upsert',
-      'delete',
-      'deleteMany',
-    ]
     const passesATort: string[] = []
-    for (const [model, operations] of Object.entries(
+    for (const { model, operation } of couplesNonDeclares(
       SUPERADMIN_GLOBAL_OPERATIONS,
     )) {
-      for (const operation of toutesLesOperations.filter(
-        (op) => !operations.includes(op),
-      )) {
-        try {
-          assertTenantScope(
-            { model, operation, args: argsMinimaux(operation) },
-            store,
-          )
-          passesATort.push(`${model}.${operation}`)
-        } catch (erreur) {
-          if (!(erreur instanceof TenantScopeMissingError)) {
-            throw erreur
-          }
-        }
+      const verdict = verdictMinimal(model, operation, store)
+      if (verdict.passe) {
+        passesATort.push(`${model}.${operation}`)
+      } else if (!(verdict.erreur instanceof TenantScopeMissingError)) {
+        throw verdict.erreur
       }
     }
     expect(passesATort).toEqual([])
@@ -3263,73 +3278,21 @@ describe('sans aucun contexte, un modele global suit une liste declaree', () => 
   // SUPERADMIN_GLOBAL_OPERATIONS : ce que la declaration promet, le garde-fou doit le tenir
   // couple par couple, et rien de plus.
   it('laisse passer chaque couple declare de NO_CONTEXT_GLOBAL_OPERATIONS, et rien d autre sur ces modeles', () => {
-    const argsMinimaux = (operation: string): Record<string, unknown> => {
-      if (operation === 'create') {
-        return { data: {} }
-      }
-      if (operation === 'update' || operation === 'updateMany') {
-        return { where: { id: 'x1' }, data: {} }
-      }
-      if (operation === 'findUnique' || operation === 'findUniqueOrThrow') {
-        return { where: { id: 'x1' } }
-      }
-      return {}
-    }
-    const refusesATort: string[] = []
-    for (const [model, operations] of Object.entries(
-      NO_CONTEXT_GLOBAL_OPERATIONS,
-    )) {
-      for (const operation of operations) {
-        try {
-          assertTenantScope(
-            { model, operation, args: argsMinimaux(operation) },
-            undefined,
-          )
-        } catch {
-          refusesATort.push(`${model}.${operation}`)
-        }
-      }
-    }
+    const refusesATort = couplesDeclares(NO_CONTEXT_GLOBAL_OPERATIONS)
+      .filter(
+        ({ model, operation }) =>
+          !verdictMinimal(model, operation, undefined).passe,
+      )
+      .map(({ model, operation }) => `${model}.${operation}`)
     expect(refusesATort).toEqual([])
 
-    const toutesLesOperations = [
-      'findMany',
-      'findFirst',
-      'findFirstOrThrow',
-      'findUnique',
-      'findUniqueOrThrow',
-      'count',
-      'aggregate',
-      'groupBy',
-      'create',
-      'createMany',
-      'createManyAndReturn',
-      'update',
-      'updateMany',
-      'updateManyAndReturn',
-      'upsert',
-      'delete',
-      'deleteMany',
-    ]
-    const passesATort: string[] = []
-    for (const [model, operations] of Object.entries(
-      NO_CONTEXT_GLOBAL_OPERATIONS,
-    )) {
-      for (const operation of toutesLesOperations) {
-        if (operations.includes(operation)) {
-          continue
-        }
-        try {
-          assertTenantScope(
-            { model, operation, args: argsMinimaux(operation) },
-            undefined,
-          )
-          passesATort.push(`${model}.${operation}`)
-        } catch {
-          // refuse, c'est l'attendu
-        }
-      }
-    }
+    // Refuse, c'est l'attendu : toute erreur compte comme un refus.
+    const passesATort = couplesNonDeclares(NO_CONTEXT_GLOBAL_OPERATIONS)
+      .filter(
+        ({ model, operation }) =>
+          verdictMinimal(model, operation, undefined).passe,
+      )
+      .map(({ model, operation }) => `${model}.${operation}`)
     expect(passesATort).toEqual([])
   })
 

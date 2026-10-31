@@ -37,6 +37,18 @@ const user: User = {
   ],
 }
 
+// Le contexte doit se resoudre : sinon le test echoue ici, pas plus loin.
+const contexteResolu = (
+  u: User,
+  params: Parameters<typeof resolveTenantContext>[1],
+) => {
+  const contexte = resolveTenantContext(u, params)
+  if (!contexte) {
+    throw new Error('contexte non resolu')
+  }
+  return contexte
+}
+
 describe('resolveTenantContext', () => {
   it('resout un couple present dans les appartenances', () => {
     expect(
@@ -125,7 +137,7 @@ describe('defaultTenantContext', () => {
   it('reprend le dernier couple visite', () => {
     rememberContext(
       'u1',
-      resolveTenantContext(user, { establishmentId: 'e2', serviceId: 's3' })!,
+      contexteResolu(user, { establishmentId: 'e2', serviceId: 's3' }),
     )
     expect(defaultTenantContext(user)).toMatchObject({
       establishmentId: 'e2',
@@ -160,11 +172,11 @@ describe('defaultTenantContext', () => {
     const other: User = { ...user, id: 'u2' }
     rememberContext(
       'u1',
-      resolveTenantContext(user, { establishmentId: 'e1', serviceId: 's2' })!,
+      contexteResolu(user, { establishmentId: 'e1', serviceId: 's2' }),
     )
     rememberContext(
       'u2',
-      resolveTenantContext(other, { establishmentId: 'e2', serviceId: 's3' })!,
+      contexteResolu(other, { establishmentId: 'e2', serviceId: 's3' }),
     )
     expect(defaultTenantContext(user)?.serviceId).toBe('s2')
     expect(defaultTenantContext(other)?.serviceId).toBe('s3')

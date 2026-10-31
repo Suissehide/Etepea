@@ -300,6 +300,35 @@ const cheminsDepuis = function* (
   }
 }
 
+// Rejoue chaque forme (racine nue puis chaque chemin) ; rend le nombre de chaines parcourues.
+const parcourirLesFormes = (
+  visiter: (
+    racine: string,
+    operation: string,
+    args: Record<string, unknown>,
+    chemin: readonly string[],
+  ) => void,
+): number => {
+  let chaines = 0
+  for (const racine of Object.keys(MODEL_RELATIONS)) {
+    // Profondeur 0 : la racine seule, sans include ni select.
+    for (const { operation, args } of FORMES_NUES) {
+      visiter(racine, operation, args, [])
+    }
+    for (const chemin of cheminsDepuis(racine, PROFONDEUR, [])) {
+      chaines += 1
+      for (const { operation, args } of formes(chemin)) {
+        visiter(racine, operation, args, chemin)
+      }
+    }
+  }
+  return chaines
+}
+
+const incrementer = (compteurs: Map<string, number>, cle: string): void => {
+  compteurs.set(cle, (compteurs.get(cle) ?? 0) + 1)
+}
+
 describe(`monotonie du garde-fou contre ${REF} (profondeur ${PROFONDEUR})`, () => {
   let avant: Assert
 
@@ -328,7 +357,6 @@ describe(`monotonie du garde-fou contre ${REF} (profondeur ${PROFONDEUR})`, () =
 
   it('ne perd aucun refus, sur aucun contexte', () => {
     let cas = 0
-    let chaines = 0
     const perdus: string[] = []
     const perdusParContexte = new Map<string, number>()
     const gagnes = new Map<string, number>()
@@ -350,25 +378,14 @@ describe(`monotonie du garde-fou contre ${REF} (profondeur ${PROFONDEUR})`, () =
           perdus.push(
             `${nom} | ${racine}.${operation} | ${chemin.join('>') || '(nu)'}`,
           )
-          perdusParContexte.set(nom, (perdusParContexte.get(nom) ?? 0) + 1)
+          incrementer(perdusParContexte, nom)
         } else {
-          gagnes.set(nom, (gagnes.get(nom) ?? 0) + 1)
+          incrementer(gagnes, nom)
         }
       }
     }
 
-    for (const racine of Object.keys(MODEL_RELATIONS)) {
-      // Profondeur 0 : la racine seule, sans include ni select.
-      for (const { operation, args } of FORMES_NUES) {
-        comparer(racine, operation, args, [])
-      }
-      for (const chemin of cheminsDepuis(racine, PROFONDEUR, [])) {
-        chaines += 1
-        for (const { operation, args } of formes(chemin)) {
-          comparer(racine, operation, args, chemin)
-        }
-      }
-    }
+    const chaines = parcourirLesFormes(comparer)
 
     console.log(
       (sourcesIdentiques

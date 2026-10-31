@@ -153,6 +153,29 @@ const design = (x: number, avecCalendrier = false) => ({
 // `'livree'` pour un design qui part d'une image de l'application — c'est ce second cas qui
 // distingue « les octets du serveur » de « les octets de ce que l'utilisateur vient de
 // choisir ».
+// Lectures de l'editeur : ressources deposees, puis designs du service.
+const reponseGet = (
+  chemin: string,
+  url: string,
+  designs: () => Promise<unknown>,
+) => {
+  const ok = (json: () => Promise<unknown>) => ({
+    ok: true,
+    status: 200,
+    url,
+    json,
+  })
+  if (chemin.endsWith('/pdf-assets/a1')) {
+    return ok(async () => ({ mimeType: 'image/png', base64: 'AAAA' }))
+  }
+  if (chemin.endsWith('/pdf-assets')) {
+    return ok(async () => [
+      { id: 'a1', fileName: 'fond.png', mimeType: 'image/png' },
+    ])
+  }
+  return chemin.endsWith('/pdf-designs') ? ok(designs) : ok(async () => [])
+}
+
 const monter = (
   avecCalendrier = false,
   delaiGet = 0,
@@ -176,38 +199,12 @@ const monter = (
     const method = init?.method ?? 'GET'
     const chemin = new URL(url).pathname
     if (method === 'GET') {
-      if (chemin.endsWith('/pdf-assets/a1')) {
-        return {
-          ok: true,
-          status: 200,
-          url,
-          json: async () => ({ mimeType: 'image/png', base64: 'AAAA' }),
+      return reponseGet(chemin, url, async () => {
+        if (delaiGet > 0) {
+          await new Promise((r) => setTimeout(r, delaiGet))
         }
-      }
-      if (chemin.endsWith('/pdf-assets')) {
-        return {
-          ok: true,
-          status: 200,
-          url,
-          json: async () => [
-            { id: 'a1', fileName: 'fond.png', mimeType: 'image/png' },
-          ],
-        }
-      }
-      if (!chemin.endsWith('/pdf-designs')) {
-        return { ok: true, status: 200, url, json: async () => [] }
-      }
-      return {
-        ok: true,
-        status: 200,
-        url,
-        json: async () => {
-          if (delaiGet > 0) {
-            await new Promise((r) => setTimeout(r, delaiGet))
-          }
-          return { presets: [], designs: [enBase] }
-        },
-      }
+        return { presets: [], designs: [enBase] }
+      })
     }
     const corps = JSON.parse(String(init?.body)) as {
       content?: PdfDesignContent

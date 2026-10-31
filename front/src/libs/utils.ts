@@ -147,6 +147,13 @@ const toRowPatients = (appointments: Appointment[]) =>
 const byStartDate = (a: { startDate: string }, b: { startDate: string }) =>
   dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf()
 
+const closedReason = (slot: Slot): DaySlotRow['closed'] => {
+  if (slot.archivedAt) {
+    return 'archived'
+  }
+  return slot.locked ? 'locked' : undefined
+}
+
 const buildDaySlotRow = (slot: Slot): DaySlotRow => {
   const appointments = slot.appointments ?? []
   // Un créneau supprimé n'accepte plus d'inscription, même s'il reste affiché.
@@ -168,7 +175,7 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
     isIndividual,
     capacity: slot.slotTemplate?.capacity ?? 1,
     canBook: bookable && hasSlotAvailability(slot),
-    closed: slot.archivedAt ? 'archived' : slot.locked ? 'locked' : undefined,
+    closed: closedReason(slot),
   }
   if (!isIndividual || appointments.length === 0) {
     return row

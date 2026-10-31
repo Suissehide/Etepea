@@ -151,6 +151,50 @@ function collectWeekNotices(
   return notices
 }
 
+function layoutWeek(slots: Slot[], weekStart: dayjs.Dayjs, patientId?: string) {
+  const weekdaySlots = slots
+    .filter((s) => {
+      const d = dayjs.utc(s.startDate)
+      return (
+        (d.isAfter(weekStart) || d.isSame(weekStart, 'day')) &&
+        d.isBefore(weekStart.add(7, 'day'))
+      )
+    })
+    .filter(isWeekday)
+  const days = Array.from({ length: 5 }, (_, i) =>
+    layoutDay(
+      weekdaySlots.filter((s) =>
+        dayjs.utc(s.startDate).isSame(weekStart.add(i, 'day'), 'day'),
+      ),
+      (s) => getSlotDisplayRange(s, patientId),
+    ),
+  )
+  return { weekdaySlots, days }
+}
+
+// Une fermeture ne se justifie qu'entre deux semaines du programme : on ne
+// l'ajoute qu'une fois qu'une semaine la précède, et jamais en fin de
+// programme (la boucle s'arrête sur la dernière semaine avec rendez-vous).
+function pushClosure(entries: CalendarEntry[], closure: ClosureData | null) {
+  if (closure && entries.length > 0) {
+    entries.push({ kind: 'closure', ...closure })
+  }
+}
+
+// Des semaines interdites qui se suivent ne donnent qu'une seule mention.
+function extendClosure(
+  entries: CalendarEntry[],
+  pending: ClosureData | null,
+  weekStart: dayjs.Dayjs,
+): ClosureData {
+  const end = weekStart.add(CLOSURE_LAST_WEEKDAY_OFFSET, 'day')
+  if (pending?.end.add(3, 'day').isSame(weekStart, 'day')) {
+    return { start: pending.start, end }
+  }
+  pushClosure(entries, pending)
+  return { start: weekStart, end }
+}
+
 export function buildCalendarEntries(
   slots: Slot[],
   patientId?: string,
@@ -183,34 +227,13 @@ export function buildCalendarEntries(
   let weekIndex = 1
   let pendingClosure: ClosureData | null = null
 
-  // Une fermeture ne se justifie qu'entre deux semaines du programme : on ne
-  // l'ajoute qu'une fois qu'une semaine la précède, et jamais en fin de
-  // programme (la boucle s'arrête sur la dernière semaine avec rendez-vous).
   const flushClosure = () => {
-    if (pendingClosure && entries.length > 0) {
-      entries.push({ kind: 'closure', ...pendingClosure })
-    }
+    pushClosure(entries, pendingClosure)
     pendingClosure = null
   }
 
   while (current.isBefore(programEnd) || current.isSame(programEnd, 'day')) {
-    const weekSlots = slots.filter((s) => {
-      const d = dayjs.utc(s.startDate)
-      return (
-        (d.isAfter(current) || d.isSame(current, 'day')) &&
-        d.isBefore(current.add(7, 'day'))
-      )
-    })
-
-    const weekdaySlots = weekSlots.filter(isWeekday)
-    const days = Array.from({ length: 5 }, (_, i) =>
-      layoutDay(
-        weekdaySlots.filter((s) =>
-          dayjs.utc(s.startDate).isSame(current.add(i, 'day'), 'day'),
-        ),
-        (s) => getSlotDisplayRange(s, patientId),
-      ),
-    )
+    const { weekdaySlots, days } = layoutWeek(slots, current, patientId)
     const [startMinute, endMinute] = hourBounds(days)
 
     const isForbidden = forbiddenWeekKeys.has(current.format('YYYY-MM-DD'))
@@ -245,14 +268,7 @@ export function buildCalendarEntries(
         weekIndex++
       }
     } else if (isForbidden) {
-      const closureEnd = current.add(CLOSURE_LAST_WEEKDAY_OFFSET, 'day')
-      // Des semaines interdites qui se suivent ne donnent qu'une seule mention.
-      if (pendingClosure?.end.add(3, 'day').isSame(current, 'day')) {
-        pendingClosure = { start: pendingClosure.start, end: closureEnd }
-      } else {
-        flushClosure()
-        pendingClosure = { start: current, end: closureEnd }
-      }
+      pendingClosure = extendClosure(entries, pendingClosure, current)
     } else {
       // Semaine sans rendez-vous alors que le service est ouvert : rien à dire.
       flushClosure()

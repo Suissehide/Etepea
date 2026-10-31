@@ -111,9 +111,10 @@ body {
   pointer-events: auto;
 }
 
-.MuiPickersSectionList-root {
+/* Classe doublee : passe devant le style injecte par MUI, sans !important. */
+.MuiPickersSectionList-root.MuiPickersSectionList-root {
   width: auto;
-  min-width: 0 !important;
+  min-width: 0;
 }
 
 .MuiButtonBase-root {

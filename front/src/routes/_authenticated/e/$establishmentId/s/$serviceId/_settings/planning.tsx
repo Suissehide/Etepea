@@ -1,6 +1,8 @@
 import FullCalendar, {
+  type CalendarController,
   type DateSelectInfo,
   type EventDropInfo,
+  type EventInput,
   type EventResizeDoneInfo,
   useCalendarController,
 } from '@fullcalendar/react'
@@ -90,6 +92,7 @@ import type {
   CreateSlotParamsWithTemplateData,
   SlotDateRange,
 } from '@/types/slot.ts'
+import type { SlotTemplate } from '@/types/slotTemplate.ts'
 import { resolveTenantContext } from '@/utils/tenant-context.ts'
 import { cycleWeekNumber } from '@/utils/weekCycle.ts'
 
@@ -112,6 +115,32 @@ export const Route = createFileRoute(
   component: Planning,
 })
 
+const buildTemplateDuplicateParams = (
+  slotTemplate: SlotTemplate,
+  offsetDays: SlotTemplate['offsetDays'],
+  templateID: string,
+) => ({
+  startTime: slotTemplate.startTime,
+  endTime: slotTemplate.endTime,
+  offsetDays,
+  thematicId: slotTemplate.thematicId,
+  locationID: slotTemplate.locationID,
+  description: slotTemplate.description,
+  color: slotTemplate.color,
+  isIndividual: slotTemplate.isIndividual,
+  capacity: slotTemplate.capacity,
+  soignantIDs: slotTemplate.soignants?.map((s) => s.id) ?? [],
+  templateID,
+})
+
+// Lundi de la semaine affichée, à défaut celui de la semaine courante.
+const mondayOfViewedWeek = () => {
+  const { viewStart } = usePlanningStore.getState()
+  return viewStart
+    ? dayjs.utc(viewStart).isoWeekday(1)
+    : dayjs.utc().isoWeekday(1)
+}
+
 function Planning() {
   // Plage connue seulement une fois le calendrier monté : la page s'affiche
   // d'abord, les créneaux suivent.
@@ -133,7 +162,6 @@ function Planning() {
     useSlotMutations()
   const { instantiatePathway, deletePathway } = usePathwayMutations()
   const { toast } = useToast()
-  const lastDropTimeRef = useRef<number>(0)
   const controleurAnnee = useCalendarController()
   const { createSlotTemplate, updateSlotTemplate, deleteSlotTemplate } =
     useSlotTemplateMutations()
@@ -165,18 +193,12 @@ function Planning() {
 
   const [view, setView] = useState<'calendar' | 'timeline'>('calendar')
   const [isForbiddenWeekMode, setIsForbiddenWeekMode] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<{
-    id: string
-    title: string
-    anchor: { getBoundingClientRect: () => DOMRect }
-  } | null>(null)
-  const [hoveredPathway, setHoveredPathway] = useState<{
-    title: string
-    start: string
-    end: string
-    x: number
-    y: number
-  } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PathwayDeleteTarget | null>(
+    null,
+  )
+  const [hoveredPathway, setHoveredPathway] = useState<HoveredPathway | null>(
+    null,
+  )
   const [openEventId, setOpenEventId] = useState('')
   const [deleteConfirmEventId, setDeleteConfirmEventId] = useState<
     string | null
@@ -519,6 +541,27 @@ function Planning() {
     return { newStart: newStartFull, newEnd }
   }
 
+  const selectedIdsWithPrefix = (prefix: string) =>
+    [...selectedSlotIds]
+      .filter((eventId) => eventId.startsWith(prefix))
+      .map((eventId) => eventId.replace(prefix, ''))
+
+  const finishBulkOperation = (
+    action: 'duplicate' | 'move',
+    destination: string,
+  ) => {
+    const label = action === 'duplicate' ? 'dupliqué' : 'déplacé'
+    toast({
+      title:
+        action === 'duplicate'
+          ? 'Duplication en cours'
+          : 'Déplacement en cours',
+      message: `${selectedSlotIds.size} créneau(x) ${label}(s) sur ${destination}`,
+      severity: TOAST_SEVERITY.SUCCESS,
+    })
+    handleClearSelection()
+  }
+
   const handleDuplicateSlot = (eventId: string) => {
     if (eventId.startsWith('slot_')) {
       const slotId = eventId.replace('slot_', '')
@@ -537,19 +580,13 @@ function Planning() {
       if (!slotTemplate || !currentPathwayTemplate) {
         return
       }
-      createSlotTemplate.mutate({
-        startTime: slotTemplate.startTime,
-        endTime: slotTemplate.endTime,
-        offsetDays: slotTemplate.offsetDays,
-        thematicId: slotTemplate.thematicId,
-        locationID: slotTemplate.locationID,
-        description: slotTemplate.description,
-        color: slotTemplate.color,
-        isIndividual: slotTemplate.isIndividual,
-        capacity: slotTemplate.capacity,
-        soignantIDs: slotTemplate.soignants?.map((s) => s.id) ?? [],
-        templateID: currentPathwayTemplate.id,
-      })
+      createSlotTemplate.mutate(
+        buildTemplateDuplicateParams(
+          slotTemplate,
+          slotTemplate.offsetDays,
+          currentPathwayTemplate.id,
+        ),
+      )
     }
   }
 
@@ -567,11 +604,7 @@ function Planning() {
   ) => {
     const targetWeekStart = targetDate.isoWeekday(1).utc().startOf('day')
 
-    for (const eventId of selectedSlotIds) {
-      if (!eventId.startsWith('slot_')) {
-        continue
-      }
-      const slotId = eventId.replace('slot_', '')
+    for (const slotId of selectedIdsWithPrefix('slot_')) {
       const slot = slots?.find((s) => s.id === slotId)
       if (!slot) {
         continue
@@ -601,17 +634,10 @@ function Planning() {
       }
     }
 
-    const label = action === 'duplicate' ? 'dupliqué' : 'déplacé'
-    toast({
-      title:
-        action === 'duplicate'
-          ? 'Duplication en cours'
-          : 'Déplacement en cours',
-      message: `${selectedSlotIds.size} créneau(x) ${label}(s) sur la semaine du ${targetWeekStart.format('DD/MM/YYYY')}`,
-      severity: TOAST_SEVERITY.SUCCESS,
-    })
-
-    handleClearSelection()
+    finishBulkOperation(
+      action,
+      `la semaine du ${targetWeekStart.format('DD/MM/YYYY')}`,
+    )
     if (action === 'duplicate') {
       setShowDuplicateModal(false)
       setDuplicateWeekDate(null)
@@ -629,11 +655,7 @@ function Planning() {
       return
     }
 
-    for (const eventId of selectedSlotIds) {
-      if (!eventId.startsWith('template_')) {
-        continue
-      }
-      const templateId = eventId.replace('template_', '')
+    for (const templateId of selectedIdsWithPrefix('template_')) {
       const slotTemplate = currentPathwayTemplate.slotTemplates?.find(
         (t) => t.id === templateId,
       )
@@ -641,24 +663,17 @@ function Planning() {
         continue
       }
 
-      const currentOffsetDays = slotTemplate.offsetDays ?? 0
-      const dayInWeek = currentOffsetDays % 7
+      const dayInWeek = (slotTemplate.offsetDays ?? 0) % 7
       const newOffsetDays = (targetWeekNum - 1) * 7 + dayInWeek
 
       if (action === 'duplicate') {
-        createSlotTemplate.mutate({
-          startTime: slotTemplate.startTime,
-          endTime: slotTemplate.endTime,
-          offsetDays: newOffsetDays,
-          thematicId: slotTemplate.thematicId,
-          locationID: slotTemplate.locationID,
-          description: slotTemplate.description,
-          color: slotTemplate.color,
-          isIndividual: slotTemplate.isIndividual,
-          capacity: slotTemplate.capacity,
-          soignantIDs: slotTemplate.soignants?.map((s) => s.id) ?? [],
-          templateID: currentPathwayTemplate.id,
-        })
+        createSlotTemplate.mutate(
+          buildTemplateDuplicateParams(
+            slotTemplate,
+            newOffsetDays,
+            currentPathwayTemplate.id,
+          ),
+        )
       } else {
         updateSlotTemplate.mutate({
           id: templateId,
@@ -669,17 +684,7 @@ function Planning() {
       }
     }
 
-    const label = action === 'duplicate' ? 'dupliqué' : 'déplacé'
-    toast({
-      title:
-        action === 'duplicate'
-          ? 'Duplication en cours'
-          : 'Déplacement en cours',
-      message: `${selectedSlotIds.size} créneau(x) ${label}(s) sur la semaine ${targetWeekNum}`,
-      severity: TOAST_SEVERITY.SUCCESS,
-    })
-
-    handleClearSelection()
+    finishBulkOperation(action, `la semaine ${targetWeekNum}`)
     if (action === 'duplicate') {
       setShowDuplicateModal(false)
       setDuplicateTargetWeek(1)
@@ -690,10 +695,7 @@ function Planning() {
   }
 
   const handleBulkDelete = () => {
-    const prefix = editMode ? 'template_' : 'slot_'
-    const ids = [...selectedSlotIds]
-      .filter((eventId) => eventId.startsWith(prefix))
-      .map((eventId) => eventId.replace(prefix, ''))
+    const ids = selectedIdsWithPrefix(editMode ? 'template_' : 'slot_')
 
     if (editMode) {
       for (const id of ids) {
@@ -704,6 +706,35 @@ function Planning() {
     }
     setShowBulkDeleteModal(false)
     handleClearSelection()
+  }
+
+  const openDuplicateModal = () => {
+    if (editMode) {
+      setDuplicateTargetWeek(1)
+    } else {
+      setDuplicateWeekDate(mondayOfViewedWeek())
+    }
+    setShowDuplicateModal(true)
+  }
+
+  const openMoveModal = () => {
+    if (editMode) {
+      setMoveTargetWeek(1)
+    } else {
+      setMoveWeekDate(mondayOfViewedWeek())
+    }
+    setShowMoveModal(true)
+  }
+
+  const handleBulkActionChange = (v: string) => {
+    setBulkAction(v)
+    if (v === 'duplicate') {
+      openDuplicateModal()
+    } else if (v === 'move') {
+      openMoveModal()
+    } else if (v === 'delete') {
+      setShowBulkDeleteModal(true)
+    }
   }
 
   const handleForbiddenWeekCreate = (date: string) => {
@@ -791,6 +822,23 @@ function Planning() {
     }
   }
 
+  const forbiddenWeekList = forbiddenWeeks ?? []
+  const templateList = pathwayTemplates ?? []
+  // En édition de modèle, la grille n'affiche ni semaines interdites ni cycle.
+  const calendarModeProps = editMode
+    ? {
+        forbiddenWeeks: [],
+        weekAnchorDate: startDate,
+        planningCycle: undefined,
+        barre: 'minimale' as const,
+      }
+    : {
+        forbiddenWeeks: forbiddenWeekList,
+        weekAnchorDate: undefined,
+        planningCycle,
+        barre: 'complete' as const,
+      }
+
   const isSlot = openEventId.startsWith('slot_')
   const isTemplate = openEventId.startsWith('template_')
   const slotId = openEventId.replace(/^.*?_/, '')
@@ -823,153 +871,97 @@ function Planning() {
 
           <div className="flex justify-end items-center gap-2">
             {!editMode && (
-              <PathwayFilter
-                templates={pathwayTemplates ?? []}
-                hiddenIds={hiddenPathwayIds}
-                onToggle={handleTogglePathwayFilter}
-                onReset={handleResetPathwayFilter}
-                onHideAll={handleHideAllPathways}
-              />
-            )}
+              <>
+                <PathwayFilter
+                  templates={templateList}
+                  hiddenIds={hiddenPathwayIds}
+                  onToggle={handleTogglePathwayFilter}
+                  onReset={handleResetPathwayFilter}
+                  onHideAll={handleHideAllPathways}
+                />
 
-            {!editMode && (
-              <LocationFilter
-                locations={locations ?? []}
-                hiddenIds={hiddenLocationIds}
-                onToggle={handleToggleLocationFilter}
-                onReset={handleResetLocationFilter}
-                onHideAll={handleHideAllLocations}
-              />
-            )}
+                <LocationFilter
+                  locations={locations ?? []}
+                  hiddenIds={hiddenLocationIds}
+                  onToggle={handleToggleLocationFilter}
+                  onReset={handleResetLocationFilter}
+                  onHideAll={handleHideAllLocations}
+                />
 
-            {!editMode && (
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button variant="outline" className="font-normal rounded-lg">
-                    <Settings2 size={16} />
-                    Actions
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    className="min-w-[280px] bg-primary-foreground rounded shadow-md border border-border p-2 z-50"
-                    align="end"
-                    sideOffset={5}
-                    collisionPadding={8}
-                  >
-                    <DropdownMenu.Item
-                      onSelect={() => setRegenerateOpen(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      variant="outline"
+                      className="font-normal rounded-lg"
                     >
-                      <RefreshCw size={16} />
-                      Mettre à jour les parcours instanciés
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onSelect={() => setExportOpen(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
+                      <Settings2 size={16} />
+                      Actions
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="min-w-[280px] bg-primary-foreground rounded shadow-md border border-border p-2 z-50"
+                      align="end"
+                      sideOffset={5}
+                      collisionPadding={8}
                     >
-                      <Printer size={16} />
-                      Exporter le planning (PDF)
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onSelect={() => setCycleOpen(true)}
-                      className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
-                    >
-                      <CalendarRange size={16} />
-                      Configurer le cycle de semaines
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-            )}
+                      <DropdownMenu.Item
+                        onSelect={() => setRegenerateOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
+                      >
+                        <RefreshCw size={16} />
+                        Mettre à jour les parcours instanciés
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        onSelect={() => setExportOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
+                      >
+                        <Printer size={16} />
+                        Exporter le planning (PDF)
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        onSelect={() => setCycleOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
+                      >
+                        <CalendarRange size={16} />
+                        Configurer le cycle de semaines
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
 
-            {!editMode && (
-              <ToggleGroup
-                value={view}
-                onValueChange={(v: string) => {
-                  if (v) {
-                    setView(v as 'calendar' | 'timeline')
-                    if (v !== 'timeline') {
-                      setIsForbiddenWeekMode(false)
+                <ToggleGroup
+                  value={view}
+                  onValueChange={(v: string) => {
+                    if (v) {
+                      setView(v as 'calendar' | 'timeline')
+                      if (v !== 'timeline') {
+                        setIsForbiddenWeekMode(false)
+                      }
                     }
-                  }
-                }}
-              >
-                <ToggleGroupItem value="calendar">
-                  <CalendarDays className="h-4 w-4" />
-                  Calendrier
-                </ToggleGroupItem>
-                <ToggleGroupItem value="timeline">
-                  <GanttChart className="h-4 w-4" />
-                  Timeline
-                </ToggleGroupItem>
-              </ToggleGroup>
+                  }}
+                >
+                  <ToggleGroupItem value="calendar">
+                    <CalendarDays className="h-4 w-4" />
+                    Calendrier
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="timeline">
+                    <GanttChart className="h-4 w-4" />
+                    Timeline
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </>
             )}
           </div>
         </div>
 
         {selectedSlotIds.size > 0 && (
-          <div className="mx-6 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2">
-            <CheckSquare className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-text-dark">
-              {selectedSlotIds.size} créneau
-              {selectedSlotIds.size > 1 ? 'x' : ''} sélectionné
-              {selectedSlotIds.size > 1 ? 's' : ''}
-            </span>
-
-            <div className="w-72">
-              <Select
-                options={[
-                  { value: 'duplicate', label: 'Dupliquer sur une semaine' },
-                  { value: 'move', label: 'Déplacer sur une semaine' },
-                  { value: 'delete', label: 'Supprimer la sélection' },
-                ]}
-                placeholder="Action..."
-                value={bulkAction}
-                onValueChange={(v) => {
-                  setBulkAction(v)
-                  if (v === 'duplicate') {
-                    if (editMode) {
-                      setDuplicateTargetWeek(1)
-                    } else {
-                      const { viewStart } = usePlanningStore.getState()
-                      setDuplicateWeekDate(
-                        viewStart
-                          ? dayjs.utc(viewStart).isoWeekday(1)
-                          : dayjs.utc().isoWeekday(1),
-                      )
-                    }
-                    setShowDuplicateModal(true)
-                  } else if (v === 'move') {
-                    if (editMode) {
-                      setMoveTargetWeek(1)
-                    } else {
-                      const { viewStart } = usePlanningStore.getState()
-                      setMoveWeekDate(
-                        viewStart
-                          ? dayjs.utc(viewStart).isoWeekday(1)
-                          : dayjs.utc().isoWeekday(1),
-                      )
-                    }
-                    setShowMoveModal(true)
-                  } else if (v === 'delete') {
-                    setShowBulkDeleteModal(true)
-                  }
-                }}
-                clearable={false}
-              />
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto text-text-light hover:text-text-dark"
-              onClick={handleClearSelection}
-            >
-              <X className="h-4 w-4" />
-              Désélectionner
-            </Button>
-          </div>
+          <SelectionBar
+            count={selectedSlotIds.size}
+            bulkAction={bulkAction}
+            onActionChange={handleBulkActionChange}
+            onClear={handleClearSelection}
+          />
         )}
 
         <div className="flex flex-col h-full">
@@ -985,7 +977,6 @@ function Planning() {
                 handleOpenEvent={setOpenEventId}
                 editMode={editMode}
                 editable={true}
-                forbiddenWeeks={editMode ? [] : (forbiddenWeeks ?? [])}
                 onDuplicate={handleDuplicateSlot}
                 onDelete={handleDeleteHoverSlot}
                 onToggleLock={handleToggleLock}
@@ -993,240 +984,32 @@ function Planning() {
                 onToggleSelect={handleToggleSelect}
                 onRangeChange={handleRangeChange}
                 showSecondaryTags={false}
-                weekAnchorDate={editMode ? startDate : undefined}
-                planningCycle={editMode ? undefined : planningCycle}
-                barre={editMode ? 'minimale' : 'complete'}
+                {...calendarModeProps}
               />
             ) : (
               <div className="flex h-full flex-col">
-                <BarreCalendrier
+                <PlanningTimeline
                   controller={controleurAnnee}
-                  vues={[
-                    { type: 'multiMonthYear', libelle: 'Grille' },
-                    { type: 'dayGridYear', libelle: 'Liste' },
-                  ]}
-                />
-                <FullCalendar
-                  controller={controleurAnnee}
-                  plugins={[
-                    breezyTheme,
-                    dayGridPlugin,
-                    multiMonthPlugin,
-                    interactionPlugin,
-                  ]}
-                  initialView="multiMonthYear"
-                  locale={frLocale}
-                  timeZone="UTC"
-                  weekends={true}
-                  headerToolbar={false}
-                  // Pas de cadre autour de la grille, la carte de l'écran l'entoure déjà.
-                  viewClass="rounded-none border-0"
-                  // Le thème ne fait que teinter les événements : parcours et semaines interdites
-                  // gardent leur couleur, pleine.
-                  backgroundEventClass="bg-[var(--fc-event-color)] opacity-100"
-                  rowEventClass="bg-[var(--fc-event-color)]"
-                  rowEventTitleClass="text-[var(--fc-event-contrast-color)] opacity-100"
-                  // Planifier une semaine interdite : la semaine survolée s'annonce en rouge.
-                  dayRowClass={
-                    isForbiddenWeekMode
-                      ? 'cursor-pointer hover:bg-red-500/20'
-                      : undefined
-                  }
-                  singleMonthMinWidth={600}
-                  weekNumbers={true}
-                  weekNumberFormat={{ week: 'numeric' }}
-                  // 0 = semaine interdite, hors cycle : pas de numéro.
-                  inlineWeekNumberContent={(arg) => (arg.num ? arg.text : '')}
-                  // FullCalendar transmet ici dateEnv.toDate(marker), pas le
-                  // marker interne : le Date obtenu porte ses champs dans le
-                  // fuseau de dateEnv. Le dayjs.utc(date) ci-dessous ne donne
-                  // le bon résultat que parce que cette instance a
-                  // timeZone="UTC" — avec 'local' (le défaut FullCalendar),
-                  // toute la grille annuelle se décalerait d'une semaine en
-                  // Europe/Paris.
+                  isForbiddenWeekMode={isForbiddenWeekMode}
                   weekNumberCalculation={weekNumberCalculation}
-                  dayMaxEvents={false}
-                  dayMaxEventRows={false}
-                  height="100%"
                   events={[...pathwayEvents, ...forbiddenWeekBackgroundEvents]}
-                  editable={false}
-                  selectable={false}
-                  droppable={true}
-                  dateClick={handleTimelineDateClick}
-                  drop={(info) => {
-                    const now = Date.now()
-                    if (now - lastDropTimeRef.current < 500) {
-                      return
-                    }
-                    lastDropTimeRef.current = now
-                    const pathwayId =
-                      info.draggedEl.getAttribute('data-pathway-id')
-                    const weekStart = dayjs
-                      .utc(info.date)
-                      .isoWeekday(1)
-                      .startOf('day')
-                    if (pathwayId) {
-                      handleInstantiatePathway(
-                        pathwayId,
-                        weekStart.toISOString(),
-                      )
-                    }
-                  }}
-                  eventDidMount={(info) => {
-                    if (info.event.extendedProps.type === 'pathway') {
-                      info.el.setAttribute('data-pathway-id', info.event.id)
-                      info.el.style.cursor = 'pointer'
-                    }
-                  }}
-                  eventMouseEnter={(info) => {
-                    if (
-                      info.event.extendedProps.type === 'pathway' &&
-                      info.event.start &&
-                      info.event.end
-                    ) {
-                      const rect = info.el.getBoundingClientRect()
-                      setHoveredPathway({
-                        title: info.event.title,
-                        start: dayjs.utc(info.event.start).format('DD/MM/YYYY'),
-                        end: dayjs
-                          .utc(info.event.end)
-                          .subtract(1, 'day')
-                          .format('DD/MM/YYYY'),
-                        x: rect.left + rect.width / 2,
-                        y: rect.top,
-                      })
-                      const segments = document.querySelectorAll<HTMLElement>(
-                        `[data-pathway-id="${info.event.id}"]`,
-                      )
-                      segments.forEach((el) => {
-                        el.style.filter =
-                          'brightness(1.15) drop-shadow(0 2px 8px rgba(0,0,0,0.25))'
-                        el.style.zIndex = '10'
-                        el.style.transition = 'filter 0.15s ease'
-                      })
-                    }
-                  }}
-                  eventMouseLeave={(info) => {
-                    setHoveredPathway(null)
-                    const segments = document.querySelectorAll<HTMLElement>(
-                      `[data-pathway-id="${info.event.id}"]`,
-                    )
-                    segments.forEach((el) => {
-                      el.style.filter = ''
-                      el.style.zIndex = ''
-                    })
-                  }}
-                  eventClick={(info) => {
-                    if (isForbiddenWeekMode) {
-                      return
-                    }
-                    if (info.event.id.startsWith('forbidden_')) {
-                      return
-                    }
-                    const x = info.jsEvent.clientX
-                    const rect = info.el.getBoundingClientRect()
-                    const y = rect.top + rect.height / 2
-                    setDeleteTarget({
-                      id: info.event.id,
-                      title: info.event.title,
-                      anchor: {
-                        getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
-                      },
-                    })
-                  }}
+                  onDateClick={handleTimelineDateClick}
+                  onInstantiatePathway={handleInstantiatePathway}
+                  onHoverPathway={setHoveredPathway}
+                  onPathwayClick={setDeleteTarget}
                 />
               </div>
             )}
           </div>
         </div>
 
-        {hoveredPathway && (
-          <div
-            className="pointer-events-none fixed z-[200] max-w-xs rounded-md border border-border bg-popover px-3 py-2 text-xs text-text-dark shadow-md"
-            style={{
-              left: hoveredPathway.x,
-              top: hoveredPathway.y,
-              transform: 'translate(-50%, -100%) translateY(-8px)',
-            }}
-          >
-            <p className="mb-1 font-semibold">{hoveredPathway.title}</p>
-            <p>
-              {hoveredPathway.start} – {hoveredPathway.end}
-            </p>
-          </div>
-        )}
+        <PathwayTooltip pathway={hoveredPathway} />
 
-        <PopoverRoot
-          open={!!deleteTarget}
-          onOpenChange={(open) => {
-            if (!open) {
-              setDeleteTarget(null)
-            }
-          }}
-        >
-          {deleteTarget && (
-            <PopoverAnchor virtualRef={{ current: deleteTarget.anchor }} />
-          )}
-          <PopoverContent
-            side="top"
-            align="center"
-            sideOffset={10}
-            className="w-56 p-0 shadow-lg"
-          >
-            <PopoverArrow
-              width={14}
-              height={7}
-              style={{
-                fill: 'var(--popover)',
-                stroke: 'var(--border)',
-                strokeWidth: 1,
-              }}
-            />
-
-            <div className="px-4 pt-4 pb-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-light">
-                    Supprimer le parcours
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-text-dark leading-snug line-clamp-2">
-                    {deleteTarget?.title}
-                  </p>
-                </div>
-                <PopoverClose className="mt-0.5 shrink-0 rounded p-0.5 text-text-light hover:text-text hover:bg-muted transition-colors cursor-pointer">
-                  <X className="h-3.5 w-3.5" />
-                </PopoverClose>
-              </div>
-            </div>
-
-            <div className="mx-4 border-t border-border" />
-
-            <div className="flex gap-2 p-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 h-8 text-xs"
-                onClick={() => setDeleteTarget(null)}
-              >
-                Annuler
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex-1 h-8 text-xs gap-1.5"
-                onClick={() => {
-                  if (deleteTarget) {
-                    deletePathway.mutate(deleteTarget.id)
-                    setDeleteTarget(null)
-                  }
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-                Supprimer
-              </Button>
-            </div>
-          </PopoverContent>
-        </PopoverRoot>
+        <PathwayDeletePopover
+          target={deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={(id) => deletePathway.mutate(id)}
+        />
 
         <ConfirmDeleteForm
           open={!!deleteConfirmEventId}
@@ -1312,91 +1095,91 @@ function Planning() {
         />
 
         {editMode ? (
-          <BulkDuplicateForm
-            open={showDuplicateModal}
-            setOpen={(open) => {
-              setShowDuplicateModal(open)
-              if (!open) {
-                setBulkAction('')
-                setDuplicateTargetWeek(1)
+          <>
+            <BulkDuplicateForm
+              open={showDuplicateModal}
+              setOpen={(open) => {
+                setShowDuplicateModal(open)
+                if (!open) {
+                  setBulkAction('')
+                  setDuplicateTargetWeek(1)
+                }
+              }}
+              editMode
+              count={selectedSlotIds.size}
+              targetWeekNumber={duplicateTargetWeek}
+              onTargetWeekNumberChange={setDuplicateTargetWeek}
+              onConfirm={() =>
+                handleBulkTemplateOperation(duplicateTargetWeek, 'duplicate')
               }
-            }}
-            editMode
-            count={selectedSlotIds.size}
-            targetWeekNumber={duplicateTargetWeek}
-            onTargetWeekNumberChange={setDuplicateTargetWeek}
-            onConfirm={() =>
-              handleBulkTemplateOperation(duplicateTargetWeek, 'duplicate')
-            }
-          />
+            />
+            <BulkMoveForm
+              open={showMoveModal}
+              setOpen={(open) => {
+                setShowMoveModal(open)
+                if (!open) {
+                  setBulkAction('')
+                  setMoveTargetWeek(1)
+                }
+              }}
+              editMode
+              count={selectedSlotIds.size}
+              targetWeekNumber={moveTargetWeek}
+              onTargetWeekNumberChange={setMoveTargetWeek}
+              onConfirm={() =>
+                handleBulkTemplateOperation(moveTargetWeek, 'move')
+              }
+            />
+          </>
         ) : (
-          <BulkDuplicateForm
-            open={showDuplicateModal}
-            setOpen={(open) => {
-              setShowDuplicateModal(open)
-              if (!open) {
-                setBulkAction('')
-                setDuplicateWeekDate(null)
-              }
-            }}
-            count={selectedSlotIds.size}
-            weekDate={duplicateWeekDate}
-            onWeekChange={setDuplicateWeekDate}
-            planningCycle={planningCycle}
-            forbiddenWeeks={forbiddenWeeks ?? []}
-            onConfirm={() => {
-              if (duplicateWeekDate) {
-                handleBulkSlotOperation(duplicateWeekDate, 'duplicate')
-              }
-            }}
-          />
-        )}
-
-        {editMode ? (
-          <BulkMoveForm
-            open={showMoveModal}
-            setOpen={(open) => {
-              setShowMoveModal(open)
-              if (!open) {
-                setBulkAction('')
-                setMoveTargetWeek(1)
-              }
-            }}
-            editMode
-            count={selectedSlotIds.size}
-            targetWeekNumber={moveTargetWeek}
-            onTargetWeekNumberChange={setMoveTargetWeek}
-            onConfirm={() =>
-              handleBulkTemplateOperation(moveTargetWeek, 'move')
-            }
-          />
-        ) : (
-          <BulkMoveForm
-            open={showMoveModal}
-            setOpen={(open) => {
-              setShowMoveModal(open)
-              if (!open) {
-                setBulkAction('')
-                setMoveWeekDate(null)
-              }
-            }}
-            count={selectedSlotIds.size}
-            weekDate={moveWeekDate}
-            onWeekChange={setMoveWeekDate}
-            planningCycle={planningCycle}
-            forbiddenWeeks={forbiddenWeeks ?? []}
-            onConfirm={() => {
-              if (moveWeekDate) {
-                handleBulkSlotOperation(moveWeekDate, 'move')
-              }
-            }}
-          />
+          <>
+            <BulkDuplicateForm
+              open={showDuplicateModal}
+              setOpen={(open) => {
+                setShowDuplicateModal(open)
+                if (!open) {
+                  setBulkAction('')
+                  setDuplicateWeekDate(null)
+                }
+              }}
+              count={selectedSlotIds.size}
+              weekDate={duplicateWeekDate}
+              onWeekChange={setDuplicateWeekDate}
+              planningCycle={planningCycle}
+              forbiddenWeeks={forbiddenWeekList}
+              onConfirm={() => {
+                if (duplicateWeekDate) {
+                  handleBulkSlotOperation(duplicateWeekDate, 'duplicate')
+                }
+              }}
+            />
+            <BulkMoveForm
+              open={showMoveModal}
+              setOpen={(open) => {
+                setShowMoveModal(open)
+                if (!open) {
+                  setBulkAction('')
+                  setMoveWeekDate(null)
+                }
+              }}
+              count={selectedSlotIds.size}
+              weekDate={moveWeekDate}
+              onWeekChange={setMoveWeekDate}
+              planningCycle={planningCycle}
+              forbiddenWeeks={forbiddenWeekList}
+              onConfirm={() => {
+                if (moveWeekDate) {
+                  handleBulkSlotOperation(moveWeekDate, 'move')
+                }
+              }}
+            />
+          </>
         )}
 
         <RegeneratePathwaysForm
           open={regenerateOpen}
           setOpen={setRegenerateOpen}
-          templates={pathwayTemplates ?? []}
+          templates={templateList}
         />
 
         <PlanningCycleForm
@@ -1427,5 +1210,322 @@ function Planning() {
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+type HoveredPathway = {
+  title: string
+  start: string
+  end: string
+  x: number
+  y: number
+}
+
+type PathwayDeleteTarget = {
+  id: string
+  title: string
+  anchor: { getBoundingClientRect: () => DOMRect }
+}
+
+function SelectionBar({
+  count,
+  bulkAction,
+  onActionChange,
+  onClear,
+}: {
+  count: number
+  bulkAction: string
+  onActionChange: (action: string) => void
+  onClear: () => void
+}) {
+  return (
+    <div className="mx-6 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2">
+      <CheckSquare className="h-4 w-4 text-primary" />
+      <span className="text-sm font-medium text-text-dark">
+        {count} créneau
+        {count > 1 ? 'x' : ''} sélectionné
+        {count > 1 ? 's' : ''}
+      </span>
+
+      <div className="w-72">
+        <Select
+          options={[
+            { value: 'duplicate', label: 'Dupliquer sur une semaine' },
+            { value: 'move', label: 'Déplacer sur une semaine' },
+            { value: 'delete', label: 'Supprimer la sélection' },
+          ]}
+          placeholder="Action..."
+          value={bulkAction}
+          onValueChange={onActionChange}
+          clearable={false}
+        />
+      </div>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="ml-auto text-text-light hover:text-text-dark"
+        onClick={onClear}
+      >
+        <X className="h-4 w-4" />
+        Désélectionner
+      </Button>
+    </div>
+  )
+}
+
+function PlanningTimeline({
+  controller,
+  isForbiddenWeekMode,
+  weekNumberCalculation,
+  events,
+  onDateClick,
+  onInstantiatePathway,
+  onHoverPathway,
+  onPathwayClick,
+}: {
+  controller: CalendarController
+  isForbiddenWeekMode: boolean
+  weekNumberCalculation: 'ISO' | ((date: Date) => number)
+  events: EventInput[]
+  onDateClick: (info: { dateStr: string }) => void
+  onInstantiatePathway: (pathwayTemplateID: string, startDate: string) => void
+  onHoverPathway: (pathway: HoveredPathway | null) => void
+  onPathwayClick: (target: PathwayDeleteTarget) => void
+}) {
+  const lastDropTimeRef = useRef<number>(0)
+  return (
+    <div className="flex h-full flex-col">
+      <BarreCalendrier
+        controller={controller}
+        vues={[
+          { type: 'multiMonthYear', libelle: 'Grille' },
+          { type: 'dayGridYear', libelle: 'Liste' },
+        ]}
+      />
+      <FullCalendar
+        controller={controller}
+        plugins={[
+          breezyTheme,
+          dayGridPlugin,
+          multiMonthPlugin,
+          interactionPlugin,
+        ]}
+        initialView="multiMonthYear"
+        locale={frLocale}
+        timeZone="UTC"
+        weekends={true}
+        headerToolbar={false}
+        // Pas de cadre autour de la grille, la carte de l'écran l'entoure déjà.
+        viewClass="rounded-none border-0"
+        // Le thème ne fait que teinter les événements : parcours et semaines interdites
+        // gardent leur couleur, pleine.
+        backgroundEventClass="bg-[var(--fc-event-color)] opacity-100"
+        rowEventClass="bg-[var(--fc-event-color)]"
+        rowEventTitleClass="text-[var(--fc-event-contrast-color)] opacity-100"
+        // Planifier une semaine interdite : la semaine survolée s'annonce en rouge.
+        dayRowClass={
+          isForbiddenWeekMode ? 'cursor-pointer hover:bg-red-500/20' : undefined
+        }
+        singleMonthMinWidth={600}
+        weekNumbers={true}
+        weekNumberFormat={{ week: 'numeric' }}
+        // 0 = semaine interdite, hors cycle : pas de numéro.
+        inlineWeekNumberContent={(arg) => (arg.num ? arg.text : '')}
+        // FullCalendar transmet ici dateEnv.toDate(marker), pas le
+        // marker interne : le Date obtenu porte ses champs dans le
+        // fuseau de dateEnv. Le dayjs.utc(date) ci-dessous ne donne
+        // le bon résultat que parce que cette instance a
+        // timeZone="UTC" — avec 'local' (le défaut FullCalendar),
+        // toute la grille annuelle se décalerait d'une semaine en
+        // Europe/Paris.
+        weekNumberCalculation={weekNumberCalculation}
+        dayMaxEvents={false}
+        dayMaxEventRows={false}
+        height="100%"
+        events={events}
+        editable={false}
+        selectable={false}
+        droppable={true}
+        dateClick={onDateClick}
+        drop={(info) => {
+          const now = Date.now()
+          if (now - lastDropTimeRef.current < 500) {
+            return
+          }
+          lastDropTimeRef.current = now
+          const pathwayId = info.draggedEl.getAttribute('data-pathway-id')
+          const weekStart = dayjs.utc(info.date).isoWeekday(1).startOf('day')
+          if (pathwayId) {
+            onInstantiatePathway(pathwayId, weekStart.toISOString())
+          }
+        }}
+        eventDidMount={(info) => {
+          if (info.event.extendedProps.type === 'pathway') {
+            info.el.setAttribute('data-pathway-id', info.event.id)
+            info.el.style.cursor = 'pointer'
+          }
+        }}
+        eventMouseEnter={(info) => {
+          if (
+            info.event.extendedProps.type === 'pathway' &&
+            info.event.start &&
+            info.event.end
+          ) {
+            const rect = info.el.getBoundingClientRect()
+            onHoverPathway({
+              title: info.event.title,
+              start: dayjs.utc(info.event.start).format('DD/MM/YYYY'),
+              end: dayjs
+                .utc(info.event.end)
+                .subtract(1, 'day')
+                .format('DD/MM/YYYY'),
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+            })
+            const segments = document.querySelectorAll<HTMLElement>(
+              `[data-pathway-id="${info.event.id}"]`,
+            )
+            segments.forEach((el) => {
+              el.style.filter =
+                'brightness(1.15) drop-shadow(0 2px 8px rgba(0,0,0,0.25))'
+              el.style.zIndex = '10'
+              el.style.transition = 'filter 0.15s ease'
+            })
+          }
+        }}
+        eventMouseLeave={(info) => {
+          onHoverPathway(null)
+          const segments = document.querySelectorAll<HTMLElement>(
+            `[data-pathway-id="${info.event.id}"]`,
+          )
+          segments.forEach((el) => {
+            el.style.filter = ''
+            el.style.zIndex = ''
+          })
+        }}
+        eventClick={(info) => {
+          if (isForbiddenWeekMode) {
+            return
+          }
+          if (info.event.id.startsWith('forbidden_')) {
+            return
+          }
+          const x = info.jsEvent.clientX
+          const rect = info.el.getBoundingClientRect()
+          const y = rect.top + rect.height / 2
+          onPathwayClick({
+            id: info.event.id,
+            title: info.event.title,
+            anchor: {
+              getBoundingClientRect: () => new DOMRect(x, y, 0, 0),
+            },
+          })
+        }}
+      />
+    </div>
+  )
+}
+
+function PathwayTooltip({ pathway }: { pathway: HoveredPathway | null }) {
+  if (!pathway) {
+    return null
+  }
+  return (
+    <div
+      className="pointer-events-none fixed z-[200] max-w-xs rounded-md border border-border bg-popover px-3 py-2 text-xs text-text-dark shadow-md"
+      style={{
+        left: pathway.x,
+        top: pathway.y,
+        transform: 'translate(-50%, -100%) translateY(-8px)',
+      }}
+    >
+      <p className="mb-1 font-semibold">{pathway.title}</p>
+      <p>
+        {pathway.start} – {pathway.end}
+      </p>
+    </div>
+  )
+}
+
+function PathwayDeletePopover({
+  target,
+  onClose,
+  onConfirm,
+}: {
+  target: PathwayDeleteTarget | null
+  onClose: () => void
+  onConfirm: (id: string) => void
+}) {
+  return (
+    <PopoverRoot
+      open={!!target}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose()
+        }
+      }}
+    >
+      {target && <PopoverAnchor virtualRef={{ current: target.anchor }} />}
+      <PopoverContent
+        side="top"
+        align="center"
+        sideOffset={10}
+        className="w-56 p-0 shadow-lg"
+      >
+        <PopoverArrow
+          width={14}
+          height={7}
+          style={{
+            fill: 'var(--popover)',
+            stroke: 'var(--border)',
+            strokeWidth: 1,
+          }}
+        />
+
+        <div className="px-4 pt-4 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-light">
+                Supprimer le parcours
+              </p>
+              <p className="mt-1 text-sm font-medium text-text-dark leading-snug line-clamp-2">
+                {target?.title}
+              </p>
+            </div>
+            <PopoverClose className="mt-0.5 shrink-0 rounded p-0.5 text-text-light hover:text-text hover:bg-muted transition-colors cursor-pointer">
+              <X className="h-3.5 w-3.5" />
+            </PopoverClose>
+          </div>
+        </div>
+
+        <div className="mx-4 border-t border-border" />
+
+        <div className="flex gap-2 p-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={onClose}
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="flex-1 h-8 text-xs gap-1.5"
+            onClick={() => {
+              if (target) {
+                onConfirm(target.id)
+                onClose()
+              }
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+            Supprimer
+          </Button>
+        </div>
+      </PopoverContent>
+    </PopoverRoot>
   )
 }

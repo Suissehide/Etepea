@@ -1,6 +1,7 @@
 import { DateCalendar } from '@mui/x-date-pickers'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
+  type Cell,
   type Column,
   type ColumnDef,
   flexRender,
@@ -85,6 +86,85 @@ function getCommonPinningStyles(
           ? 'inset 1px 0 0 var(--color-border)'
           : undefined,
   }
+}
+
+/** Ligne de titre d'un parcours : couleur, nom et dates. */
+function GroupRow({ row, colSpan }: { row: SuiviRow; colSpan: number }) {
+  return (
+    <tr>
+      <td
+        colSpan={colSpan}
+        className="py-1.5 text-sm font-semibold border-b border-border"
+        style={{
+          backgroundColor: hexToRGBA(row.pathwayColor, 0.12),
+        }}
+      >
+        <div className="sticky left-0 w-fit px-3 flex items-center">
+          <span
+            className="w-2.5 h-2.5 rounded-full mr-2 shrink-0"
+            style={{
+              backgroundColor: row.pathwayColor,
+            }}
+          />
+          <span className="whitespace-nowrap">{row.pathwayName}</span>
+          {row.pathwayStartDate && (
+            <span className="ml-3 font-normal text-text-light whitespace-nowrap">
+              {dayjs.utc(row.pathwayStartDate).format('DD/MM/YYYY')}
+              {' – '}
+              {row.pathwayEndDate
+                ? dayjs.utc(row.pathwayEndDate).format('DD/MM/YYYY')
+                : '…'}
+            </span>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+/** Case d'un jour : teintée s'il y a un rendez-vous, grisée aujourd'hui. */
+function SuiviCell({
+  cell,
+  today,
+}: {
+  cell: Cell<Features, SuiviRow, unknown>
+  today: number | null
+}) {
+  const isPinned = cell.column.getIsPinned()
+  const dayNum = cell.column.id.startsWith('day-')
+    ? parseInt(cell.column.id.slice(4), 10)
+    : null
+  const apt = dayNum == null ? null : cell.row.original.days.get(dayNum)
+  const isToday = dayNum === today
+
+  return (
+    <td
+      className="border-b border-border"
+      style={{
+        ...getCommonPinningStyles(cell.column),
+        minWidth: cell.column.getSize(),
+        width: isPinned ? undefined : cell.column.getSize(),
+        height: 40,
+        ...(apt
+          ? {
+              backgroundColor: hexToRGBA(cell.row.original.pathwayColor, 0.3),
+            }
+          : isToday
+            ? { backgroundColor: 'var(--color-input)' }
+            : {}),
+      }}
+    >
+      <div
+        className={
+          isPinned
+            ? 'px-3 text-sm text-text-dark whitespace-nowrap'
+            : 'flex items-center justify-center h-full'
+        }
+      >
+        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      </div>
+    </td>
+  )
 }
 
 function SuiviPage() {
@@ -277,43 +357,11 @@ function SuiviPage() {
                   {table.getRowModel().rows.map((row) => {
                     if (row.original.type === 'group') {
                       return (
-                        <tr key={row.id}>
-                          <td
-                            colSpan={days.length + 1}
-                            className="py-1.5 text-sm font-semibold border-b border-border"
-                            style={{
-                              backgroundColor: hexToRGBA(
-                                row.original.pathwayColor,
-                                0.12,
-                              ),
-                            }}
-                          >
-                            <div className="sticky left-0 w-fit px-3 flex items-center">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full mr-2 shrink-0"
-                                style={{
-                                  backgroundColor: row.original.pathwayColor,
-                                }}
-                              />
-                              <span className="whitespace-nowrap">
-                                {row.original.pathwayName}
-                              </span>
-                              {row.original.pathwayStartDate && (
-                                <span className="ml-3 font-normal text-text-light whitespace-nowrap">
-                                  {dayjs
-                                    .utc(row.original.pathwayStartDate)
-                                    .format('DD/MM/YYYY')}
-                                  {' – '}
-                                  {row.original.pathwayEndDate
-                                    ? dayjs
-                                        .utc(row.original.pathwayEndDate)
-                                        .format('DD/MM/YYYY')
-                                    : '…'}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
+                        <GroupRow
+                          key={row.id}
+                          row={row.original}
+                          colSpan={days.length + 1}
+                        />
                       )
                     }
 
@@ -333,55 +381,9 @@ function SuiviPage() {
                           })
                         }
                       >
-                        {row.getVisibleCells().map((cell) => {
-                          const isPinned = cell.column.getIsPinned()
-                          const dayNum = cell.column.id.startsWith('day-')
-                            ? parseInt(cell.column.id.slice(4), 10)
-                            : null
-                          const apt =
-                            dayNum == null
-                              ? null
-                              : row.original.days.get(dayNum)
-                          const isToday = dayNum === today
-
-                          return (
-                            <td
-                              key={cell.id}
-                              className="border-b border-border"
-                              style={{
-                                ...getCommonPinningStyles(cell.column),
-                                minWidth: cell.column.getSize(),
-                                width: isPinned
-                                  ? undefined
-                                  : cell.column.getSize(),
-                                height: 40,
-                                ...(apt
-                                  ? {
-                                      backgroundColor: hexToRGBA(
-                                        row.original.pathwayColor,
-                                        0.3,
-                                      ),
-                                    }
-                                  : isToday
-                                    ? { backgroundColor: 'var(--color-input)' }
-                                    : {}),
-                              }}
-                            >
-                              <div
-                                className={
-                                  isPinned
-                                    ? 'px-3 text-sm text-text-dark whitespace-nowrap'
-                                    : 'flex items-center justify-center h-full'
-                                }
-                              >
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext(),
-                                )}
-                              </div>
-                            </td>
-                          )
-                        })}
+                        {row.getVisibleCells().map((cell) => (
+                          <SuiviCell key={cell.id} cell={cell} today={today} />
+                        ))}
                       </tr>
                     )
                   })}

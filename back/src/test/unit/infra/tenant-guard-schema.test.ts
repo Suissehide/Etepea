@@ -96,6 +96,50 @@ const targetsOf = (body: string): Record<string, string> =>
 const hasRequiredColumn = (body: string, column: string): boolean =>
   new RegExp(`^\\s*${column}\\s+String(?!\\?)\\b`, 'm').test(body)
 
+const cardinalite = (list: boolean): string => (list ? 'many' : 'one')
+
+const ecartsDUneRelation = (
+  nom: string,
+  relation: ModelRelation,
+  declaree: ModelRelation | undefined,
+): string[] => {
+  if (!declaree) {
+    return [`${nom} -> ${relation.model} : absente de la table`]
+  }
+  const ecarts: string[] = []
+  if (declaree.list !== relation.list) {
+    ecarts.push(
+      `${nom} : cardinalite schema=${cardinalite(relation.list)}, table=${cardinalite(declaree.list)}`,
+    )
+  }
+  if (declaree.model !== relation.model) {
+    ecarts.push(
+      `${nom} : cible schema=${relation.model}, table=${declaree.model}`,
+    )
+  }
+  return ecarts
+}
+
+// Les trois ecarts possibles entre MODEL_RELATIONS et le schema pour un modele, nommes un a un.
+const ecartsDeRelations = (model: string): string[] => {
+  const ecarts: string[] = []
+  const declarees = MODEL_RELATIONS[model] ?? {}
+  const auSchema = relationsOf(models.get(model) ?? '')
+  for (const [field, relation] of Object.entries(auSchema)) {
+    ecarts.push(
+      ...ecartsDUneRelation(`${model}.${field}`, relation, declarees[field]),
+    )
+  }
+  for (const [field, declaree] of Object.entries(declarees)) {
+    if (!auSchema[field]) {
+      ecarts.push(
+        `${model}.${field} -> ${declaree.model} : absente du schema (entree morte)`,
+      )
+    }
+  }
+  return ecarts
+}
+
 // Modeles qui portent serviceId ET establishmentId en colonnes requises : ce sont exactement les
 // deux colonnes qui decident, dans tenant-guard.ts, de la famille « service » (voir familyOf).
 // Absent des deux listes (SERVICE_MODELS et ESTABLISHMENT_MODELS), un tel modele tombe dans la
@@ -214,37 +258,7 @@ describe('MODEL_RELATIONS reflete prisma/schema.prisma', () => {
   //   - `absente de la table` : le schema la declare, la table l'ignore ;
   //   - `absente du schema` : la table la declare, le schema ne l'a plus (entree morte).
   it('porte la cardinalite exacte de chaque relation du schema, dans les trois sens', () => {
-    const ecarts: string[] = []
-    for (const model of modelNames) {
-      const declarees = MODEL_RELATIONS[model] ?? {}
-      const auSchema = relationsOf(models.get(model) ?? '')
-      for (const [field, relation] of Object.entries(auSchema)) {
-        const declaree = declarees[field]
-        if (!declaree) {
-          ecarts.push(
-            `${model}.${field} -> ${relation.model} : absente de la table`,
-          )
-          continue
-        }
-        if (declaree.list !== relation.list) {
-          ecarts.push(
-            `${model}.${field} : cardinalite schema=${relation.list ? 'many' : 'one'}, table=${declaree.list ? 'many' : 'one'}`,
-          )
-        }
-        if (declaree.model !== relation.model) {
-          ecarts.push(
-            `${model}.${field} : cible schema=${relation.model}, table=${declaree.model}`,
-          )
-        }
-      }
-      for (const [field, declaree] of Object.entries(declarees)) {
-        if (!auSchema[field]) {
-          ecarts.push(
-            `${model}.${field} -> ${declaree.model} : absente du schema (entree morte)`,
-          )
-        }
-      }
-    }
+    const ecarts = [...modelNames].flatMap(ecartsDeRelations)
     expect(ecarts).toEqual([])
   })
 

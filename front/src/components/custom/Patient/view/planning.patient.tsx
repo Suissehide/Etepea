@@ -14,7 +14,7 @@ import {
 import { usePlanningStore } from '../../../../store/usePlanningStore.ts'
 import type { CreateAppointmentParams } from '../../../../types/appointment.ts'
 import type { Patient } from '../../../../types/patient.ts'
-import type { SlotDateRange } from '../../../../types/slot.ts'
+import type { Slot, SlotDateRange } from '../../../../types/slot.ts'
 import type { Soignant } from '../../../../types/soignant.ts'
 import { Select } from '../../../ui/select.tsx'
 import type { CalendarEvent } from '../../Calendar/calendar.tsx'
@@ -244,6 +244,24 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
     }
   }
 
+  const openSlotAppointment = (slot: Slot, appointmentId: string) => {
+    setSelectedSlotSoignants(slot.slotTemplate?.soignants ?? [])
+    setOpenAppointmentId(appointmentId)
+  }
+
+  const openCreateAppointment = (slot: Slot) => {
+    const isIndividual = slot.slotTemplate.isIndividual
+    setSelectedSlotID(slot.id)
+    setSelectedSlotSoignants(slot.slotTemplate?.soignants ?? [])
+    setSelectedSlotMaxDate(slot.endDate)
+    setSelectedSlotType(isIndividual ? 'individual' : 'multiple')
+    if (!isIndividual) {
+      setSelectedSlotStart(slot.startDate)
+      setSelectedSlotEnd(slot.endDate)
+    }
+    setOpenCreateAppointmentModal(true)
+  }
+
   const handleClickSlot = (eventId: string) => {
     const slotId = eventId.replace('slot_', '')
     const slot = slots?.find((s) => s.id === slotId)
@@ -259,28 +277,18 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
     if (!isIndividual && enrolledSlotIds.has(slotId)) {
       const appointmentId = patientAppointmentBySlotId.get(slotId)
       if (appointmentId) {
-        setSelectedSlotSoignants(slot.slotTemplate?.soignants ?? [])
-        setOpenAppointmentId(appointmentId)
+        openSlotAppointment(slot, appointmentId)
       }
-    } else {
-      if (slot.locked) {
-        return
-      }
-      if (!isIndividual && slot.appointments && slot.appointments.length > 0) {
-        setSelectedSlotSoignants(slot.slotTemplate?.soignants ?? [])
-        setOpenAppointmentId(slot.appointments[0].id)
-        return
-      }
-      setSelectedSlotID(slotId)
-      setSelectedSlotSoignants(slot.slotTemplate?.soignants ?? [])
-      setSelectedSlotMaxDate(slot.endDate)
-      setSelectedSlotType(isIndividual ? 'individual' : 'multiple')
-      if (!isIndividual) {
-        setSelectedSlotStart(slot.startDate)
-        setSelectedSlotEnd(slot.endDate)
-      }
-      setOpenCreateAppointmentModal(true)
+      return
     }
+    if (slot.locked) {
+      return
+    }
+    if (!isIndividual && slot.appointments && slot.appointments.length > 0) {
+      openSlotAppointment(slot, slot.appointments[0].id)
+      return
+    }
+    openCreateAppointment(slot)
   }
 
   const handleCreateAppointment = (newAppointment: CreateAppointmentParams) => {

@@ -1,12 +1,13 @@
 import {
   type Column,
-  type ColumnDef,
   type ColumnFiltersState,
+  type ColumnHelper,
   type ExpandedState,
   type PaginationState,
   type Row,
   type RowSelectionState,
   type SortingState,
+  type Table,
   useTable,
   type ColumnVisibilityState as VisibilityState,
 } from '@tanstack/react-table'
@@ -54,8 +55,41 @@ export type ServerPagination = {
   onChange: (next: { pageIndex: number; pageSize: number }) => void
 }
 
+// Le type de `columnHelper.columns` : des colonnes aux valeurs de types différents.
+type Columns<TData extends { id: string }> = ReturnType<
+  ColumnHelper<Features, TData>['columns']
+>
+
+function TableToolbar<TData extends { id: string }>({
+  table,
+  start,
+  end,
+}: {
+  table: Table<Features, TData>
+  start?: ReactNode
+  end?: ReactNode
+}) {
+  return (
+    <div
+      role="toolbar"
+      aria-label="Filtres du tableau"
+      className="mb-4 flex flex-wrap items-center gap-3"
+    >
+      {start}
+      <ChoiceFilters table={table} />
+      <ColumnPicker table={table} />
+      {end && (
+        <>
+          <div className="flex-1 border-t border-border" />
+          {end}
+        </>
+      )}
+    </div>
+  )
+}
+
 type ReactTableProps<TData extends { id: string }> = {
-  columns: ColumnDef<Features, TData, any>[]
+  columns: Columns<TData>
   data: TData[]
   customButtons?: ReactNode[]
   title?: string
@@ -291,21 +325,7 @@ export function ReactTable<TData extends { id: string }>({
       {title && <div className="px-4 mb-4 text-2xl font-bold">{title}</div>}
 
       {hasToolbar && (
-        <div
-          role="toolbar"
-          aria-label="Filtres du tableau"
-          className="mb-4 flex flex-wrap items-center gap-3"
-        >
-          {toolbar}
-          <ChoiceFilters table={table} />
-          <ColumnPicker table={table} />
-          {toolbarEnd && (
-            <>
-              <div className="flex-1 border-t border-border" />
-              {toolbarEnd}
-            </>
-          )}
-        </div>
+        <TableToolbar table={table} start={toolbar} end={toolbarEnd} />
       )}
 
       <div className="react-table__filter">
