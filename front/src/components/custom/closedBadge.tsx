@@ -10,11 +10,12 @@ import {
 const CLOSED = {
   locked: {
     Icon: Lock,
-    label: 'Créneau verrouillé : plus de prise de rendez-vous',
+    label: 'Créneau verrouillé : impossible de rajouter des rendez-vous',
   },
   archived: {
     Icon: Trash2,
-    label: 'Créneau supprimé, conservé pour ses rendez-vous',
+    label:
+      'Créneau supprimé, conservé pour ses rendez-vous : impossible de rajouter des rendez-vous',
   },
 }
 

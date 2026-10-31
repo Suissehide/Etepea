@@ -14,6 +14,7 @@ import {
   TooltipRoot,
   TooltipTrigger,
 } from '../../ui/tooltip.tsx'
+import { ClosedBadge } from '../closedBadge.tsx'
 import { Tronque } from './tronque.tsx'
 
 function ConvocationCheckbox({
@@ -87,6 +88,13 @@ export default function PatientCell({ row, onAddPatient }: PatientCellProps) {
     </Button>
   )
 
+  const libre = (
+    <span className="inline-flex items-center gap-1.5 text-text-light">
+      Libre
+      <ClosedBadge reason={row.closed} />
+    </span>
+  )
+
   if (row.kind === 'free') {
     return row.canBook ? (
       <Button variant="outline" size="sm" onClick={() => onAddPatient(row)}>
@@ -94,12 +102,12 @@ export default function PatientCell({ row, onAddPatient }: PatientCellProps) {
         Prendre un rendez-vous
       </Button>
     ) : (
-      <span className="text-text-light">Libre</span>
+      libre
     )
   }
 
   if (patients.length === 0) {
-    return addButton || '—'
+    return addButton || (row.closed ? libre : '—')
   }
 
   const hidden = patients.length - MAX_VISIBLE_PATIENTS

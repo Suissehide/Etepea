@@ -14,7 +14,6 @@ import {
   SlotTimeline,
 } from '../components/custom/agenda/slotRange.tsx'
 import { Tronque } from '../components/custom/agenda/tronque.tsx'
-import { ClosedBadge } from '../components/custom/closedBadge.tsx'
 import { ConflictBadge } from '../components/custom/conflictBadge.tsx'
 import { Etiquette } from '../components/table/etiquette.tsx'
 import type { Features } from '../components/table/features.ts'
@@ -83,7 +82,6 @@ export const getDayAppointmentColumns = ({
           <span className="inline-flex items-center gap-1.5">
             {formatRange(row.original)}
             <ConflictBadge labels={labels} />
-            <ClosedBadge reason={row.original.closed} />
           </span>
         )
       },
