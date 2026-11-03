@@ -303,9 +303,12 @@ export default function OverviewPatient({
   const { slots } = usePatientSlotsQuery(patient?.id)
   const { dismissEnrollmentIssue, removeFromPathway, reorderPathways } =
     usePatientMutations()
-  const { pathways: patientPathways = [] } = usePatientPathwaysQuery(
+  const { pathways: savedPathways = [] } = usePatientPathwaysQuery(
     patient?.id ?? '',
   )
+  // Ordre tenu en local pendant un glisser, envoyé une seule fois au lâcher.
+  const [dragOrder, setDragOrder] = useState<PatientPathway[] | null>(null)
+  const patientPathways = dragOrder ?? savedPathways
 
   const patientSlots = useMemo(
     () => splitPatientSlots(slots, patient?.id),
@@ -385,31 +388,37 @@ export default function OverviewPatient({
   )
 
   const handleDragStart = useCallback(
-    (index: number) => setDraggedIndex(index),
-    [],
+    (index: number) => {
+      setDraggedIndex(index)
+      setDragOrder(savedPathways)
+    },
+    [savedPathways],
   )
 
   const handleDragOver = useCallback(
     (e: React.DragEvent, index: number) => {
       e.preventDefault()
-      if (!patient || draggedIndex === null || draggedIndex === index) {
+      if (!dragOrder || draggedIndex === null || draggedIndex === index) {
         return
       }
 
-      const next = [...patientPathways]
+      const next = [...dragOrder]
       const [moved] = next.splice(draggedIndex, 1)
       next.splice(index, 0, moved)
       setDraggedIndex(index)
-
-      reorderPathways.mutate({
-        patientID: patient.id,
-        pathwayIDs: next.map((p) => p.pathwayID),
-      })
+      setDragOrder(next)
     },
-    [draggedIndex, patientPathways, patient, reorderPathways],
+    [draggedIndex, dragOrder],
   )
 
-  const handleDragEnd = useCallback(() => setDraggedIndex(null), [])
+  const handleDragEnd = useCallback(() => {
+    const ordre = dragOrder?.map((p) => p.pathwayID)
+    if (patient && ordre?.some((id, i) => id !== savedPathways[i]?.pathwayID)) {
+      reorderPathways.mutate({ patientID: patient.id, pathwayIDs: ordre })
+    }
+    setDraggedIndex(null)
+    setDragOrder(null)
+  }, [dragOrder, patient, savedPathways, reorderPathways])
 
   const handleRemoveClick = useCallback(
     async (pathwayID: string) => {

@@ -5,7 +5,7 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -303,5 +303,54 @@ describe('retrait d’un parcours', () => {
     expect(
       await screen.findByText(/5 rendez-vous seront supprimés/),
     ).toBeInTheDocument()
+  })
+})
+
+describe('priorité des parcours', () => {
+  // Une requête par survol se chevauchait côté back (delete + create) : clé primaire en double.
+  it('n’envoie l’ordre qu’une fois, au lâcher', async () => {
+    const parcours = [
+      ...PARCOURS,
+      { ...PARCOURS[1], pathwayID: 'edu', templateMainTag: 'EDU', priority: 3 },
+    ]
+    const envois: unknown[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = input.toString()
+        const { pathname } = new URL(url)
+        if (pathname.endsWith('/pathway-priorities')) {
+          envois.push(JSON.parse(String(init?.body)))
+          return { ok: true, status: 204, url }
+        }
+        if (pathname.endsWith('/slot')) {
+          return { ...json(CRENEAUX), url }
+        }
+        if (pathname.endsWith('/patient/p1/pathways')) {
+          return { ...json(parcours), url }
+        }
+        if (pathname.endsWith('/thematic') || pathname.endsWith('/patient')) {
+          return { ...json([]), url }
+        }
+        throw new Error(`Appel fetch non attendu dans ce test : ${url}`)
+      }),
+    )
+    rendre(<OverviewPatient patient={patient} />)
+
+    await screen.findByText('EDU')
+    const ligne = (tag: string) =>
+      screen
+        .getAllByText(tag)
+        .find((el) => el.closest('li[draggable]'))
+        ?.closest('li') as HTMLElement
+    fireEvent.dragStart(ligne('RI'))
+    fireEvent.dragOver(ligne('PSY'))
+    fireEvent.dragOver(ligne('EDU'))
+    expect(envois).toEqual([])
+    fireEvent.dragEnd(ligne('RI'))
+
+    await waitFor(() =>
+      expect(envois).toEqual([{ pathwayIDs: ['psy', 'edu', 'ri'] }]),
+    )
   })
 })
