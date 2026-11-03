@@ -53,10 +53,21 @@ interface AppointmentSheetProps {
   handleDeleteEvent?: (eventID: string) => void
 }
 
-const pathwayLabel = (pathway?: Pathway | null) =>
-  pathway
-    ? `${pathway.template?.name ?? 'Parcours'} du ${dayjs.utc(pathway.startDate).format('D MMMM YYYY')}`
-    : 'Hors parcours'
+const PathwayInfo = ({ pathway }: { pathway?: Pathway | null }) =>
+  pathway ? (
+    <div className="flex items-center gap-2 text-sm">
+      <span
+        className="size-2.5 rounded-full shrink-0"
+        style={{ backgroundColor: pathway.template?.color ?? '#6366f1' }}
+      />
+      <span>{pathway.template?.name ?? 'Parcours sans modèle'}</span>
+      <span className="text-text-light">
+        du {dayjs.utc(pathway.startDate).format('D MMMM YYYY')}
+      </span>
+    </div>
+  ) : (
+    <div className="text-sm text-text-light">Hors parcours</div>
+  )
 
 export default function AppointmentSheet({
   open,
@@ -262,10 +273,7 @@ export default function AppointmentSheet({
             >
               <FormField>
                 <Label>Parcours</Label>
-                <Input
-                  value={pathwayLabel(appointment?.slot?.pathway)}
-                  disabled
-                />
+                <PathwayInfo pathway={appointment?.slot?.pathway} />
               </FormField>
 
               <FormField>
