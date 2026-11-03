@@ -292,17 +292,25 @@ export function BulkWeekForm(props: BulkWeekFormProps) {
 const ROW =
   'grid h-10 w-full grid-cols-[44px_repeat(7,minmax(0,1fr))_64px] items-center rounded-lg border-none p-0 text-sm'
 
-function rowState(isSource: boolean, isTarget: boolean, past?: boolean) {
+function rowState(
+  isSource: boolean,
+  isTarget: boolean,
+  week: Pick<Week, 'past' | 'forbidden'> = {},
+) {
   if (isTarget) {
     return 'bg-primary font-semibold text-white'
   }
   if (isSource) {
     return 'cursor-default bg-muted'
   }
-  if (past) {
-    return 'cursor-default text-[#cbd5e1]'
+  const background = week.forbidden ? 'bg-red-50' : 'bg-transparent'
+  if (week.past) {
+    return cn('cursor-default text-[#cbd5e1]', background)
   }
-  return 'cursor-pointer bg-transparent hover:shadow-[inset_0_0_0_1.5px_#93c5fd]'
+  return cn(
+    'cursor-pointer hover:shadow-[inset_0_0_0_1.5px_#93c5fd]',
+    background,
+  )
 }
 
 function RowTag({
@@ -319,7 +327,7 @@ function RowTag({
     : isSource
       ? { label: 'Source', className: 'bg-border text-text-dark' }
       : forbidden
-        ? { label: 'Interdite', className: 'bg-red-50 text-red-700' }
+        ? { label: 'Interdite', className: 'bg-red-100 text-red-700' }
         : null
   return (
     <span className="mr-2 justify-self-end">
@@ -406,7 +414,7 @@ function WeekCalendar({
             aria-pressed={isTarget}
             aria-label={week.long}
             onClick={() => onPick(monday)}
-            className={cn(ROW, rowState(isSource, isTarget, week.past))}
+            className={cn(ROW, rowState(isSource, isTarget, week))}
           >
             <span
               className={cn(
