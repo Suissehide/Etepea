@@ -1,5 +1,6 @@
 import {
   type ConflictSlot,
+  countOverlaps,
   detectConflicts,
 } from '../../../main/utils/planning-conflicts'
 
@@ -193,5 +194,24 @@ describe('detectConflicts', () => {
         ]),
       ).toEqual([])
     })
+  })
+})
+
+describe('countOverlaps', () => {
+  it('compte les paires qui se chevauchent, pas les rendez-vous qui se touchent', () => {
+    const rdv = (start: string, end: string) => ({
+      startDate: at(start),
+      endDate: at(end),
+    })
+    expect(
+      countOverlaps([
+        rdv('09:00', '10:00'),
+        rdv('09:30', '10:30'),
+        rdv('10:30', '11:00'),
+      ]),
+    ).toBe(1)
+    expect(countOverlaps([rdv('09:00', '10:00'), rdv('10:00', '11:00')])).toBe(
+      0,
+    )
   })
 })

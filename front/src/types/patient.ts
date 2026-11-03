@@ -42,6 +42,8 @@ export type PatientWithTags = Patient & {
   pathwayTemplateTags: string[]
   // Couleur de chaque tag : celle du parcours du patient le mieux classé qui le porte.
   pathwayTagColors?: Record<string, string>
+  // Paires de rendez-vous à venir qui se chevauchent.
+  appointmentConflicts?: number
   // Valeurs des champs configurables du sous-dossier du service courant (texte long exclu).
   data?: FieldValues
   clinicalData?: FieldValues
