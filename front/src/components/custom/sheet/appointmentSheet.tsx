@@ -53,21 +53,16 @@ interface AppointmentSheetProps {
   handleDeleteEvent?: (eventID: string) => void
 }
 
-const PathwayInfo = ({ pathway }: { pathway?: Pathway | null }) =>
+const PathwayName = ({ pathway }: { pathway?: Pathway | null }) =>
   pathway ? (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-1.5 text-sm text-text-light">
       <span
         className="size-2.5 rounded-full shrink-0"
         style={{ backgroundColor: pathway.template?.color ?? '#6366f1' }}
       />
-      <span>{pathway.template?.name ?? 'Parcours sans modèle'}</span>
-      <span className="text-text-light">
-        du {dayjs.utc(pathway.startDate).format('D MMMM YYYY')}
-      </span>
+      {pathway.template?.name ?? 'Parcours sans modèle'}
     </div>
-  ) : (
-    <div className="text-sm text-text-light">Hors parcours</div>
-  )
+  ) : null
 
 export default function AppointmentSheet({
   open,
@@ -253,6 +248,7 @@ export default function AppointmentSheet({
                     ${dayjs.utc(appointment?.endDate).format('[à] HH:mm')}
                     ${formatDuration(appointment?.startDate, appointment?.endDate)}`}
               </div>
+              <PathwayName pathway={appointment?.slot?.pathway} />
             </div>
           </div>
         </SheetHeader>
@@ -271,11 +267,6 @@ export default function AppointmentSheet({
               }}
               className="w-full flex-1 flex flex-col min-h-0 gap-3 px-4"
             >
-              <FormField>
-                <Label>Parcours</Label>
-                <PathwayInfo pathway={appointment?.slot?.pathway} />
-              </FormField>
-
               <FormField>
                 <Label>Soignants</Label>
                 <Input
