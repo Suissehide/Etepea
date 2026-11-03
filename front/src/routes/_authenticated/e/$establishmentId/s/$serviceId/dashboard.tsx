@@ -331,7 +331,7 @@ function Dashboard() {
               handleSelectEvent={handleSelectAppointment}
               handleClickEvent={handleAddAppointment}
               handleOpenEvent={handleOpenEvent}
-              selectAllow={(selectInfo) => {
+              selectAllow={(selectInfo, eventId) => {
                 const { start, end } = selectInfo
                 const selectionStart = dayjs(start)
                 const selectionEnd = dayjs(end)
@@ -339,6 +339,7 @@ function Dashboard() {
                 // Only allow selection within individual slots that are not locked
                 const individualSlots = events.filter(
                   (e) =>
+                    e.id === eventId &&
                     e.extendedProps?.type === 'slot' &&
                     !e.extendedProps?.locked &&
                     !e.extendedProps?.archived &&

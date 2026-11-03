@@ -143,7 +143,8 @@ interface CalendarProps {
   handleClickEvent?: (eventID: string) => void
   handleDropEvent?: (pathwayTemplateID: string, startDate: string) => void
   handleOpenEvent?: (eventId: string) => void
-  selectAllow?: (selectInfo: DateSpanApi) => boolean
+  /** `eventId` : le créneau sous la souris au début de la sélection ; sans créneau, aucune sélection. */
+  selectAllow?: (selectInfo: DateSpanApi, eventId: string) => boolean
   editMode?: boolean
   /** complete : vues, aujourd'hui, date ; navigation : sans les vues ; minimale : précédent/suivant. */
   barre?: 'complete' | 'navigation' | 'minimale'
@@ -330,6 +331,7 @@ function Calendar({
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
+      pressedSlotRef.current = null
       const target = e.target as HTMLElement | null
       if (!target) {
         return
@@ -347,7 +349,6 @@ function Calendar({
         return
       }
 
-      pressedSlotRef.current = null
       const el = target.closest('.fc-event-hero')
       if (!el) {
         return
@@ -614,7 +615,12 @@ function Calendar({
             to: toUtcDay(arg.end),
           })
         }}
-        selectAllow={selectAllow}
+        selectAllow={
+          selectAllow &&
+          ((info) =>
+            !!pressedSlotRef.current &&
+            selectAllow(info, pressedSlotRef.current))
+        }
         eventReceive={undefined}
         drop={(info) => {
           const now = Date.now()
