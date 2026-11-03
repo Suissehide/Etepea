@@ -225,6 +225,8 @@ export const usePathwayTemplateMutations = () => {
 
   const reorderPathwayTemplates = useMutation({
     mutationKey: [PATHWAY_TEMPLATE.REORDER],
+    // Deux reorders en vol se bloquent mutuellement en base : on les enchaîne.
+    scope: { id: PATHWAY_TEMPLATE.REORDER },
     mutationFn: PathwayTemplateApi.reorder,
     onMutate: async (orderedIds: string[]) => {
       await queryClient.cancelQueries({ queryKey: [PATHWAY_TEMPLATE.GET_ALL] })

@@ -74,8 +74,12 @@ class PathwayTemplateRepository implements PathwayTemplateRepositoryInterface {
   }
 
   async reorder(orderedIds: string[]): Promise<void> {
+    // Lignes verrouillées dans l'ordre des id : deux reorders concurrents attendent au lieu de se bloquer.
+    const updates = orderedIds
+      .map((id, index) => ({ id, index }))
+      .sort((a, b) => a.id.localeCompare(b.id))
     await this.prisma.$transaction(
-      orderedIds.map((id, index) =>
+      updates.map(({ id, index }) =>
         this.prisma.pathwayTemplate.update({
           where: { id_serviceId: { id, serviceId: this.scope.serviceId } },
           data: { displayOrder: index },

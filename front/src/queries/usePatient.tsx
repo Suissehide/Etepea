@@ -491,6 +491,8 @@ export const usePatientMutations = () => {
 
   const reorderPathways = useMutation({
     mutationKey: [PATIENT.REORDER_PATHWAYS],
+    // Deux reorders en vol se marchent dessus en base : on les enchaîne.
+    scope: { id: PATIENT.REORDER_PATHWAYS },
     mutationFn: ({
       patientID,
       pathwayIDs,
