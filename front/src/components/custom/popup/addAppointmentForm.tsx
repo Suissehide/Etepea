@@ -5,7 +5,11 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { appointmentTypeLabel } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { getTrancheChoice } from '../../../libs/slotAvailability.ts'
+import {
+  appointmentRange,
+  getTrancheChoice,
+  isRangeFree,
+} from '../../../libs/slotAvailability.ts'
 import {
   generateDurationOptions,
   thematicLabel,
@@ -84,17 +88,9 @@ function AddAppointmentForm({
       patientIDs: (defaultPatientIDs ?? []) as string[],
     },
     onSubmit: ({ value }) => {
-      if (noFreeTranche) {
-        return
-      }
-      const start = tranche ? dayjs.utc(tranche.start) : value.startTime
       const newAppointment: CreateAppointmentParams = {
         startDate: start.toISOString(),
-        endDate: tranche
-          ? tranche.end
-          : start
-              .add(Number.parseInt(value.duration, 10), 'minute')
-              .toISOString(),
+        endDate: end.toISOString(),
         slotID,
         thematicId: value.thematicId,
         patientIDs: value.patientIDs,
@@ -128,12 +124,7 @@ function AddAppointmentForm({
   // Individuel : débuts calés sur des tranches de la durée de la sous-thématique (à défaut, de la thématique).
   const subThematicID = useStore(form.store, (state) => state.values.thematicId)
   const startTime = useStore(form.store, (state) => state.values.startTime)
-  const {
-    tranches,
-    tranche,
-    minutes: trancheMinutes,
-    noFreeTranche,
-  } = getTrancheChoice(
+  const { tranche } = getTrancheChoice(
     slot,
     [
       thematics?.find((t) => t.id === subThematicID)?.duration,
@@ -141,9 +132,24 @@ function AddAppointmentForm({
     ],
     startTime,
   )
-  const durationOptions = tranches
-    ? [{ label: `${trancheMinutes} min`, value: String(trancheMinutes) }]
-    : generateDurationOptions(startDate, maxDate)
+  // La tranche libre n'est qu'une proposition : dès qu'on touche à l'heure ou à la durée, on garde la saisie.
+  const [manual, setManual] = useState(false)
+  const duration = useStore(form.store, (state) => state.values.duration)
+  const proposed = manual ? undefined : tranche
+  const { start, end } = appointmentRange(proposed, startTime, duration)
+  const minutes = end.diff(start, 'minute')
+  const takeOver = () => {
+    if (proposed) {
+      form.setFieldValue('startTime', start)
+      form.setFieldValue('duration', String(minutes))
+    }
+    setManual(true)
+  }
+  // Sur tout le créneau : une plage qui déborde est refusée à l'envoi, pas rendue impossible à saisir.
+  const durationOptions = generateDurationOptions(
+    slot?.startDate ?? startDate,
+    slot?.endDate ?? maxDate,
+  )
 
   return (
     <Popup modal={true} open={open} onOpenChange={setOpen}>
@@ -161,31 +167,33 @@ function AddAppointmentForm({
             }}
             className="flex flex-col gap-2 max-w-md"
           >
-            <form.Field name="startTime">
+            <form.Field
+              name="startTime"
+              validators={{
+                onSubmit: () =>
+                  slot?.slotTemplate?.isIndividual &&
+                  !isRangeFree(slot, start, end)
+                    ? 'Plage non disponible'
+                    : undefined,
+              }}
+            >
               {(startTimeField) => (
                 <form.Field name="duration">
                   {(durationField) => (
                     <AppointmentTimeFields
                       date={startDate}
-                      startTime={tranche ? dayjs.utc(tranche.start) : startTime}
-                      startTimeOptions={tranches?.map((t) => ({
-                        value: t.start,
-                        label: dayjs.utc(t.start).format('HH:mm'),
-                      }))}
-                      onStartTimeChange={(time) =>
+                      startTime={start}
+                      onStartTimeChange={(time) => {
+                        takeOver()
                         startTimeField.handleChange(time)
-                      }
-                      duration={
-                        tranches
-                          ? String(trancheMinutes)
-                          : durationField.state.value
-                      }
-                      onDurationChange={(value) =>
+                      }}
+                      duration={String(minutes)}
+                      onDurationChange={(value) => {
+                        takeOver()
                         durationField.handleChange(value)
-                      }
+                      }}
                       durationOptions={durationOptions}
                       disabled={type === 'multiple'}
-                      durationDisabled={!!tranches}
                       durationFieldId={durationField.name}
                       startTimeInfo={<FieldInfo field={startTimeField} />}
                       durationInfo={<FieldInfo field={durationField} />}
@@ -300,7 +308,6 @@ function AddAppointmentForm({
           <Button
             variant="default"
             onClick={() => form.handleSubmit()}
-            disabled={noFreeTranche}
             isLoading={isPending}
           >
             <Check className="w-4 h-4" />

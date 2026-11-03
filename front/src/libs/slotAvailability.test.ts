@@ -10,6 +10,7 @@ import {
   getPathwayStartDates,
   getUpcomingSlotSuggestions,
   groupSlotsByDay,
+  isRangeFree,
   jourRelatif,
   splitPatientSlots,
 } from './slotAvailability.ts'
@@ -371,5 +372,30 @@ describe('getFreeTranches', () => {
     expect(getFreeTranches(creneau([]), 240)).toEqual([
       { start: '2026-11-02T09:00:00.000Z', end: '2026-11-02T12:00:00.000Z' },
     ])
+  })
+})
+
+describe('isRangeFree', () => {
+  const slot = {
+    id: 'slot-1',
+    startDate: '2026-11-04T13:30:00.000Z',
+    endDate: '2026-11-04T14:30:00.000Z',
+    appointments: [
+      {
+        id: 'apt-1',
+        startDate: '2026-11-04T13:45:00.000Z',
+        endDate: '2026-11-04T14:00:00.000Z',
+      },
+    ],
+  } as unknown as Slot
+  const at = (hhmm: string) => dayjs.utc(`2026-11-04T${hhmm}:00.000Z`)
+
+  it('accepte une plage libre, bord a bord avec un rendez-vous', () => {
+    expect(isRangeFree(slot, at('14:00'), at('14:30'))).toBe(true)
+  })
+
+  it('refuse une plage qui chevauche un rendez-vous ou deborde du creneau', () => {
+    expect(isRangeFree(slot, at('13:30'), at('14:00'))).toBe(false)
+    expect(isRangeFree(slot, at('14:15'), at('14:45'))).toBe(false)
   })
 })

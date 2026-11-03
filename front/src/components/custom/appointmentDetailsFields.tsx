@@ -24,8 +24,6 @@ interface AppointmentTimeFieldsProps {
   minTime?: Dayjs
   /** Borne supérieure du TimePicker — restreint le choix à un intervalle libre. */
   maxTime?: Dayjs
-  /** Débuts permis (dates ISO) : remplacent le TimePicker par une liste. */
-  startTimeOptions?: SelectOption[]
 }
 
 export function AppointmentTimeFields({
@@ -43,7 +41,6 @@ export function AppointmentTimeFields({
   durationInfo,
   minTime,
   maxTime,
-  startTimeOptions,
 }: AppointmentTimeFieldsProps) {
   return (
     <div className="flex flex-wrap gap-2 items-center">
@@ -56,53 +53,34 @@ export function AppointmentTimeFields({
         </div>
       )}
 
-      {startTimeOptions?.length === 0 ? (
-        <span className="text-sm text-destructive">Aucune tranche libre</span>
-      ) : (
-        <>
-          <FormField className="flex-row items-center gap-2">
-            <div className="text-sm text-text-light font-medium mb-0">à</div>
-            <div>
-              {!!startTimeOptions?.length && (
-                <Select
-                  options={startTimeOptions}
-                  value={startTime.toISOString()}
-                  onValueChange={(value) => onStartTimeChange(dayjs.utc(value))}
-                  disabled={disabled}
-                  clearable={false}
-                />
-              )}
-              {!startTimeOptions && (
-                <TimePicker
-                  value={startTime}
-                  onChange={(time) => onStartTimeChange(time ?? dayjs.utc())}
-                  disabled={disabled}
-                  minTime={minTime}
-                  maxTime={maxTime}
-                />
-              )}
-              {startTimeInfo}
-            </div>
-          </FormField>
+      <FormField className="flex-row items-center gap-2">
+        <div className="text-sm text-text-light font-medium mb-0">à</div>
+        <div>
+          <TimePicker
+            value={startTime}
+            onChange={(time) => onStartTimeChange(time ?? dayjs.utc())}
+            disabled={disabled}
+            minTime={minTime}
+            maxTime={maxTime}
+          />
+          {startTimeInfo}
+        </div>
+      </FormField>
 
-          <FormField className="flex-row items-center gap-2">
-            <div className="text-sm text-text-light font-medium mb-0">
-              pendant
-            </div>
-            <div>
-              <Select
-                id={durationFieldId}
-                options={durationOptions}
-                value={duration}
-                onValueChange={onDurationChange}
-                disabled={disabled || durationDisabled}
-                clearable={false}
-              />
-              {durationInfo}
-            </div>
-          </FormField>
-        </>
-      )}
+      <FormField className="flex-row items-center gap-2">
+        <div className="text-sm text-text-light font-medium mb-0">pendant</div>
+        <div>
+          <Select
+            id={durationFieldId}
+            options={durationOptions}
+            value={duration}
+            onValueChange={onDurationChange}
+            disabled={disabled || durationDisabled}
+            clearable={false}
+          />
+          {durationInfo}
+        </div>
+      </FormField>
     </div>
   )
 }

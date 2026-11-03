@@ -66,6 +66,27 @@ export const getFreeIntervals = (slot: Slot): FreeInterval[] => {
   )
 }
 
+/** La tranche proposée tant qu'il y en a une, sinon l'heure et la durée saisies. */
+export const appointmentRange = (
+  proposed: FreeInterval | undefined,
+  startTime: Dayjs,
+  duration: string,
+): { start: Dayjs; end: Dayjs } =>
+  proposed
+    ? { start: dayjs.utc(proposed.start), end: dayjs.utc(proposed.end) }
+    : {
+        start: startTime,
+        end: startTime.add(Number.parseInt(duration, 10) || 0, 'minute'),
+      }
+
+/** La plage tient dans le créneau sans chevaucher aucun de ses rendez-vous. */
+export const isRangeFree = (slot: Slot, start: Dayjs, end: Dayjs): boolean =>
+  getFreeIntervals(slot).some(
+    (interval) =>
+      !start.isBefore(dayjs.utc(interval.start)) &&
+      !end.isAfter(dayjs.utc(interval.end)),
+  )
+
 /** Une thématique plus longue que le créneau en prend tout le créneau, plutôt que de le rendre inréservable. */
 const trancheLength = (slot: Slot, minutes: number) =>
   Math.min(
