@@ -14,14 +14,18 @@ import breezyTheme from '@fullcalendar/react/themes/breezy'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import {
+  CalendarArrowUp,
   CalendarDays,
   CalendarRange,
   CheckSquare,
+  ChevronUp,
+  Copy,
   GanttChart,
   Printer,
   RefreshCw,
   Settings2,
   Square,
+  Tags,
   Trash2,
   X,
 } from 'lucide-react'
@@ -41,12 +45,14 @@ import PathwayFilter, {
 } from '@/components/custom/planning/pathwayFilter.tsx'
 import PlanningExportModal from '@/components/custom/planning/pdf/planning-export-modal.tsx'
 import AddSlotForm from '@/components/custom/popup/addSlotForm.tsx'
-import { BulkDuplicateForm } from '@/components/custom/popup/bulkDuplicateForm.tsx'
-import { BulkMoveForm } from '@/components/custom/popup/bulkMoveForm.tsx'
 import {
   BulkThematicTypeForm,
   type ThematicTypeChanges,
 } from '@/components/custom/popup/bulkThematicTypeForm.tsx'
+import {
+  BulkWeekForm,
+  type BulkWeekMode,
+} from '@/components/custom/popup/bulkWeekForm.tsx'
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import { CreateForbiddenWeekForm } from '@/components/custom/popup/createForbiddenWeekForm.tsx'
 import { DeleteForbiddenWeekForm } from '@/components/custom/popup/deleteForbiddenWeekForm.tsx'
@@ -63,7 +69,6 @@ import {
   PopoverContent,
   PopoverRoot,
 } from '@/components/ui/popover.tsx'
-import { Select } from '@/components/ui/select.tsx'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
 import { TOAST_SEVERITY } from '@/constants/ui.constant.ts'
 import { can } from '@/hooks/useCan.ts'
@@ -147,6 +152,20 @@ const mondayOfViewedWeek = () => {
     ? dayjs.utc(viewStart).isoWeekday(1)
     : dayjs.utc().isoWeekday(1)
 }
+
+// Mode semaines fixes : numéro de la semaine affichée, et nombre de semaines du modèle.
+const templateWeekOf = (monday: dayjs.Dayjs, startDate: string) =>
+  Math.max(
+    1,
+    Math.floor(monday.diff(dayjs.utc(startDate).isoWeekday(1), 'day') / 7) + 1,
+  )
+const templateWeekCount = (slotTemplates: SlotTemplate[] = []) =>
+  Math.max(
+    1,
+    ...slotTemplates.map((t) => Math.floor((t.offsetDays ?? 0) / 7) + 1),
+  )
+
+type BulkAction = BulkWeekMode | 'thematicType' | 'delete'
 
 type SelectedTemplate = { slotId?: string; template: SlotTemplate }
 
@@ -299,14 +318,14 @@ function Planning() {
       ]),
     )
   }, [locations])
-  const [bulkAction, setBulkAction] = useState('')
-  const [duplicateWeekDate, setDuplicateWeekDate] =
-    useState<dayjs.Dayjs | null>(null)
-  const [duplicateTargetWeek, setDuplicateTargetWeek] = useState(1)
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
-  const [moveWeekDate, setMoveWeekDate] = useState<dayjs.Dayjs | null>(null)
-  const [moveTargetWeek, setMoveTargetWeek] = useState(1)
-  const [showMoveModal, setShowMoveModal] = useState(false)
+  // Semaine source figée à l'ouverture : la popup en déduit sa cible par défaut.
+  const [weekAction, setWeekAction] = useState<{
+    open: boolean
+    mode: BulkWeekMode
+    source: dayjs.Dayjs
+  }>(() => ({ open: false, mode: 'duplicate', source: mondayOfViewedWeek() }))
+  const closeWeekAction = () =>
+    setWeekAction((action) => ({ ...action, open: false }))
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [showThematicTypeModal, setShowThematicTypeModal] = useState(false)
 
@@ -341,7 +360,6 @@ function Planning() {
 
   const handleClearSelection = useCallback(() => {
     setSelectedSlotIds(new Set())
-    setBulkAction('')
   }, [])
 
   const visibleSlots = useMemo(() => {
@@ -684,13 +702,7 @@ function Planning() {
       action,
       `la semaine du ${targetWeekStart.format('DD/MM/YYYY')}`,
     )
-    if (action === 'duplicate') {
-      setShowDuplicateModal(false)
-      setDuplicateWeekDate(null)
-    } else {
-      setShowMoveModal(false)
-      setMoveWeekDate(null)
-    }
+    closeWeekAction()
   }
 
   const handleBulkTemplateOperation = (
@@ -731,13 +743,7 @@ function Planning() {
     }
 
     finishBulkOperation(action, `la semaine ${targetWeekNum}`)
-    if (action === 'duplicate') {
-      setShowDuplicateModal(false)
-      setDuplicateTargetWeek(1)
-    } else {
-      setShowMoveModal(false)
-      setMoveTargetWeek(1)
-    }
+    closeWeekAction()
   }
 
   const handleBulkDelete = () => {
@@ -780,36 +786,19 @@ function Planning() {
     handleClearSelection()
   }
 
-  const openDuplicateModal = () => {
-    if (editMode) {
-      setDuplicateTargetWeek(1)
-    } else {
-      setDuplicateWeekDate(mondayOfViewedWeek())
-    }
-    setShowDuplicateModal(true)
+  const bulkActions: Record<BulkAction, () => void> = {
+    duplicate: () =>
+      setWeekAction({
+        open: true,
+        mode: 'duplicate',
+        source: mondayOfViewedWeek(),
+      }),
+    move: () =>
+      setWeekAction({ open: true, mode: 'move', source: mondayOfViewedWeek() }),
+    thematicType: () => setShowThematicTypeModal(true),
+    delete: () => setShowBulkDeleteModal(true),
   }
-
-  const openMoveModal = () => {
-    if (editMode) {
-      setMoveTargetWeek(1)
-    } else {
-      setMoveWeekDate(mondayOfViewedWeek())
-    }
-    setShowMoveModal(true)
-  }
-
-  const handleBulkActionChange = (v: string) => {
-    setBulkAction(v)
-    if (v === 'duplicate') {
-      openDuplicateModal()
-    } else if (v === 'move') {
-      openMoveModal()
-    } else if (v === 'thematicType') {
-      setShowThematicTypeModal(true)
-    } else if (v === 'delete') {
-      setShowBulkDeleteModal(true)
-    }
-  }
+  const handleBulkActionChange = (action: BulkAction) => bulkActions[action]()
 
   const handleForbiddenWeekCreate = (date: string) => {
     setCreateForbiddenWeekDate(date)
@@ -1039,7 +1028,6 @@ function Planning() {
         {selectedSlotIds.size > 0 && (
           <SelectionBar
             count={selectedSlotIds.size}
-            bulkAction={bulkAction}
             onActionChange={handleBulkActionChange}
             onClear={handleClearSelection}
           />
@@ -1109,9 +1097,6 @@ function Planning() {
           open={showThematicTypeModal}
           setOpen={(open) => {
             setShowThematicTypeModal(open)
-            if (!open) {
-              setBulkAction('')
-            }
           }}
           soignantIdsPerSlot={selectedTemplates().map(({ template }) =>
             template.soignants.map((soignant) => soignant.id),
@@ -1123,9 +1108,6 @@ function Planning() {
           open={showBulkDeleteModal}
           setOpen={(open) => {
             setShowBulkDeleteModal(open)
-            if (!open) {
-              setBulkAction('')
-            }
           }}
           onConfirm={handleBulkDelete}
           title="Supprimer la sélection"
@@ -1190,85 +1172,31 @@ function Planning() {
         />
 
         {editMode ? (
-          <>
-            <BulkDuplicateForm
-              open={showDuplicateModal}
-              setOpen={(open) => {
-                setShowDuplicateModal(open)
-                if (!open) {
-                  setBulkAction('')
-                  setDuplicateTargetWeek(1)
-                }
-              }}
-              editMode
-              count={selectedSlotIds.size}
-              targetWeekNumber={duplicateTargetWeek}
-              onTargetWeekNumberChange={setDuplicateTargetWeek}
-              onConfirm={() =>
-                handleBulkTemplateOperation(duplicateTargetWeek, 'duplicate')
-              }
-            />
-            <BulkMoveForm
-              open={showMoveModal}
-              setOpen={(open) => {
-                setShowMoveModal(open)
-                if (!open) {
-                  setBulkAction('')
-                  setMoveTargetWeek(1)
-                }
-              }}
-              editMode
-              count={selectedSlotIds.size}
-              targetWeekNumber={moveTargetWeek}
-              onTargetWeekNumberChange={setMoveTargetWeek}
-              onConfirm={() =>
-                handleBulkTemplateOperation(moveTargetWeek, 'move')
-              }
-            />
-          </>
+          <BulkWeekForm
+            open={weekAction.open}
+            setOpen={(open) => !open && closeWeekAction()}
+            mode={weekAction.mode}
+            count={selectedSlotIds.size}
+            editMode
+            sourceWeek={templateWeekOf(weekAction.source, startDate)}
+            weekCount={templateWeekCount(currentPathwayTemplate?.slotTemplates)}
+            onConfirm={(week) =>
+              handleBulkTemplateOperation(week, weekAction.mode)
+            }
+          />
         ) : (
-          <>
-            <BulkDuplicateForm
-              open={showDuplicateModal}
-              setOpen={(open) => {
-                setShowDuplicateModal(open)
-                if (!open) {
-                  setBulkAction('')
-                  setDuplicateWeekDate(null)
-                }
-              }}
-              count={selectedSlotIds.size}
-              weekDate={duplicateWeekDate}
-              onWeekChange={setDuplicateWeekDate}
-              planningCycle={planningCycle}
-              forbiddenWeeks={forbiddenWeekList}
-              onConfirm={() => {
-                if (duplicateWeekDate) {
-                  handleBulkSlotOperation(duplicateWeekDate, 'duplicate')
-                }
-              }}
-            />
-            <BulkMoveForm
-              open={showMoveModal}
-              setOpen={(open) => {
-                setShowMoveModal(open)
-                if (!open) {
-                  setBulkAction('')
-                  setMoveWeekDate(null)
-                }
-              }}
-              count={selectedSlotIds.size}
-              weekDate={moveWeekDate}
-              onWeekChange={setMoveWeekDate}
-              planningCycle={planningCycle}
-              forbiddenWeeks={forbiddenWeekList}
-              onConfirm={() => {
-                if (moveWeekDate) {
-                  handleBulkSlotOperation(moveWeekDate, 'move')
-                }
-              }}
-            />
-          </>
+          <BulkWeekForm
+            open={weekAction.open}
+            setOpen={(open) => !open && closeWeekAction()}
+            mode={weekAction.mode}
+            count={selectedSlotIds.size}
+            sourceWeek={weekAction.source}
+            planningCycle={planningCycle}
+            forbiddenWeeks={forbiddenWeekList}
+            onConfirm={(weekDate) =>
+              handleBulkSlotOperation(weekDate, weekAction.mode)
+            }
+          />
         )}
 
         <RegeneratePathwaysForm
@@ -1381,50 +1309,118 @@ function SelectAllButton({
   )
 }
 
+const BAR_BUTTON =
+  'flex h-9 cursor-pointer items-center gap-[7px] rounded-lg px-3 text-sm font-medium text-white hover:bg-white/10'
+const MENU_ITEM =
+  'flex h-[38px] cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-sm text-foreground outline-none select-none data-highlighted:bg-[#f8fafc]'
+
 function SelectionBar({
   count,
-  bulkAction,
   onActionChange,
   onClear,
 }: {
   count: number
-  bulkAction: string
-  onActionChange: (action: string) => void
+  onActionChange: (action: BulkAction) => void
   onClear: () => void
 }) {
+  // Échap désélectionne, Suppr ou Retour arrière demande la suppression ; hors champ, menu ou modale.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        CHAMPS_DE_SAISIE.includes(target.tagName) ||
+        target.isContentEditable ||
+        target.closest('[role="dialog"], [role="menu"]')
+      ) {
+        return
+      }
+      if (event.key === 'Escape') {
+        onClear()
+      } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        onActionChange('delete')
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onActionChange, onClear])
+
   return (
-    <div className="absolute bottom-6 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg border border-border-sidebar bg-foreground px-4 py-2 shadow-lg">
-      <CheckSquare className="h-4 w-4 text-primary" />
-      <span className="text-sm font-medium text-text">
-        {count} créneau
-        {count > 1 ? 'x' : ''} sélectionné
-        {count > 1 ? 's' : ''}
+    <div className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-xl bg-[#04182b] p-1.5 shadow-[0_10px_30px_rgba(4,24,43,.3)]">
+      <span className="flex items-center gap-2 px-2.5 text-sm font-semibold text-white">
+        <span className="flex h-[22px] min-w-[26px] items-center justify-center rounded-full bg-primary px-1.5 text-[13px]">
+          {count}
+        </span>
+        {count > 1 ? 'sélectionnés' : 'sélectionné'}
       </span>
-
-      <div className="w-72">
-        <Select
-          options={[
-            { value: 'duplicate', label: 'Dupliquer sur une semaine' },
-            { value: 'move', label: 'Déplacer sur une semaine' },
-            { value: 'thematicType', label: 'Modifier thématique et type' },
-            { value: 'delete', label: 'Supprimer la sélection' },
-          ]}
-          placeholder="Action..."
-          value={bulkAction}
-          onValueChange={onActionChange}
-          clearable={false}
-        />
-      </div>
-
-      <Button
-        variant="gradient"
-        size="sm"
-        className="ml-auto"
-        onClick={onClear}
+      <span className="h-6 w-px bg-white/15" />
+      <button
+        type="button"
+        className={BAR_BUTTON}
+        onClick={() => onActionChange('duplicate')}
       >
-        <X className="h-4 w-4" />
-        Désélectionner
-      </Button>
+        <Copy size={16} />
+        Dupliquer…
+      </button>
+      <button
+        type="button"
+        className={BAR_BUTTON}
+        onClick={() => onActionChange('move')}
+      >
+        <CalendarArrowUp size={16} />
+        Déplacer…
+      </button>
+      {/* Toute nouvelle action va dans « Plus », les destructrices en dernier sous un séparateur. */}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className={`${BAR_BUTTON} data-[state=open]:bg-white/15`}
+          >
+            Plus
+            <ChevronUp size={14} />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            side="top"
+            align="start"
+            sideOffset={8}
+            collisionPadding={8}
+            className="z-50 w-[260px] rounded-[10px] border border-border bg-primary-foreground p-1 shadow-[0_16px_40px_rgba(4,24,43,.22)]"
+          >
+            <DropdownMenu.Item
+              className={MENU_ITEM}
+              onSelect={() => onActionChange('thematicType')}
+            >
+              <Tags size={16} />
+              Modifier thématique et type
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator className="mx-1 my-1 h-px bg-border" />
+            <DropdownMenu.Item
+              className={`${MENU_ITEM} text-red-700`}
+              onSelect={() => onActionChange('delete')}
+            >
+              <Trash2 size={16} />
+              Supprimer la sélection
+              <span className="ml-auto text-xs text-[#94a3b8]">Suppr</span>
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+      <span className="h-6 w-px bg-white/15" />
+      <button
+        type="button"
+        title="Désélectionner (Échap)"
+        aria-label="Désélectionner"
+        onClick={onClear}
+        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-[#cbd5e1] hover:bg-white/10"
+      >
+        <X size={18} />
+      </button>
     </div>
   )
 }
