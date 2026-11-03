@@ -74,7 +74,7 @@ export function BarreCalendrier({
           type="button"
           aria-label="Choisir une date"
           onClick={(e) => onChoisirDate(e.currentTarget)}
-          className="flex h-9 cursor-pointer items-center gap-2 rounded-lg px-2.5 text-lg font-semibold text-text-dark hover:bg-muted"
+          className="flex h-9 cursor-pointer items-center gap-2 rounded-lg px-2.5 text-lg font-semibold text-text-dark outline-none hover:bg-muted focus-visible:bg-muted"
         >
           {vue?.title}
           <ChevronDown className="size-4 text-text-light" />
