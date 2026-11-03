@@ -38,8 +38,18 @@ vi.mock('../../../../queries/usePlanningCycle.ts', () => ({
 vi.mock('../../../../queries/usePathwayTemplate.ts', () => ({
   usePathwayTemplateQueries: () => ({
     pathwayTemplates: [
-      { id: 'ic', name: 'Insuffisance cardiaque', color: '#228b22' },
-      { id: 'ta', name: 'Tabac', color: '#f59e0b' },
+      {
+        id: 'ic',
+        name: 'Insuffisance cardiaque',
+        color: '#228b22',
+        firstAppointmentOnly: false,
+      },
+      {
+        id: 'ta',
+        name: 'Tabac',
+        color: '#f59e0b',
+        firstAppointmentOnly: true,
+      },
     ],
   }),
 }))
@@ -103,6 +113,15 @@ describe('PlanningExportModal', () => {
     const user = userEvent.setup()
     renderModal()
     await user.click(screen.getByRole('button', { name: /Tous les parcours/ }))
+    const labels = screen
+      .getAllByRole('button')
+      .map((b) => b.textContent)
+      .filter((t) =>
+        ['Hors parcours', 'Tabac', 'Insuffisance cardiaque'].includes(t ?? ''),
+      )
+    expect(labels).toEqual(['Hors parcours', 'Tabac', 'Insuffisance cardiaque'])
+    expect(screen.getByText('Individuels')).toBeInTheDocument()
+    expect(screen.getByText('Multiples')).toBeInTheDocument()
     await user.type(
       screen.getByPlaceholderText('Rechercher un parcours'),
       'tab',

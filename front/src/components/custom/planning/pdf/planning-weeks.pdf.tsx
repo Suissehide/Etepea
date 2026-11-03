@@ -16,6 +16,9 @@ const DAY_HEADER_HEIGHT = 24
 // mesurée sur un rendu réel. react-pdf pagine avant de résoudre flexbox :
 // c'est cette hauteur explicite qui garantit une semaine par page.
 const AVAILABLE_ROWS_HEIGHT = 496
+// Bandeau « Service fermé » (hauteur + marge), retiré de l'axe horaire.
+const CLOSURE_HEIGHT = 20
+const CLOSURE_MARGIN = 6
 
 // Même police pour tous les créneaux ; un créneau trop court perd ses
 // dernières lignes plutôt que de rapetisser. Hauteurs de ligne = police × 1,2.
@@ -59,8 +62,9 @@ const styles = StyleSheet.create({
   },
   closureBlock: {
     flexShrink: 0,
-    paddingVertical: 6,
-    marginBottom: 6,
+    height: CLOSURE_HEIGHT,
+    justifyContent: 'center',
+    marginBottom: CLOSURE_MARGIN,
     backgroundColor: '#fee2e2',
     borderWidth: 0.5,
     borderColor: '#fecaca',
@@ -111,7 +115,6 @@ const styles = StyleSheet.create({
   },
   timeBody: {
     flexDirection: 'row',
-    height: AVAILABLE_ROWS_HEIGHT,
   },
   timeAxis: {
     width: 54,
@@ -231,8 +234,10 @@ function SlotBlock({ placed, height }: { placed: PlacedSlot; height: number }) {
 }
 
 function WeekPage({ week }: { week: PlanningWeek }) {
-  const minuteHeight =
-    AVAILABLE_ROWS_HEIGHT / (week.endMinute - week.startMinute)
+  const rowsHeight = week.isClosed
+    ? AVAILABLE_ROWS_HEIGHT - CLOSURE_HEIGHT - CLOSURE_MARGIN
+    : AVAILABLE_ROWS_HEIGHT
+  const minuteHeight = rowsHeight / (week.endMinute - week.startMinute)
   const topOf = (minute: number) => (minute - week.startMinute) * minuteHeight
   const hours = innerHours(week.startMinute, week.endMinute)
 
@@ -271,7 +276,7 @@ function WeekPage({ week }: { week: PlanningWeek }) {
             ))}
           </View>
 
-          <View style={styles.timeBody} wrap={false}>
+          <View style={[styles.timeBody, { height: rowsHeight }]} wrap={false}>
             <View style={styles.timeAxis}>
               {hours.map((minute) => (
                 <Text
@@ -282,7 +287,7 @@ function WeekPage({ week }: { week: PlanningWeek }) {
                     {
                       top: Math.min(
                         Math.max(topOf(minute) - TIME_LABEL_SIZE / 2, 1),
-                        AVAILABLE_ROWS_HEIGHT - TIME_LABEL_SIZE - 3,
+                        rowsHeight - TIME_LABEL_SIZE - 3,
                       ),
                     },
                   ]}

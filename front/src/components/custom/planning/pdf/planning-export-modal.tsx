@@ -12,7 +12,7 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 
 import { cn } from '../../../../libs/utils.ts'
 import { useForbiddenWeekQueries } from '../../../../queries/useForbiddenWeek.ts'
@@ -113,13 +113,19 @@ export default function PlanningExportModal({
     )
   }, [pathwayTemplates])
 
-  const pathwayItems = useMemo(
-    () => [
+  // Même ordre et mêmes groupes que le filtre « Parcours » du planning.
+  const pathwayItems = useMemo(() => {
+    const templates = pathwayTemplates ?? []
+    const inGroup = (individual: boolean, group: string) =>
+      templates
+        .filter((template) => !!template.firstAppointmentOnly === individual)
+        .map(({ id, name, color }) => ({ id, name, color, group }))
+    return [
       { id: NO_PATHWAY_KEY, name: 'Hors parcours', color: NO_PATHWAY_COLOR },
-      ...(pathwayTemplates ?? []),
-    ],
-    [pathwayTemplates],
-  )
+      ...inGroup(true, 'Individuels'),
+      ...inGroup(false, 'Multiples'),
+    ]
+  }, [pathwayTemplates])
   const includedPathways = pathwayItems.filter(
     (item) => !excludedPathwayIds.has(item.id),
   )
@@ -545,7 +551,7 @@ function PathwayPicker({
   onSelectAll,
   onClear,
 }: {
-  items: { id: string; name: string; color: string }[]
+  items: { id: string; name: string; color: string; group?: string }[]
   excludedIds: Set<string>
   onToggle: (id: string) => void
   onSelectAll: () => void
@@ -612,34 +618,45 @@ function PathwayPicker({
           </button>
         </div>
         <div className="max-h-[260px] overflow-auto p-1">
-          {shown.map((item) => {
+          {shown.map((item, index) => {
             const checked = !excludedIds.has(item.id)
+            const startsGroup =
+              item.group && item.group !== shown[index - 1]?.group
             return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={checked}
-                onClick={() => onToggle(item.id)}
-                className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md border-none bg-transparent px-2 text-left text-sm text-foreground hover:bg-[#f8fafc]"
-              >
-                <span
-                  className={cn(
-                    'flex h-4 w-4 shrink-0 items-center justify-center rounded border-[1.5px]',
-                    checked
-                      ? 'border-primary bg-primary'
-                      : 'border-[#cbd5e1] bg-white',
-                  )}
+              <Fragment key={item.id}>
+                {startsGroup && (
+                  <>
+                    {index > 0 && <div className="my-1 h-px bg-border" />}
+                    <div className="px-2 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-text-light">
+                      {item.group}
+                    </div>
+                  </>
+                )}
+                <button
+                  type="button"
+                  aria-pressed={checked}
+                  onClick={() => onToggle(item.id)}
+                  className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-md border-none bg-transparent px-2 text-left text-sm text-foreground hover:bg-[#f8fafc]"
                 >
-                  {checked && (
-                    <Check size={11} strokeWidth={3} className="text-white" />
-                  )}
-                </span>
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="flex-1 truncate">{item.name}</span>
-              </button>
+                  <span
+                    className={cn(
+                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border-[1.5px]',
+                      checked
+                        ? 'border-primary bg-primary'
+                        : 'border-[#cbd5e1] bg-white',
+                    )}
+                  >
+                    {checked && (
+                      <Check size={11} strokeWidth={3} className="text-white" />
+                    )}
+                  </span>
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="flex-1 truncate">{item.name}</span>
+                </button>
+              </Fragment>
             )
           })}
         </div>
