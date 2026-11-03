@@ -9,6 +9,7 @@ import {
   appointmentRange,
   getTrancheChoice,
   isRangeFree,
+  MIN_APPOINTMENT_MINUTES,
 } from '../../../libs/slotAvailability.ts'
 import {
   generateDurationOptions,
@@ -212,6 +213,13 @@ function AddAppointmentForm({
                         durationField.handleChange(value)
                       }}
                       durationOptions={durationOptions}
+                      minTime={slot && dayjs.utc(slot.startDate)}
+                      maxTime={
+                        slot &&
+                        dayjs
+                          .utc(slot.endDate)
+                          .subtract(MIN_APPOINTMENT_MINUTES, 'minute')
+                      }
                       disabled={type === 'multiple'}
                       durationFieldId={durationField.name}
                       startTimeInfo={<FieldInfo field={startTimeField} />}
