@@ -89,3 +89,32 @@ export const conflictWarning = (all: PlanningConflict[]) => {
     severity: TOAST_SEVERITY.WARNING,
   }
 }
+
+// Rendez-vous à venir du patient qui en chevauchent un autre de ses rendez-vous, par identifiant.
+export const patientOverlaps = (slots: Slot[] = [], patientID?: string) => {
+  const now = dayjs()
+  const appointments = slots
+    .filter((slot) => !slot.archivedAt)
+    .flatMap((slot) => slot.appointments ?? [])
+    .filter(
+      (a) =>
+        a.appointmentPatients?.some((ap) => ap.patient?.id === patientID) &&
+        dayjs(a.endDate).isAfter(now),
+    )
+  const labels = new Map<string, string[]>()
+  for (const a of appointments) {
+    for (const b of appointments) {
+      if (
+        a !== b &&
+        dayjs(a.startDate).isBefore(b.endDate) &&
+        dayjs(a.endDate).isAfter(b.startDate)
+      ) {
+        labels.set(a.id, [
+          ...(labels.get(a.id) ?? []),
+          `Déjà un rendez-vous ${hour(b.startDate)}–${hour(b.endDate)}`,
+        ])
+      }
+    }
+  }
+  return labels
+}

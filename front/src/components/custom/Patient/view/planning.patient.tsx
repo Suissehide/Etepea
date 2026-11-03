@@ -9,6 +9,7 @@ import { APPOINTMENT, SLOT } from '../../../../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../../../../constants/ui.constant.ts'
 import { useToast } from '../../../../hooks/useToast.ts'
 import { getContrastTextColor } from '../../../../libs/color.ts'
+import { patientOverlaps } from '../../../../libs/planningConflicts.ts'
 import { buildCalendarEventsFromSlots } from '../../../../libs/utils.ts'
 import { useAppointmentMutations } from '../../../../queries/useAppointment.ts'
 import { usePathwayTemplateQueries } from '../../../../queries/usePathwayTemplate.ts'
@@ -103,6 +104,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
     if (!slots || !patient) {
       return []
     }
+    const conflits = patientOverlaps(slots, patient.id)
 
     return slots
       .filter((slot) =>
@@ -132,6 +134,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
           extendedProps: {
             type: 'appointment',
             thematic: soignantsLabel ? thematic : undefined,
+            conflicts: conflits.get(apt?.id ?? ''),
           },
         }
       })
