@@ -31,7 +31,9 @@ describe('BulkWeekForm, mode calendrier', () => {
         mode="move"
         count={84}
         sourceWeek={MONDAY}
-        forbiddenWeeks={[{ id: 'f1', startOfWeek: '2026-11-30T00:00:00.000Z' }]}
+        forbiddenWeeks={[
+          { id: 'f1', startOfWeek: '2026-11-30T00:00:00.000Z', createdAt: '' },
+        ]}
         onConfirm={onConfirm}
       />,
     )
@@ -64,7 +66,7 @@ describe('BulkWeekForm, mode calendrier', () => {
     )
     expect(
       screen.getByText(
-        /Les 84 créneaux de S45 passeront en S48, du 23 au 27 nov\./,
+        'Les 84 créneaux de S45 passeront en S48, du 23 au 27 nov. S45 sera vidée de ces créneaux.',
       ),
     ).toBeInTheDocument()
     await userEvent.click(
@@ -89,6 +91,25 @@ describe('BulkWeekForm, mode calendrier', () => {
       'border-primary',
     )
   })
+})
+
+it('la cible par défaut saute une semaine interdite', () => {
+  vi.useFakeTimers({ now: new Date('2026-11-04T10:00:00Z'), toFake: ['Date'] })
+  render(
+    <BulkWeekForm
+      open
+      setOpen={vi.fn()}
+      mode="duplicate"
+      count={2}
+      sourceWeek={MONDAY}
+      forbiddenWeeks={[
+        { id: 'f1', startOfWeek: '2026-11-09T00:00:00.000Z', createdAt: '' },
+      ]}
+      onConfirm={vi.fn()}
+    />,
+  )
+  expect(screen.getByRole('button', { name: 'Dupliquer en S47' })).toBeEnabled()
+  vi.useRealTimers()
 })
 
 describe('BulkWeekForm, mode semaines fixes', () => {
