@@ -18,7 +18,14 @@ import {
 } from '../../ui/popup.tsx'
 import { Select } from '../../ui/select.tsx'
 
-export type ThematicTypeChanges = { thematicId?: string; type?: string }
+export type ThematicTypeChanges = {
+  thematicId?: string | null
+  type?: string | null
+}
+
+// Valeur de liste qui vide le champ ; '' reste « inchangé ».
+const NONE = '__none__'
+const fromChoice = (value: string) => (value === NONE ? null : value)
 
 // Comme le formulaire d'un créneau : une thématique n'est proposée que si chaque créneau a un soignant qui la pratique.
 export const commonThematics = (
@@ -46,9 +53,12 @@ export function BulkThematicTypeForm({
   const [thematicId, setThematicId] = useState('')
   const [type, setType] = useState('')
   const count = soignantIdsPerSlot.length
-  const thematicOptions = commonThematics(thematics ?? [], soignantIdsPerSlot)
-    .map((t) => ({ value: t.id, label: thematicLabel(t) }))
-    .sort((a, b) => a.label.localeCompare(b.label, 'fr'))
+  const thematicOptions = [
+    { value: NONE, label: 'Vide' },
+    ...commonThematics(thematics ?? [], soignantIdsPerSlot)
+      .map((t) => ({ value: t.id, label: thematicLabel(t) }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'fr')),
+  ]
 
   const close = (next: boolean) => {
     setOpen(next)
@@ -77,12 +87,7 @@ export function BulkThematicTypeForm({
             <Label>Thématique</Label>
             <Select
               options={thematicOptions}
-              placeholder={
-                thematicOptions.length === 0
-                  ? 'Aucune thématique commune aux soignants'
-                  : 'Inchangée'
-              }
-              disabled={thematicOptions.length === 0}
+              placeholder="Inchangée"
               value={thematicId}
               onValueChange={setThematicId}
             />
@@ -91,7 +96,10 @@ export function BulkThematicTypeForm({
           <FormField>
             <Label>Type</Label>
             <Select
-              options={APPOINTMENT_TYPE_OPTIONS}
+              options={[
+                { value: NONE, label: 'Vide' },
+                ...APPOINTMENT_TYPE_OPTIONS,
+              ]}
               placeholder="Inchangé"
               value={type}
               onValueChange={setType}
@@ -109,8 +117,8 @@ export function BulkThematicTypeForm({
             disabled={!(thematicId || type)}
             onClick={() => {
               onConfirm({
-                ...(thematicId && { thematicId }),
-                ...(type && { type }),
+                ...(thematicId && { thematicId: fromChoice(thematicId) }),
+                ...(type && { type: fromChoice(type) }),
               })
               close(false)
             }}
