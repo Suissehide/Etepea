@@ -7,9 +7,11 @@ import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constan
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import {
   appointmentRange,
+  clampTime,
   getTrancheChoice,
   isRangeFree,
   MIN_APPOINTMENT_MINUTES,
+  maxDurationUntil,
 } from '../../../libs/slotAvailability.ts'
 import {
   generateDurationOptions,
@@ -165,11 +167,12 @@ function AddAppointmentForm({
     }
     setManual(true)
   }
-  // Sur tout le créneau : une plage qui déborde est refusée à l'envoi, pas rendue impossible à saisir.
-  const durationOptions = generateDurationOptions(
-    slot?.startDate ?? startDate,
-    slot?.endDate ?? maxDate,
-  )
+  // Depuis l'heure choisie jusqu'à la fin du créneau, jamais au-delà.
+  const slotEnd = slot?.endDate ?? maxDate
+  const latestStart = dayjs
+    .utc(slotEnd)
+    .subtract(MIN_APPOINTMENT_MINUTES, 'minute')
+  const durationOptions = generateDurationOptions(start.toISOString(), slotEnd)
 
   return (
     <Popup modal={true} open={open} onOpenChange={setOpen}>
@@ -203,9 +206,19 @@ function AddAppointmentForm({
                     <AppointmentTimeFields
                       date={startDate}
                       startTime={start}
-                      onStartTimeChange={(time) => {
+                      onStartTimeChange={(picked) => {
+                        // MUI garde les minutes en changeant d'heure : on ramène l'heure dans le créneau.
+                        const time = clampTime(
+                          picked,
+                          slot && dayjs.utc(slot.startDate),
+                          slot && latestStart,
+                        )
                         takeOver()
                         startTimeField.handleChange(time)
+                        const room = maxDurationUntil(time, slotEnd)
+                        if (room < minutes) {
+                          durationField.handleChange(String(room))
+                        }
                       }}
                       duration={String(minutes)}
                       onDurationChange={(value) => {
@@ -214,12 +227,7 @@ function AddAppointmentForm({
                       }}
                       durationOptions={durationOptions}
                       minTime={slot && dayjs.utc(slot.startDate)}
-                      maxTime={
-                        slot &&
-                        dayjs
-                          .utc(slot.endDate)
-                          .subtract(MIN_APPOINTMENT_MINUTES, 'minute')
-                      }
+                      maxTime={slot && latestStart}
                       disabled={type === 'multiple'}
                       durationFieldId={durationField.name}
                       startTimeInfo={<FieldInfo field={startTimeField} />}

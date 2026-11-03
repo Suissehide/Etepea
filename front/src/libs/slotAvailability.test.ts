@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Slot } from '../types/slot.ts'
 import {
+  clampTime,
   ecartEnJours,
   getFreeTranches,
   getPathwayProgress,
@@ -12,6 +13,7 @@ import {
   groupSlotsByDay,
   isRangeFree,
   jourRelatif,
+  maxDurationUntil,
   splitPatientSlots,
 } from './slotAvailability.ts'
 
@@ -397,5 +399,30 @@ describe('isRangeFree', () => {
   it('refuse une plage qui chevauche un rendez-vous ou deborde du creneau', () => {
     expect(isRangeFree(slot, at('13:30'), at('14:00'))).toBe(false)
     expect(isRangeFree(slot, at('14:15'), at('14:45'))).toBe(false)
+  })
+})
+
+describe('maxDurationUntil', () => {
+  it('arrondit au quart d heure inferieur la place restante avant la fin', () => {
+    const start = dayjs.utc('2026-11-04T14:05:00.000Z')
+    expect(maxDurationUntil(start, '2026-11-04T14:30:00.000Z')).toBe(15)
+    expect(maxDurationUntil(start, '2026-11-04T14:00:00.000Z')).toBe(0)
+  })
+})
+
+describe('clampTime', () => {
+  const at = (hhmm: string) => dayjs.utc(`2026-11-04T${hhmm}:00.000Z`)
+
+  it('ramene l heure dans les bornes, et la laisse quand elles manquent', () => {
+    expect(clampTime(at('14:30'), at('13:30'), at('14:15'))).toEqual(
+      at('14:15'),
+    )
+    expect(clampTime(at('13:00'), at('13:30'), at('14:15'))).toEqual(
+      at('13:30'),
+    )
+    expect(clampTime(at('14:00'), at('13:30'), at('14:15'))).toEqual(
+      at('14:00'),
+    )
+    expect(clampTime(at('18:00'))).toEqual(at('18:00'))
   })
 })

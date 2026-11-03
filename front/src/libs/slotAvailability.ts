@@ -79,6 +79,23 @@ export const appointmentRange = (
         end: startTime.add(Number.parseInt(duration, 10) || 0, 'minute'),
       }
 
+/** `time` ramené entre `min` et `max` quand ils sont connus. */
+export const clampTime = (time: Dayjs, min?: Dayjs, max?: Dayjs): Dayjs => {
+  if (min && time.isBefore(min)) {
+    return min
+  }
+  if (max && time.isAfter(max)) {
+    return max
+  }
+  return time
+}
+
+/** Plus longue durée, au pas de MIN_APPOINTMENT_MINUTES, qui finit avant `end`. */
+export const maxDurationUntil = (start: Dayjs, end: string): number => {
+  const minutes = dayjs.utc(end).diff(start, 'minute')
+  return Math.max(0, minutes - (minutes % MIN_APPOINTMENT_MINUTES))
+}
+
 /** La plage tient dans le créneau sans chevaucher aucun de ses rendez-vous. */
 export const isRangeFree = (slot: Slot, start: Dayjs, end: Dayjs): boolean =>
   getFreeIntervals(slot).some(
