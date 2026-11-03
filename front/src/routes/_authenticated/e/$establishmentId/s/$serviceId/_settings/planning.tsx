@@ -322,6 +322,19 @@ function Planning() {
     })
   }, [])
 
+  // Dès qu'un créneau est coché, cliquer sur un créneau le coche au lieu de l'ouvrir.
+  const isSelecting = selectedSlotIds.size > 0
+  const handleClickSlot = useCallback(
+    (eventId: string) => {
+      if (!isSelecting) {
+        setOpenEventId(eventId)
+      } else if (/^(slot|template)_/.test(eventId)) {
+        handleToggleSelect(eventId)
+      }
+    },
+    [isSelecting, handleToggleSelect],
+  )
+
   const handleSelectAll = useCallback((ids: string[]) => {
     setSelectedSlotIds((prev) => new Set([...prev, ...ids]))
   }, [])
@@ -1041,7 +1054,7 @@ function Planning() {
                 handleSelectEvent={handleSelectSlot}
                 handleEditEvent={handleEditSlot}
                 handleDropEvent={handleInstantiatePathway}
-                handleClickEvent={setOpenEventId}
+                handleClickEvent={handleClickSlot}
                 handleOpenEvent={setOpenEventId}
                 editMode={editMode}
                 editable={true}
