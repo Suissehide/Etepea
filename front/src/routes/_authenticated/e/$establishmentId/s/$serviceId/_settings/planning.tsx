@@ -869,7 +869,7 @@ function Planning() {
         </Button>,
       ]}
     >
-      <div className="flex-1 bg-background rounded-lg flex flex-col w-full gap-4">
+      <div className="relative flex-1 bg-background rounded-lg flex flex-col w-full gap-4">
         <div className="px-6 pt-6 flex items-center justify-between">
           <h1 className="h-9 flex items-center text-text-dark text-xl font-semibold">
             Planning
@@ -1311,7 +1311,7 @@ function SelectionBar({
   onClear: () => void
 }) {
   return (
-    <div className="mx-6 flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2">
+    <div className="absolute bottom-6 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg border border-primary/30 bg-background px-4 py-2 shadow-lg">
       <CheckSquare className="h-4 w-4 text-primary" />
       <span className="text-sm font-medium text-text-dark">
         {count} créneau
