@@ -1354,9 +1354,7 @@ function ForbiddenWeekModeButton({
       className="w-full transition duration-200"
       onClick={onClick}
     >
-      {active
-        ? 'Terminer les semaines interdites'
-        : 'Planifier semaines interdites'}
+      {active ? 'Quitter le mode' : 'Planifier semaines interdites'}
     </Button>
   )
 }
