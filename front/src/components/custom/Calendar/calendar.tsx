@@ -673,6 +673,7 @@ function Calendar({
         setAnchorEl={setAnchorEl}
         onChange={handleDateChange}
         semaine={currentView.endsWith('Week')}
+        cycle={planningCycle}
         value={
           anchorEl
             ? dayjs.utc(calendarRef.current?.getApi().getDate())

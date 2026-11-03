@@ -12,6 +12,7 @@ import { getContrastTextColor } from '../../../../libs/color.ts'
 import { buildCalendarEventsFromSlots } from '../../../../libs/utils.ts'
 import { useAppointmentMutations } from '../../../../queries/useAppointment.ts'
 import { usePathwayTemplateQueries } from '../../../../queries/usePathwayTemplate.ts'
+import { usePlanningCycleQueries } from '../../../../queries/usePlanningCycle.ts'
 import {
   usePatientSlotsQuery,
   useSlotsInRangeQuery,
@@ -41,6 +42,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
   const savedDate = usePlanningStore((state) => state.viewStart)
 
   const { pathwayTemplates } = usePathwayTemplateQueries()
+  const { planningCycle } = usePlanningCycleQueries()
   // Un tag par entree, avec TOUTES les couleurs des modeles qui le portent : ce sont celles que
   // le calendrier donnera aux creneaux du tag choisi.
   const allTags = useMemo(() => {
@@ -446,6 +448,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
             unselectRef={calendarUnselectRef}
             onRangeChange={handleRangeChange}
             saveDates={false}
+            planningCycle={planningCycle}
             showSecondaryTags={false}
             barre="navigation"
             classeBarre="px-0"

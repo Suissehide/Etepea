@@ -1,8 +1,14 @@
-import { DateCalendar, type PickerDayProps } from '@mui/x-date-pickers'
+import {
+  DateCalendar,
+  LocalizationProvider,
+  type PickerDayProps,
+} from '@mui/x-date-pickers'
 import dayjs, { type Dayjs } from 'dayjs'
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import type { PlanningCycle } from '../../../types/planningCycle.ts'
+import { cycleWeekNumber } from '../../../utils/weekCycle.ts'
 import { WeekDay } from '../../ui/weekPicker.tsx'
 
 // Aujourd'hui reste bien visible à côté de la date sélectionnée.
@@ -14,14 +20,53 @@ export const DATE_CALENDAR_SX = {
   },
 }
 
-// Les jours de semaine perdent leur marge : les libellés suivent, sinon ils se décalent.
-const WEEK_SX = {
+// Les jours de semaine perdent leur marge : libellés et numéros de semaine suivent.
+const PICKER_SX = {
   ...DATE_CALENDAR_SX,
-  '& .MuiDayCalendar-weekDayLabel': { width: 36, margin: 0 },
+  '& .MuiPickerDay-root': { '--PickerDay-horizontalMargin': '0px' },
+  '& .MuiDayCalendar-weekDayLabel, & .MuiDayCalendar-weekNumberLabel': {
+    width: 36,
+    margin: 0,
+  },
+  '& .MuiDayCalendar-weekNumber': {
+    width: 36,
+    margin: 0,
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'var(--text-light)',
+  },
 }
 
 /** Largeur du calendrier MUI, bordure comprise. */
 const POPOVER_WIDTH = 322
+
+/** Lundi de la semaine ISO `n` la plus proche de `autour` : MUI ne donne que le numéro. */
+function lundiDeLaSemaine(n: number, autour: Dayjs): Dayjs {
+  const lundis = [-1, 0, 1].map((decalage) =>
+    dayjs
+      .utc(`${autour.year() + decalage}-01-04`)
+      .startOf('isoWeek')
+      .add(n - 1, 'week'),
+  )
+  const ecart = (lundi: Dayjs) => Math.abs(lundi.diff(autour, 'day'))
+  return lundis.reduce((a, b) => (ecart(b) < ecart(a) ? b : a))
+}
+
+/** Même convention que le titre du calendrier : S7 dans le cycle, s45 sans cycle. */
+export function libelleSemaine(
+  n: number,
+  mois: Dayjs,
+  cycle?: PlanningCycle | null,
+): string {
+  if (!cycle) {
+    return `s${n}`
+  }
+  const semaine = cycleWeekNumber(
+    lundiDeLaSemaine(n, mois.add(15, 'day')),
+    cycle,
+  )
+  return semaine === null ? '–' : `S${semaine}`
+}
 
 interface Props {
   anchorEl: HTMLElement | null
@@ -31,22 +76,20 @@ interface Props {
   value?: Dayjs
   /** Vrai : toute la semaine de `value` est coloriée. */
   semaine?: boolean
+  /** Cycle du service, pour numéroter les semaines ; absent = numéros ISO. */
+  cycle?: PlanningCycle | null
 }
 
 export default function CalendarDatePickerButton({
   anchorEl,
   setAnchorEl,
-  onChange,
-  value,
-  semaine,
+  ...props
 }: Props) {
-  const [hoveredDay, setHoveredDay] = useState<Dayjs | null>(null)
   if (!anchorEl) {
     return null
   }
 
   const rect = anchorEl.getBoundingClientRect()
-  const date = value ?? dayjs.utc()
 
   return createPortal(
     <>
@@ -70,33 +113,52 @@ export default function CalendarDatePickerButton({
         }}
         className="rounded-md border border-border bg-popover shadow-md animate-in fade-in-0 zoom-in-95"
       >
-        {semaine ? (
-          <DateCalendar
-            onChange={onChange}
-            defaultValue={date}
-            timezone="UTC"
-            sx={WEEK_SX}
-            slots={{ day: WeekDay as React.ComponentType<PickerDayProps> }}
-            slotProps={{
-              day: ((ownerState: PickerDayProps) => ({
-                selectedWeekStart: date.isoWeekday(1),
-                hoveredWeekStart: hoveredDay?.isoWeekday(1) ?? null,
-                isForbidden: false,
-                onPointerEnter: () => setHoveredDay(ownerState.day),
-                onPointerLeave: () => setHoveredDay(null),
-              })) as never,
-            }}
-          />
-        ) : (
-          <DateCalendar
-            onChange={onChange}
-            defaultValue={date}
-            timezone="UTC"
-            sx={DATE_CALENDAR_SX}
-          />
-        )}
+        <Selecteur {...props} />
       </div>
     </>,
     document.body,
+  )
+}
+
+// Monté à chaque ouverture : mois affiché et survol repartent de zéro.
+function Selecteur({
+  onChange,
+  value,
+  semaine,
+  cycle,
+}: Omit<Props, 'anchorEl' | 'setAnchorEl'>) {
+  const date = value ?? dayjs.utc()
+  const [mois, setMois] = useState(date.startOf('month'))
+  const [hoveredDay, setHoveredDay] = useState<Dayjs | null>(null)
+
+  return (
+    // Imbriqué : ne remplace que ces deux libellés, le reste vient du fournisseur racine.
+    <LocalizationProvider
+      localeText={{
+        calendarWeekNumberHeaderText: '',
+        calendarWeekNumberText: (n: number) => libelleSemaine(n, mois, cycle),
+      }}
+    >
+      <DateCalendar
+        onChange={onChange}
+        defaultValue={date}
+        timezone="UTC"
+        onMonthChange={setMois}
+        displayWeekNumber
+        sx={PICKER_SX}
+        {...(semaine && {
+          slots: { day: WeekDay as React.ComponentType<PickerDayProps> },
+          slotProps: {
+            day: ((ownerState: PickerDayProps) => ({
+              selectedWeekStart: date.isoWeekday(1),
+              hoveredWeekStart: hoveredDay?.isoWeekday(1) ?? null,
+              isForbidden: false,
+              onPointerEnter: () => setHoveredDay(ownerState.day),
+              onPointerLeave: () => setHoveredDay(null),
+            })) as never,
+          },
+        })}
+      />
+    </LocalizationProvider>
   )
 }
