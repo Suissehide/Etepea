@@ -41,7 +41,7 @@ interface WeekDayExtraProps {
   isForbidden: boolean
 }
 
-function WeekDay(props: PickerDayProps & WeekDayExtraProps) {
+export function WeekDay(props: PickerDayProps & WeekDayExtraProps) {
   const { day, selectedWeekStart, hoveredWeekStart, isForbidden, ...other } =
     props
 

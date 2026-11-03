@@ -59,7 +59,8 @@ export function BarreCalendrier({
           {aujourdhui && (
             <Button
               variant="outline"
-              className={cn('px-3', etat.today.isDisabled && 'invisible')}
+              className="px-3"
+              disabled={etat.today.isDisabled}
               onClick={() => controller.today()}
             >
               {etat.today.text}
