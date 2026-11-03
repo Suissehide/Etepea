@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
+  AlertTriangle,
   ArrowLeft,
   Download,
   RotateCcw,
@@ -49,6 +50,9 @@ const filtersStorageKey = (serviceId: string) => `patient/filters/${serviceId}`
 const matchesStatus = (p: PatientWithTags, status: Status) =>
   status === 'all' || Boolean(p.exitDate) === (status === 'exited')
 
+const hasErrors = (p: PatientWithTags) =>
+  (p.enrollmentIssues?.length ?? 0) > 0 || (p.appointmentConflicts ?? 0) > 0
+
 const matchesTags = (p: PatientWithTags, tags: string[]) =>
   tags.length === 0 || tags.some((tag) => p.pathwayTemplateTags?.includes(tag))
 
@@ -72,7 +76,7 @@ function PatientList() {
   const canReadClinical = useCan('clinical:read')
   const [searchTerm, setSearchTerm] = useState('')
   const [storedFilters] = useState(() =>
-    safeParse<{ status?: string; tags?: string[] }>(
+    safeParse<{ status?: string; tags?: string[]; errorsOnly?: boolean }>(
       localStorage.getItem(filtersStorageKey(serviceId)),
       {},
     ),
@@ -85,6 +89,9 @@ function PatientList() {
       ? (storedFilters.status as Status)
       : DEFAULT_STATUS,
   )
+  const [errorsOnly, setErrorsOnly] = useState(
+    storedFilters.errorsOnly === true,
+  )
   const [isExporting, setIsExporting] = useState(false)
   const userId = useAuthStore((state) => state.user?.id) ?? 'anonyme'
   const tableId = `patient/${serviceId}/${userId}`
@@ -94,9 +101,9 @@ function PatientList() {
   useEffect(() => {
     localStorage.setItem(
       filtersStorageKey(serviceId),
-      JSON.stringify({ status, tags: selectedTags }),
+      JSON.stringify({ status, tags: selectedTags, errorsOnly }),
     )
-  }, [serviceId, status, selectedTags])
+  }, [serviceId, status, selectedTags, errorsOnly])
 
   const handleRedirectPatient = useCallback(
     async (patientID: string) => {
@@ -150,7 +157,11 @@ function PatientList() {
   // Le compteur d'un parcours tient compte du statut, pas des autres parcours.
   const byTags = searched.filter((p) => matchesTags(p, selectedTags))
   const byStatus = searched.filter((p) => matchesStatus(p, status))
-  const filteredPatients = byTags.filter((p) => matchesStatus(p, status))
+  const byTagsAndStatus = byTags.filter((p) => matchesStatus(p, status))
+  const errorCount = byTagsAndStatus.filter(hasErrors).length
+  const filteredPatients = errorsOnly
+    ? byTagsAndStatus.filter(hasErrors)
+    : byTagsAndStatus
 
   const tagFilters = [...tagColors.keys()].sort().map((tag) => ({
     id: tag,
@@ -169,6 +180,7 @@ function PatientList() {
   const resetFilters = () => {
     setStatus(DEFAULT_STATUS)
     setSelectedTags([])
+    setErrorsOnly(false)
     setResetSignal((n) => n + 1)
   }
 
@@ -293,8 +305,17 @@ function PatientList() {
                         }
                       />
                     )}
+                    <Button
+                      variant={errorsOnly ? 'default' : 'outline'}
+                      aria-pressed={errorsOnly}
+                      onClick={() => setErrorsOnly((v) => !v)}
+                    >
+                      <AlertTriangle className="w-4 h-4" />
+                      Erreurs · {errorCount}
+                    </Button>
                     {(status !== DEFAULT_STATUS ||
                       selectedTags.length > 0 ||
+                      errorsOnly ||
                       columnFiltersActive) && (
                       <Button variant="ghost" onClick={resetFilters}>
                         <X className="w-4 h-4" />

@@ -106,6 +106,7 @@ const patients = [
     lastName: 'Beta',
     pathwayTemplateTags: [],
     data: { orientation: 'B' },
+    appointmentConflicts: 1,
   },
 ]
 
@@ -285,5 +286,20 @@ describe('liste des patients, lecture des champs en echec', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
 
     await attendreColonneOrientationFiltree()
+  })
+})
+
+describe('liste des patients, filtre des erreurs', () => {
+  it('ne garde que les patients en erreur', async () => {
+    localStorage.clear()
+    monterAvecEchecPuisSucces()
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Réessayer' }),
+    )
+
+    expect(await screen.findByText('2 résultats')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Erreurs · 1/ }))
+
+    expect(await screen.findByText('1 résultat')).toBeInTheDocument()
   })
 })
