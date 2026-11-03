@@ -293,6 +293,10 @@ function Planning() {
     })
   }, [])
 
+  const handleSelectAll = (ids: string[]) => {
+    setSelectedSlotIds((prev) => new Set([...prev, ...ids]))
+  }
+
   const handleClearSelection = useCallback(() => {
     setSelectedSlotIds(new Set())
     setBulkAction('')
@@ -870,6 +874,11 @@ function Planning() {
           </h1>
 
           <div className="flex justify-end items-center gap-2">
+            <SelectAllButton
+              events={mergedEvents}
+              hidden={view !== 'calendar'}
+              onSelectAll={handleSelectAll}
+            />
             {!editMode && (
               <>
                 <PathwayFilter
@@ -1225,6 +1234,30 @@ type PathwayDeleteTarget = {
   id: string
   title: string
   anchor: { getBoundingClientRect: () => DOMRect }
+}
+
+function SelectAllButton({
+  events,
+  hidden,
+  onSelectAll,
+}: {
+  events: CalendarEvent[]
+  hidden: boolean
+  onSelectAll: (ids: string[]) => void
+}) {
+  if (hidden || events.length === 0) {
+    return null
+  }
+  return (
+    <Button
+      variant="outline"
+      className="font-normal rounded-lg"
+      onClick={() => onSelectAll(events.map((event) => event.id))}
+    >
+      <CheckSquare size={16} />
+      Tout sélectionner
+    </Button>
+  )
 }
 
 function SelectionBar({

@@ -100,6 +100,16 @@ function computeSlotLayout(events: CalendarEvent[]): SlotLayout {
   return result
 }
 
+// La v7 fige `inset: 0 !important` sur l'événement de fond : on décale par la marge, pas par `left`.
+function placeInColumn(
+  element: HTMLElement,
+  { column, totalColumns }: { column: number; totalColumns: number },
+) {
+  const width = 100 / totalColumns
+  element.style.width = `${width}%`
+  element.style.marginLeft = `${column * width}%`
+}
+
 export interface CalendarEvent {
   id: string
   title: string
@@ -243,10 +253,7 @@ function Calendar({
         continue
       }
 
-      // La v7 fige `inset: 0 !important` sur l'événement de fond : on décale par la marge, pas par `left`.
-      const width = 100 / layout.totalColumns
-      element.style.width = `${width}%`
-      element.style.marginLeft = `${layout.column * width}%`
+      placeInColumn(element, layout)
     }
   }, [slotLayout])
 
@@ -319,6 +326,7 @@ function Calendar({
 
   const clickedEventRef = useRef<string | null>(null)
   const isDraggingRef = useRef(false)
+  const pressedSlotRef = useRef<string | null>(null)
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -339,6 +347,7 @@ function Calendar({
         return
       }
 
+      pressedSlotRef.current = null
       const el = target.closest('.fc-event-hero')
       if (!el) {
         return
@@ -348,6 +357,7 @@ function Calendar({
       if (!eventID) {
         return
       }
+      pressedSlotRef.current = eventID
 
       clickedEventRef.current = eventID
     }
@@ -480,6 +490,8 @@ function Calendar({
         // La hauteur d'une demi-heure de la v6 : plus serrés, les créneaux tronquent leur texte.
         slotMinHeight={35}
         dayLaneClass={(info) => (info.isToday ? 'bg-primary/8' : undefined)}
+        // Le calque des événements de premier plan couvre la colonne et masquait les créneaux de fond aux clics.
+        dayLaneInnerClass="pointer-events-none"
         // Pas de cadre autour du calendrier, la carte de l'écran l'entoure déjà. En mode
         // édition, la vue s'encadre de rouge.
         viewClass={cn(
@@ -566,7 +578,10 @@ function Calendar({
         }
         // Sans les marges du thème : notre contenu a les siennes, et une demi-heure en a besoin.
         columnEventClass={(info) =>
-          cn('m-0 bg-[var(--fc-event-color)]', bordureCreneau(info))
+          cn(
+            'pointer-events-auto m-0 bg-[var(--fc-event-color)]',
+            bordureCreneau(info),
+          )
         }
         columnEventInnerClass="p-0"
         noEventsContent={() => (
@@ -605,6 +620,20 @@ function Calendar({
           const weekStart = dayjs(startDate).isoWeekday(1).utc().startOf('day')
           if (pathwayId) {
             handleDropEvent?.(pathwayId, weekStart.toISOString())
+          }
+        }}
+        // Le surlignage de sélection couvre toute la colonne ; le miroir suffit et prend la place du créneau.
+        highlightClass="hidden"
+        eventDidMount={(info) => {
+          if (!info.isMirror) {
+            return
+          }
+          // Le créneau sous la souris : ses voisins de colonne peuvent aussi contenir la plage.
+          const layout = pressedSlotRef.current
+            ? slotLayout.get(pressedSlotRef.current)
+            : undefined
+          if (layout && layout.totalColumns > 1) {
+            placeInColumn(info.el, layout)
           }
         }}
         backgroundEventDidMount={(info) => {
