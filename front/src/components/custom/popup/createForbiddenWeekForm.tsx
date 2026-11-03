@@ -1,15 +1,9 @@
 import dayjs from 'dayjs'
-import { CalendarX, X } from 'lucide-react'
+import { CalendarX } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 
 import { Button } from '../../ui/button.tsx'
-import {
-  Popup,
-  PopupBody,
-  PopupContent,
-  PopupFooter,
-  PopupHeader,
-  PopupTitle,
-} from '../../ui/popup.tsx'
+import { Popup, PopupContent, PopupFooter } from '../../ui/popup.tsx'
 
 interface CreateForbiddenWeekFormProps {
   open: boolean
@@ -26,42 +20,50 @@ export function CreateForbiddenWeekForm({
   onConfirm,
   loading = false,
 }: CreateForbiddenWeekFormProps) {
-  const weekStart = date ? dayjs.utc(date).isoWeekday(1) : null
-  const weekStartLabel = weekStart ? weekStart.format('DD MMMM YYYY') : ''
-  const weekEndLabel = weekStart
-    ? weekStart.add(6, 'day').format('DD MMMM YYYY')
-    : ''
+  const monday = dayjs.utc(date ?? undefined).isoWeekday(1)
+  const sunday = monday.add(6, 'day')
+  const from =
+    monday.month() === sunday.month()
+      ? monday.format('D')
+      : monday.format('D MMMM')
 
   return (
     <Popup modal open={open} onOpenChange={setOpen}>
-      <PopupContent>
-        <PopupHeader>
-          <PopupTitle className="font-bold text-xl">
-            Semaine interdite
-          </PopupTitle>
-        </PopupHeader>
+      <PopupContent className="w-[440px] rounded-xl">
+        <div className="flex items-center gap-3.5 border-b border-border px-5 py-[18px] pr-14">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+            <CalendarX size={18} className="text-red-700" />
+          </span>
+          <div className="flex flex-col gap-0.5">
+            <Dialog.Title className="m-0 text-lg font-bold text-foreground">
+              Interdire la semaine
+            </Dialog.Title>
+            <span className="text-[13px] text-text-light">
+              Aucun créneau ne pourra y être planifié.
+            </span>
+          </div>
+        </div>
 
-        <PopupBody>
-          <p className="text-sm text-text-light">
-            Marquer la semaine du{' '}
-            <span className="font-medium text-text">{weekStartLabel}</span> au{' '}
-            <span className="font-medium text-text">{weekEndLabel}</span> comme
-            interdite ? Aucun slot ne pourra être planifié sur cette semaine.
-          </p>
-        </PopupBody>
+        <div className="px-5 py-[18px]">
+          <div className="flex flex-col gap-1 rounded-lg bg-muted px-3 py-2.5">
+            <span className="text-xs text-text-light">Semaine</span>
+            <span className="text-sm font-semibold text-foreground">
+              du {from} au {sunday.format('D MMMM YYYY')}
+            </span>
+          </div>
+        </div>
 
-        <PopupFooter>
+        <PopupFooter className="px-5 py-3.5">
           <Button variant="outline" onClick={() => setOpen(false)}>
-            <X className="w-4 h-4" />
             Annuler
           </Button>
           <Button
-            variant="outline"
+            variant="destructive"
             onClick={() => date && onConfirm(date)}
             disabled={loading}
           >
-            <CalendarX className="w-4 h-4" />
-            {loading ? 'En cours...' : 'Confirmer'}
+            <CalendarX className="h-4 w-4" />
+            {loading ? 'En cours...' : 'Interdire la semaine'}
           </Button>
         </PopupFooter>
       </PopupContent>
