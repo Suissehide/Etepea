@@ -6,7 +6,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { appointmentTypeLabel } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { getTrancheChoice } from '../../../libs/slotAvailability.ts'
-import { generateDurationOptions } from '../../../libs/utils.ts'
+import {
+  generateDurationOptions,
+  thematicLabel,
+  thematicLabelByID,
+} from '../../../libs/utils.ts'
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
 import { useSlotByIDQuery } from '../../../queries/useSlot.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
@@ -111,7 +115,7 @@ function AddAppointmentForm({
       for (const t of thematics?.filter((t) =>
         t.soignants.some((ss) => ss.id === soignant.id),
       ) ?? []) {
-        map.set(t.id, { value: t.id, label: t.name })
+        map.set(t.id, { value: t.id, label: thematicLabel(t) })
       }
     }
     return [...map.values()].sort((a, b) =>
@@ -213,7 +217,13 @@ function AddAppointmentForm({
             <FormField>
               <Label>Thématique</Label>
               <Input
-                value={slot?.slotTemplate?.thematic ?? 'Aucune thématique'}
+                value={
+                  thematicLabelByID(
+                    thematics,
+                    slot?.slotTemplate?.thematicId,
+                    slot?.slotTemplate?.thematic,
+                  ) ?? 'Aucune thématique'
+                }
                 disabled
               />
             </FormField>

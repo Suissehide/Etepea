@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { combineDateAndTime } from '../../../libs/utils.ts'
+import { combineDateAndTime, thematicLabel } from '../../../libs/utils.ts'
 import { useLocationQueries } from '../../../queries/useLocation.ts'
 import { useSoignantQueries } from '../../../queries/useSoignant.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
@@ -146,7 +146,7 @@ function AddSlotForm({
       for (const t of thematics?.filter((t) =>
         t.soignants.some((ss) => ss.id === soignant.id),
       ) ?? []) {
-        set.set(t.id, { value: t.id, label: t.name })
+        set.set(t.id, { value: t.id, label: thematicLabel(t) })
       }
     }
     return [...set.values()].sort((a, b) =>

@@ -21,7 +21,11 @@ import {
   getUpcomingSlotSuggestions,
   type SlotSuggestion,
 } from '../../../libs/slotAvailability.ts'
-import { cn, generateDurationOptions } from '../../../libs/utils.ts'
+import {
+  cn,
+  generateDurationOptions,
+  thematicLabel,
+} from '../../../libs/utils.ts'
 import { useAppointmentMutations } from '../../../queries/useAppointment.ts'
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
 import { useSlotsInRangeQuery } from '../../../queries/useSlot.ts'
@@ -673,7 +677,10 @@ function AddPatientToSlotContent({
   const thematicOptions = useMemo(
     () =>
       (thematics ?? [])
-        .map((thematic) => ({ value: thematic.id, label: thematic.name }))
+        .map((thematic) => ({
+          value: thematic.id,
+          label: thematicLabel(thematic),
+        }))
         .sort((a, b) => a.label.localeCompare(b.label, 'fr')),
     [thematics],
   )

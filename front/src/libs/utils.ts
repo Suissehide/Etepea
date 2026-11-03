@@ -9,6 +9,7 @@ import type { Pathway } from '../types/pathway.ts'
 import type { Slot } from '../types/slot.ts'
 import type { SlotTemplate } from '../types/slotTemplate.ts'
 import type { Soignant } from '../types/soignant.ts'
+import type { Thematic } from '../types/thematic.ts'
 import { getContrastTextColor } from './color.ts'
 import {
   getFreeIntervals,
@@ -333,6 +334,25 @@ export function combineDateAndTime(
     .second(baseTime.second())
     .millisecond(baseTime.millisecond())
     .toDate()
+}
+
+/** « Coaching (30min) » : le nom de la thématique, suivi de sa durée quand elle en a une. */
+export const thematicLabel = ({
+  name,
+  duration,
+}: {
+  name: string
+  duration?: number | null
+}) => (duration ? `${name} (${duration}min)` : name)
+
+/** Libellé de la thématique `id`, à défaut `fallback` (nom seul, thématique introuvable). */
+export const thematicLabelByID = (
+  thematics: Thematic[] | undefined,
+  id: string | null | undefined,
+  fallback?: string,
+) => {
+  const thematic = thematics?.find((t) => t.id === id)
+  return thematic ? thematicLabel(thematic) : fallback
 }
 
 export const formatDuration = (start?: Date | string, end?: Date | string) => {

@@ -17,7 +17,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { PatientApi } from '../../api/patient.api.ts'
 import { PATIENT } from '../../constants/process.constant.ts'
 import { SLOT_DURATIONS } from '../../constants/slot.constant.ts'
-import { cn } from '../../libs/utils.ts'
+import { cn, thematicLabel } from '../../libs/utils.ts'
 import { usePathwayTemplateQueries } from '../../queries/usePathwayTemplate.ts'
 import { useThematicQueries } from '../../queries/useThematic.ts'
 import type {
@@ -509,7 +509,7 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
 
   const thematicOptions = (thematics ?? []).map((t) => ({
     value: t.id,
-    label: t.name,
+    label: thematicLabel(t),
   }))
 
   return (

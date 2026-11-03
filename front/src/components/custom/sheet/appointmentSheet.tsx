@@ -17,7 +17,11 @@ import {
   appointmentTypeLabel,
 } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { formatDuration } from '../../../libs/utils.ts'
+import {
+  formatDuration,
+  thematicLabel,
+  thematicLabelByID,
+} from '../../../libs/utils.ts'
 import {
   useAppointmentByIDQuery,
   useAppointmentMutations,
@@ -187,15 +191,17 @@ export default function AppointmentSheet({
       for (const t of thematics?.filter((t) =>
         t.soignants.some((ss) => ss.id === soignant.id),
       ) ?? []) {
-        map.set(t.id, { value: t.id, label: t.name })
+        map.set(t.id, { value: t.id, label: thematicLabel(t) })
       }
     }
     // La thématique actuelle reste proposée même si aucun soignant du créneau n'y est relié.
     const currentID = appointment?.thematicId
     if (currentID && !map.has(currentID)) {
-      const label =
-        thematics?.find((t) => t.id === currentID)?.name ??
-        appointment?.thematic
+      const label = thematicLabelByID(
+        thematics,
+        currentID,
+        appointment?.thematic,
+      )
       if (label) {
         map.set(currentID, { value: currentID, label })
       }
@@ -264,8 +270,11 @@ export default function AppointmentSheet({
                 <Label>Thématique</Label>
                 <Input
                   value={
-                    appointment?.slot?.slotTemplate?.thematic ??
-                    'Aucune thématique'
+                    thematicLabelByID(
+                      thematics,
+                      appointment?.slot?.slotTemplate?.thematicId,
+                      appointment?.slot?.slotTemplate?.thematic,
+                    ) ?? 'Aucune thématique'
                   }
                   disabled
                 />

@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react'
 
 import { APPOINTMENT_TYPE_OPTIONS } from '../../../../constants/appointment.constant.ts'
 import { withForm } from '../../../../hooks/formConfig.tsx'
+import { thematicLabel } from '../../../../libs/utils.ts'
 import { useLocationQueries } from '../../../../queries/useLocation.ts'
 import { useThematicQueries } from '../../../../queries/useThematic.ts'
 import { useSoignantStore } from '../../../../store/useSoignantStore.ts'
@@ -57,7 +58,7 @@ export const EventFormFields = withForm({
         for (const t of thematics?.filter((t) =>
           t.soignants.some((ss) => ss.id === soignant.id),
         ) ?? []) {
-          map.set(t.id, { value: t.id, label: t.name })
+          map.set(t.id, { value: t.id, label: thematicLabel(t) })
         }
       }
       return [...map.values()].sort((a, b) =>
