@@ -14,6 +14,9 @@ export function SoignantDuServiceSelect({
   value,
   onChange,
   label = 'Soignant',
+  labelClassName,
+  placeholder = 'Aucun soignant',
+  className,
   disabled,
 }: {
   establishmentId: string
@@ -21,6 +24,9 @@ export function SoignantDuServiceSelect({
   value: string | null
   onChange: (soignantId: string | null) => void
   label?: ReactNode
+  labelClassName?: string
+  placeholder?: string
+  className?: string
   disabled?: boolean
 }) {
   const { data: soignants } = useQuery({
@@ -38,12 +44,15 @@ export function SoignantDuServiceSelect({
   const id = `soignant-${serviceId}`
   return (
     <div className="flex flex-col gap-1">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className={labelClassName}>
+        {label}
+      </Label>
       <Select
         id={id}
         options={options}
         value={value ?? ''}
-        placeholder="Aucun soignant"
+        placeholder={placeholder}
+        className={className}
         disabled={disabled}
         onValueChange={(next) => onChange(next || null)}
       />
