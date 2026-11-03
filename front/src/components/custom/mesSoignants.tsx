@@ -48,7 +48,7 @@ export function MesSoignants({
           serviceId={a.serviceId}
           value={value[a.serviceId] ?? null}
           onChange={(soignantId) => onChange(a.serviceId, soignantId)}
-          label={`${a.establishmentName} > ${a.serviceName} - ${SERVICE_ROLE_LABEL[a.role]}`}
+          label={`Mon rôle dans ${a.establishmentName} > ${a.serviceName} (accès : ${SERVICE_ROLE_LABEL[a.role]})`}
         />
       ))}
     </div>
