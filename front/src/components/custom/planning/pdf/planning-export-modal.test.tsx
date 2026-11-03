@@ -141,4 +141,19 @@ describe('PlanningExportModal', () => {
     await user.click(screen.getByText('Tout sélectionner'))
     expect(screen.getByRole('button', { name: /Télécharger/ })).toBeEnabled()
   })
+
+  it('Échap ferme le menu des parcours, puis la popup', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(<PlanningExportModal initialDate="2026-11-04" onClose={onClose} />)
+    await user.click(screen.getByRole('button', { name: /Tous les parcours/ }))
+    await user.keyboard('{Escape}')
+    expect(
+      screen.queryByPlaceholderText('Rechercher un parcours'),
+    ).not.toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+
+    await user.keyboard('{Escape}')
+    expect(onClose).toHaveBeenCalledOnce()
+  })
 })

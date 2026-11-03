@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 import { Fragment, useCallback, useMemo, useState } from 'react'
 
 import { cn } from '../../../../libs/utils.ts'
@@ -206,235 +207,243 @@ export default function PlanningExportModal({
   const pagesLabel = weekCount > 1 ? ` (${weekCount} pages)` : ''
 
   return (
-    <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50">
-      <div className="bg-background rounded-xl shadow-xl w-[90vw] h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex h-16 shrink-0 items-center gap-3.5 border-b border-border px-5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dbe6fd]">
-            <FileDown size={18} className="text-primary" />
-          </span>
-          <div className="flex flex-1 flex-col gap-0.5">
-            <h2 className="m-0 text-lg font-bold text-foreground">
-              Exporter le planning
-            </h2>
-            <span className="text-[13px] text-text-light">
-              PDF, une page paysage par semaine.
+    <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-150 bg-black/50" />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className="fixed top-1/2 left-1/2 z-150 flex h-[90vh] w-[90vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-background shadow-xl"
+        >
+          <div className="flex h-16 shrink-0 items-center gap-3.5 border-b border-border px-5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dbe6fd]">
+              <FileDown size={18} className="text-primary" />
             </span>
-          </div>
-          <Button
-            variant="outline"
-            className="h-10 rounded-lg"
-            onClick={onClose}
-          >
-            Annuler
-          </Button>
-          {noneIncluded ? (
-            <Button className="h-10 rounded-lg" disabled>
-              <Download className="h-4 w-4" />
-              Télécharger{pagesLabel}
+            <div className="flex flex-1 flex-col gap-0.5">
+              <Dialog.Title className="m-0 text-lg font-bold text-foreground">
+                Exporter le planning
+              </Dialog.Title>
+              <span className="text-[13px] text-text-light">
+                PDF, une page paysage par semaine.
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              className="h-10 rounded-lg"
+              onClick={onClose}
+            >
+              Annuler
             </Button>
-          ) : (
-            <PDFDownloadLink document={pdfDocument} fileName={fileName}>
-              {({ loading }) => (
-                <Button
-                  className="h-10 rounded-lg"
-                  disabled={loading || isFetching}
-                >
-                  <Download className="h-4 w-4" />
-                  {loading ? 'Génération…' : `Télécharger${pagesLabel}`}
-                </Button>
-              )}
-            </PDFDownloadLink>
-          )}
-        </div>
-
-        <div className="grid flex-1 min-h-0 grid-cols-[480px_minmax(0,1fr)]">
-          <aside className="flex min-w-0 flex-col gap-4 overflow-y-auto border-r border-border px-5 py-[18px]">
-            <div className="grid grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] items-center gap-2">
-              <div className="flex flex-col gap-1 rounded-lg border-[1.5px] border-primary bg-blue-50 px-3 py-2.5 text-primary-dark">
-                <span className="text-xs">Du</span>
-                <span className="text-sm font-semibold">
-                  S{weekLabelOf(weekStart, planningCycle)} ·{' '}
-                  {weekStart.format('dddd D MMM')}
-                </span>
-              </div>
-              <ArrowRight
-                size={18}
-                className="justify-self-center text-[#94a3b8]"
-              />
-              <div className="flex flex-col gap-1 rounded-lg bg-muted px-3 py-2.5">
-                <span className="text-xs text-text-light">Au</span>
-                <span className="text-sm font-semibold text-foreground">
-                  S{weekLabelOf(lastWeekStart, planningCycle)} ·{' '}
-                  {lastWeekEnd.format('dddd D MMM')}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-text-dark">Durée</span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <div className="flex h-8 items-center rounded-full border border-border">
-                  <button
-                    type="button"
-                    aria-label="Retirer une semaine"
-                    disabled={weekCount <= MIN_WEEK_COUNT}
-                    onClick={() =>
-                      setWeekCount((n) => Math.max(MIN_WEEK_COUNT, n - 1))
-                    }
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="min-w-16 text-center text-[13px] font-semibold tabular-nums text-foreground">
-                    {weekCount} sem.
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Ajouter une semaine"
-                    disabled={weekCount >= MAX_WEEK_COUNT}
-                    onClick={() =>
-                      setWeekCount((n) => Math.min(MAX_WEEK_COUNT, n + 1))
-                    }
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-                {quickCounts.map(({ count, label }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    aria-pressed={count === weekCount}
-                    onClick={() => setWeekCount(count)}
-                    className={cn(
-                      'h-[30px] cursor-pointer whitespace-nowrap rounded-full border px-[9px] text-[13px] font-medium',
-                      count === weekCount
-                        ? 'border-primary bg-blue-50 text-primary-dark'
-                        : 'border-border text-text-dark hover:bg-muted',
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1 rounded-[10px] border border-border px-3 pt-2.5 pb-3">
-              <div className="flex items-center justify-between px-0.5 pb-1.5">
-                <span className="text-[15px] font-semibold text-foreground capitalize">
-                  {month.format('MMMM YYYY')}
-                </span>
-                <span className="flex gap-1">
+            {noneIncluded ? (
+              <Button className="h-10 rounded-lg" disabled>
+                <Download className="h-4 w-4" />
+                Télécharger{pagesLabel}
+              </Button>
+            ) : (
+              <PDFDownloadLink document={pdfDocument} fileName={fileName}>
+                {({ loading }) => (
                   <Button
-                    variant="icon"
-                    size="icon-md"
-                    className="h-7 w-7 hover:bg-muted"
-                    aria-label="Mois précédent"
-                    onClick={() => setMonth(month.subtract(1, 'month'))}
+                    className="h-10 rounded-lg"
+                    disabled={loading || isFetching}
                   >
-                    <ChevronLeft size={16} />
+                    <Download className="h-4 w-4" />
+                    {loading ? 'Génération…' : `Télécharger${pagesLabel}`}
                   </Button>
-                  <Button
-                    variant="icon"
-                    size="icon-md"
-                    className="h-7 w-7 hover:bg-muted"
-                    aria-label="Mois suivant"
-                    onClick={() => setMonth(month.add(1, 'month'))}
-                  >
-                    <ChevronRight size={16} />
-                  </Button>
-                </span>
-              </div>
-              <div
-                className={cn(
-                  'grid pb-1 text-xs text-[#94a3b8]',
-                  CALENDAR_COLUMNS,
                 )}
-              >
-                <span />
-                {WEEKDAYS.map(([key, label]) => (
-                  <span key={key} className="text-center">
-                    {label}
+              </PDFDownloadLink>
+            )}
+          </div>
+
+          <div className="grid flex-1 min-h-0 grid-cols-[480px_minmax(0,1fr)]">
+            <aside className="flex min-w-0 flex-col gap-4 overflow-y-auto border-r border-border px-5 py-[18px]">
+              <div className="grid grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] items-center gap-2">
+                <div className="flex flex-col gap-1 rounded-lg border-[1.5px] border-primary bg-blue-50 px-3 py-2.5 text-primary-dark">
+                  <span className="text-xs">Du</span>
+                  <span className="text-sm font-semibold">
+                    S{weekLabelOf(weekStart, planningCycle)} ·{' '}
+                    {weekStart.format('dddd D MMM')}
                   </span>
-                ))}
-                <span className="pr-2 text-right">PDF</span>
+                </div>
+                <ArrowRight
+                  size={18}
+                  className="justify-self-center text-[#94a3b8]"
+                />
+                <div className="flex flex-col gap-1 rounded-lg bg-muted px-3 py-2.5">
+                  <span className="text-xs text-text-light">Au</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    S{weekLabelOf(lastWeekStart, planningCycle)} ·{' '}
+                    {lastWeekEnd.format('dddd D MMM')}
+                  </span>
+                </div>
               </div>
-              {mondays.map((monday) => {
-                const index = monday.diff(weekStart, 'week')
-                return (
-                  <ExportWeekRow
-                    key={monday.format('YYYY-MM-DD')}
-                    monday={monday}
-                    month={month}
-                    label={weekLabelOf(monday, planningCycle)}
-                    pageIndex={index >= 0 && index < weekCount ? index : null}
-                    isLast={index === weekCount - 1}
-                    isShown={index === shownPage}
-                    isClosed={closedWeekKeys.has(monday.format('YYYY-MM-DD'))}
-                    onPick={() => handlePickWeek(monday)}
-                  />
-                )
-              })}
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-text-dark">
-                Parcours à inclure
-              </span>
-              <PathwayPicker
-                items={pathwayItems}
-                excludedIds={excludedPathwayIds}
-                onToggle={handleTogglePathway}
-                onSelectAll={handleSelectAllPathways}
-                onClear={handleClearPathways}
-              />
-            </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-text-dark">
+                  Durée
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex h-8 items-center rounded-full border border-border">
+                    <button
+                      type="button"
+                      aria-label="Retirer une semaine"
+                      disabled={weekCount <= MIN_WEEK_COUNT}
+                      onClick={() =>
+                        setWeekCount((n) => Math.max(MIN_WEEK_COUNT, n - 1))
+                      }
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="min-w-16 text-center text-[13px] font-semibold tabular-nums text-foreground">
+                      {weekCount} sem.
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Ajouter une semaine"
+                      disabled={weekCount >= MAX_WEEK_COUNT}
+                      onClick={() =>
+                        setWeekCount((n) => Math.min(MAX_WEEK_COUNT, n + 1))
+                      }
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  {quickCounts.map(({ count, label }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      aria-pressed={count === weekCount}
+                      onClick={() => setWeekCount(count)}
+                      className={cn(
+                        'h-[30px] cursor-pointer whitespace-nowrap rounded-full border px-[9px] text-[13px] font-medium',
+                        count === weekCount
+                          ? 'border-primary bg-blue-50 text-primary-dark'
+                          : 'border-border text-text-dark hover:bg-muted',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            <p className="m-0 text-[13px] leading-normal text-text-dark">
-              {noneIncluded
-                ? 'Choisissez au moins un parcours.'
-                : `Du ${weekStart.format('DD/MM')} au ${lastWeekEnd.format('DD/MM')} : ${weekCount} page${weekCount > 1 ? 's' : ''} paysage, ${slotCount} créneau${slotCount > 1 ? 'x' : ''}${allIncluded ? '' : `, ${includedPathways.length} parcours sur ${pathwayItems.length}`}.`}
-            </p>
-          </aside>
+              <div className="flex flex-col gap-1 rounded-[10px] border border-border px-3 pt-2.5 pb-3">
+                <div className="flex items-center justify-between px-0.5 pb-1.5">
+                  <span className="text-[15px] font-semibold text-foreground capitalize">
+                    {month.format('MMMM YYYY')}
+                  </span>
+                  <span className="flex gap-1">
+                    <Button
+                      variant="icon"
+                      size="icon-md"
+                      className="h-7 w-7 hover:bg-muted"
+                      aria-label="Mois précédent"
+                      onClick={() => setMonth(month.subtract(1, 'month'))}
+                    >
+                      <ChevronLeft size={16} />
+                    </Button>
+                    <Button
+                      variant="icon"
+                      size="icon-md"
+                      className="h-7 w-7 hover:bg-muted"
+                      aria-label="Mois suivant"
+                      onClick={() => setMonth(month.add(1, 'month'))}
+                    >
+                      <ChevronRight size={16} />
+                    </Button>
+                  </span>
+                </div>
+                <div
+                  className={cn(
+                    'grid pb-1 text-xs text-[#94a3b8]',
+                    CALENDAR_COLUMNS,
+                  )}
+                >
+                  <span />
+                  {WEEKDAYS.map(([key, label]) => (
+                    <span key={key} className="text-center">
+                      {label}
+                    </span>
+                  ))}
+                  <span className="pr-2 text-right">PDF</span>
+                </div>
+                {mondays.map((monday) => {
+                  const index = monday.diff(weekStart, 'week')
+                  return (
+                    <ExportWeekRow
+                      key={monday.format('YYYY-MM-DD')}
+                      monday={monday}
+                      month={month}
+                      label={weekLabelOf(monday, planningCycle)}
+                      pageIndex={index >= 0 && index < weekCount ? index : null}
+                      isLast={index === weekCount - 1}
+                      isShown={index === shownPage}
+                      isClosed={closedWeekKeys.has(monday.format('YYYY-MM-DD'))}
+                      onPick={() => handlePickWeek(monday)}
+                    />
+                  )
+                })}
+              </div>
 
-          <div className="flex min-w-0 flex-col bg-muted">
-            <div className="flex h-12 shrink-0 items-center justify-center gap-2.5 border-b border-border bg-white">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg disabled:opacity-40"
-                aria-label="Page précédente"
-                disabled={shownPage === 0}
-                onClick={() => setPage(shownPage - 1)}
-              >
-                <ChevronLeft size={16} />
-              </Button>
-              <span className="min-w-[120px] text-center text-sm font-semibold tabular-nums text-foreground">
-                Page {shownPage + 1} sur {weekCount}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-lg disabled:opacity-40"
-                aria-label="Page suivante"
-                disabled={shownPage >= weekCount - 1}
-                onClick={() => setPage(shownPage + 1)}
-              >
-                <ChevronRight size={16} />
-              </Button>
-            </div>
-            <div className="flex min-h-0 flex-1 items-center justify-center p-6 [container-type:size]">
-              {/* Une seule semaine : la barre maison et le calendrier pilotent la page. */}
-              <div className="aspect-[297/210] w-[min(100cqw,calc(100cqh*297/210))] bg-white shadow-[0_4px_18px_rgba(4,24,43,.12)]">
-                <PDFViewer width="100%" height="100%" showToolbar={false}>
-                  {previewDocument}
-                </PDFViewer>
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-text-dark">
+                  Parcours à inclure
+                </span>
+                <PathwayPicker
+                  items={pathwayItems}
+                  excludedIds={excludedPathwayIds}
+                  onToggle={handleTogglePathway}
+                  onSelectAll={handleSelectAllPathways}
+                  onClear={handleClearPathways}
+                />
+              </div>
+
+              <p className="m-0 text-[13px] leading-normal text-text-dark">
+                {noneIncluded
+                  ? 'Choisissez au moins un parcours.'
+                  : `Du ${weekStart.format('DD/MM')} au ${lastWeekEnd.format('DD/MM')} : ${weekCount} page${weekCount > 1 ? 's' : ''} paysage, ${slotCount} créneau${slotCount > 1 ? 'x' : ''}${allIncluded ? '' : `, ${includedPathways.length} parcours sur ${pathwayItems.length}`}.`}
+              </p>
+            </aside>
+
+            <div className="flex min-w-0 flex-col bg-muted">
+              <div className="flex h-12 shrink-0 items-center justify-center gap-2.5 border-b border-border bg-white">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg disabled:opacity-40"
+                  aria-label="Page précédente"
+                  disabled={shownPage === 0}
+                  onClick={() => setPage(shownPage - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="min-w-[120px] text-center text-sm font-semibold tabular-nums text-foreground">
+                  Page {shownPage + 1} sur {weekCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg disabled:opacity-40"
+                  aria-label="Page suivante"
+                  disabled={shownPage >= weekCount - 1}
+                  onClick={() => setPage(shownPage + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+              <div className="flex min-h-0 flex-1 items-center justify-center p-6 [container-type:size]">
+                {/* Une seule semaine : la barre maison et le calendrier pilotent la page. */}
+                <div className="aspect-[297/210] w-[min(100cqw,calc(100cqh*297/210))] bg-white shadow-[0_4px_18px_rgba(4,24,43,.12)]">
+                  <PDFViewer width="100%" height="100%" showToolbar={false}>
+                    {previewDocument}
+                  </PDFViewer>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
 
