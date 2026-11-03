@@ -8,6 +8,7 @@ import { AppointmentApi } from '../../../../api/appointment.api.ts'
 import { APPOINTMENT, SLOT } from '../../../../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../../../../constants/ui.constant.ts'
 import { useToast } from '../../../../hooks/useToast.ts'
+import { getContrastTextColor } from '../../../../libs/color.ts'
 import { buildCalendarEventsFromSlots } from '../../../../libs/utils.ts'
 import { useAppointmentMutations } from '../../../../queries/useAppointment.ts'
 import { usePathwayTemplateQueries } from '../../../../queries/usePathwayTemplate.ts'
@@ -115,6 +116,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
         )
         const thematic =
           apt?.thematic || slot.slotTemplate?.thematic || 'Rendez-vous'
+        const color = slot.slotTemplate?.color ?? '#2563eb'
         const soignantsLabel = slot.slotTemplate?.soignants?.length
           ? slot.slotTemplate.soignants.map((s) => s.name).join(', ')
           : ''
@@ -123,8 +125,8 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
           title: soignantsLabel || thematic,
           start: apt?.startDate ?? slot.startDate,
           end: apt?.endDate ?? slot.endDate,
-          backgroundColor: slot.slotTemplate?.color,
-          borderColor: slot.slotTemplate?.color,
+          color,
+          contrastColor: getContrastTextColor(color),
           extendedProps: {
             type: 'appointment',
             thematic: soignantsLabel ? thematic : undefined,

@@ -38,10 +38,7 @@ function LocationFilter({
   ]
 
   const hiddenCount = hiddenIds.size
-  const triggerLabel =
-    hiddenCount > 0
-      ? `Salles · ${hiddenCount} masquée${hiddenCount > 1 ? 's' : ''}`
-      : 'Salles'
+  const visibleCount = filters.filter((filter) => filter.checked).length
 
   const headerAction: DropdownFilterAction =
     hiddenCount > 0
@@ -52,7 +49,10 @@ function LocationFilter({
     <DropdownFilter
       filters={filters}
       onFilterChange={onToggle}
-      triggerLabel={triggerLabel}
+      triggerLabel="Salles"
+      actif={hiddenCount > 0}
+      compteur={visibleCount}
+      titreCompteur={`${visibleCount} affiché${visibleCount > 1 ? 's' : ''} sur ${filters.length}`}
       TriggerIcon={DoorOpen}
       headerAction={headerAction}
     />

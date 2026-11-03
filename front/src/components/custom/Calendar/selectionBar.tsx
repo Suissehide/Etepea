@@ -10,18 +10,15 @@ export const BAR_BUTTON =
 export const MENU_ITEM =
   'flex h-[38px] cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-sm text-foreground outline-none select-none data-highlighted:bg-[#f8fafc]'
 
-export function SelectAllButton({
+/** Cmd+A sélectionne tous les `events`, hors champ de saisie et modale. */
+export function SelectAllShortcut({
   events,
-  hidden,
-  selectedIds,
+  disabled: hidden,
   onSelectAll,
-  onClear,
 }: {
   events: CalendarEvent[]
-  hidden: boolean
-  selectedIds: Set<string>
+  disabled: boolean
   onSelectAll: (ids: string[]) => void
-  onClear: () => void
 }) {
   const disabled = hidden || events.length === 0
   const selectAll = useCallback(
@@ -52,20 +49,46 @@ export function SelectAllButton({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [disabled, selectAll])
 
-  if (disabled) {
+  return null
+}
+
+/** Bouton « Tout sélectionner », doublé du raccourci Cmd+A. */
+export function SelectAllButton({
+  events,
+  hidden,
+  selectedIds,
+  onSelectAll,
+  onClear,
+}: {
+  events: CalendarEvent[]
+  hidden: boolean
+  selectedIds: Set<string>
+  onSelectAll: (ids: string[]) => void
+  onClear: () => void
+}) {
+  if (hidden || events.length === 0) {
     return null
   }
   const allSelected = events.every((event) => selectedIds.has(event.id))
   return (
-    <Button
-      variant="outline"
-      className="font-normal rounded-lg"
-      title="Cmd+A"
-      onClick={allSelected ? onClear : selectAll}
-    >
-      {allSelected ? <Square size={16} /> : <CheckSquare size={16} />}
-      {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
-    </Button>
+    <>
+      <SelectAllShortcut
+        events={events}
+        disabled={false}
+        onSelectAll={onSelectAll}
+      />
+      <Button
+        variant="outline"
+        className="font-normal rounded-lg"
+        title="Cmd+A"
+        onClick={
+          allSelected ? onClear : () => onSelectAll(events.map((e) => e.id))
+        }
+      >
+        {allSelected ? <Square size={16} /> : <CheckSquare size={16} />}
+        {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+      </Button>
+    </>
   )
 }
 
