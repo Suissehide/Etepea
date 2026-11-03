@@ -21,6 +21,7 @@ import {
   Printer,
   RefreshCw,
   Settings2,
+  Square,
   Trash2,
   X,
 } from 'lucide-react'
@@ -31,6 +32,7 @@ import { BarreCalendrier } from '@/components/custom/Calendar/barreCalendrier.ts
 import Calendar, {
   type CalendarEvent,
 } from '@/components/custom/Calendar/calendar.tsx'
+import { CHAMPS_DE_SAISIE } from '@/components/custom/pdf-design/editor/raccourcis.ts'
 import LocationFilter, {
   NO_LOCATION_KEY,
 } from '@/components/custom/planning/locationFilter.tsx'
@@ -293,9 +295,9 @@ function Planning() {
     })
   }, [])
 
-  const handleSelectAll = (ids: string[]) => {
+  const handleSelectAll = useCallback((ids: string[]) => {
     setSelectedSlotIds((prev) => new Set([...prev, ...ids]))
-  }
+  }, [])
 
   const handleClearSelection = useCallback(() => {
     setSelectedSlotIds(new Set())
@@ -877,7 +879,9 @@ function Planning() {
             <SelectAllButton
               events={mergedEvents}
               hidden={view !== 'calendar'}
+              selectedIds={selectedSlotIds}
               onSelectAll={handleSelectAll}
+              onClear={handleClearSelection}
             />
             {!editMode && (
               <>
@@ -1239,23 +1243,58 @@ type PathwayDeleteTarget = {
 function SelectAllButton({
   events,
   hidden,
+  selectedIds,
   onSelectAll,
+  onClear,
 }: {
   events: CalendarEvent[]
   hidden: boolean
+  selectedIds: Set<string>
   onSelectAll: (ids: string[]) => void
+  onClear: () => void
 }) {
-  if (hidden || events.length === 0) {
+  const disabled = hidden || events.length === 0
+  const selectAll = useCallback(
+    () => onSelectAll(events.map((event) => event.id)),
+    [events, onSelectAll],
+  )
+
+  useEffect(() => {
+    if (disabled) {
+      return
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      // Dans un champ ou une modale, Cmd+A garde son sens habituel.
+      if (
+        !(event.metaKey || event.ctrlKey) ||
+        event.key.toLowerCase() !== 'a' ||
+        CHAMPS_DE_SAISIE.includes(target.tagName) ||
+        target.isContentEditable ||
+        target.closest('[role="dialog"]')
+      ) {
+        return
+      }
+      event.preventDefault()
+      selectAll()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [disabled, selectAll])
+
+  if (disabled) {
     return null
   }
+  const allSelected = events.every((event) => selectedIds.has(event.id))
   return (
     <Button
       variant="outline"
       className="font-normal rounded-lg"
-      onClick={() => onSelectAll(events.map((event) => event.id))}
+      title="Cmd+A"
+      onClick={allSelected ? onClear : selectAll}
     >
-      <CheckSquare size={16} />
-      Tout sélectionner
+      {allSelected ? <Square size={16} /> : <CheckSquare size={16} />}
+      {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
     </Button>
   )
 }
