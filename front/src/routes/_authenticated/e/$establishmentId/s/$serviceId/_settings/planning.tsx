@@ -1334,9 +1334,9 @@ function SelectionBar({
       </div>
 
       <Button
-        variant="ghost"
+        variant="gradient"
         size="sm"
-        className="ml-auto text-text-sidebar hover:bg-sidebar hover:text-text"
+        className="ml-auto"
         onClick={onClear}
       >
         <X className="h-4 w-4" />
