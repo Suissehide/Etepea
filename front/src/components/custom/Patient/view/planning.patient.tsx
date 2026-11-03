@@ -412,40 +412,6 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
 
   return (
     <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col mt-4">
-      {/* Pose sur la ligne de la barre d'outils du calendrier, qui lui reserve sa largeur a
-          droite (16rem de Select + 0.5rem, plus le bouton Tout sélectionner) : FullCalendar rend cette barre lui-meme, et greffer
-          le Select dans son DOM — ou reecrire titre et navigation a la main — couterait bien plus
-          que ces deux regles. */}
-      <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
-        <SelectAllButton
-          events={visibleAppointmentEvents}
-          hidden={!!selectedTag}
-          selectedIds={selectedIds}
-          onSelectAll={selectAll}
-          onClear={clearSelection}
-        />
-        <div className="w-64">
-          <Select
-            searchable
-            value={selectedTag}
-            onValueChange={(tag) => {
-              clearSelection()
-              setSelectedTag(tag)
-            }}
-            placeholder="Afficher les créneaux par tag"
-            options={[
-              { value: '__all__', label: 'Tout afficher', group: 'all' },
-              ...allTags.map(({ tag, colors }) => ({
-                value: tag,
-                label: tag,
-                color: colors,
-                group: 'tags',
-              })),
-            ]}
-          />
-        </div>
-      </div>
-
       <div className="flex-1 min-h-0 overflow-hidden">
         {slots && (
           <Calendar
@@ -481,7 +447,42 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
             saveDates={false}
             showSecondaryTags={false}
             barre="navigation"
-            classeBarre={selectedTag ? 'px-0 pr-[16.5rem]' : 'px-0 pr-[28rem]'}
+            classeBarre="px-0"
+            filtresBarre={
+              <>
+                <SelectAllButton
+                  events={visibleAppointmentEvents}
+                  hidden={!!selectedTag}
+                  selectedIds={selectedIds}
+                  onSelectAll={selectAll}
+                  onClear={clearSelection}
+                />
+                <div className="w-64">
+                  <Select
+                    searchable
+                    value={selectedTag}
+                    onValueChange={(tag) => {
+                      clearSelection()
+                      setSelectedTag(tag)
+                    }}
+                    placeholder="Afficher les créneaux par tag"
+                    options={[
+                      {
+                        value: '__all__',
+                        label: 'Tout afficher',
+                        group: 'all',
+                      },
+                      ...allTags.map(({ tag, colors }) => ({
+                        value: tag,
+                        label: tag,
+                        color: colors,
+                        group: 'tags',
+                      })),
+                    ]}
+                  />
+                </div>
+              </>
+            }
           />
         )}
       </div>

@@ -147,9 +147,9 @@ interface CalendarProps {
   selectAllow?: (selectInfo: DateSpanApi, eventId: string) => boolean
   editMode?: boolean
   /** complete : vues, aujourd'hui, date ; navigation : sans les vues ; minimale : précédent/suivant. */
-  barre?: 'complete' | 'navigation' | 'minimale' | 'planning'
+  barre?: 'complete' | 'navigation' | 'minimale'
   classeBarre?: string
-  /** Rendus dans la barre, entre le titre et les vues (barre planning). */
+  /** Rendus dans la barre, entre le titre et les vues. */
   filtresBarre?: React.ReactNode
   editable?: boolean
   /** false : les créneaux simultanés se partagent la colonne au lieu de se recouvrir. */
@@ -426,7 +426,7 @@ function Calendar({
       <BarreCalendrier
         controller={controller}
         vues={
-          barre === 'complete' || barre === 'planning'
+          barre === 'complete'
             ? [
                 { type: 'timeGridWeek' },
                 { type: 'timeGridDay' },
@@ -437,7 +437,6 @@ function Calendar({
         aujourdhui={barre !== 'minimale'}
         onChoisirDate={barre === 'minimale' ? undefined : setAnchorEl}
         className={classeBarre}
-        disposition={barre === 'planning' ? 'planning' : undefined}
         filtres={filtresBarre}
       />
       <FullCalendar

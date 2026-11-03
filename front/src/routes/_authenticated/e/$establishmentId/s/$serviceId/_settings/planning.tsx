@@ -922,7 +922,7 @@ function Planning() {
         forbiddenWeeks: forbiddenWeekList,
         weekAnchorDate: undefined,
         planningCycle,
-        barre: 'planning' as const,
+        barre: 'complete' as const,
         filtresBarre: (
           <>
             {pathwayFilter}
@@ -1375,7 +1375,6 @@ function PlanningTimeline({
           { type: 'multiMonthYear', libelle: 'Grille' },
           { type: 'dayGridYear', libelle: 'Liste' },
         ]}
-        disposition="planning"
         filtres={filtres}
       />
       <FullCalendar

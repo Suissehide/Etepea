@@ -324,6 +324,7 @@ function Dashboard() {
               initialDate={savedDate}
               initialView={initialView}
               planningCycle={planningCycle}
+              classeBarre="px-6"
               onViewChange={(view) =>
                 localStorage.setItem(VIEW_STORAGE_KEY, view)
               }
