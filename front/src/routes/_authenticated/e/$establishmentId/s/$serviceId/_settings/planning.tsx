@@ -945,20 +945,16 @@ function Planning() {
     <DashboardLayout
       components={['pathway']}
       quickActions={[
-        <Button
+        <ForbiddenWeekModeButton
           key="forbidden-week-mode"
-          variant="gradient"
-          className={`w-full transition duration-200
-            ${isForbiddenWeekMode ? 'border border-border-dark' : ''}`}
+          active={isForbiddenWeekMode}
           onClick={() => {
             if (view !== 'timeline') {
               setView('timeline')
             }
             setIsForbiddenWeekMode((prev) => !prev)
           }}
-        >
-          Planifier semaines interdites
-        </Button>,
+        />,
       ]}
     >
       <div className="relative flex-1 bg-background rounded-lg flex flex-col w-full">
@@ -1345,6 +1341,26 @@ type PathwayDeleteTarget = {
 const MORE_ITEM =
   'flex cursor-pointer gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none select-none data-highlighted:bg-[#f8fafc]'
 
+function ForbiddenWeekModeButton({
+  active,
+  onClick,
+}: {
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <Button
+      variant={active ? 'destructive' : 'gradient'}
+      className="w-full transition duration-200"
+      onClick={onClick}
+    >
+      {active
+        ? 'Terminer les semaines interdites'
+        : 'Planifier semaines interdites'}
+    </Button>
+  )
+}
+
 function PlanningTimeline({
   controller,
   filtres,
@@ -1377,6 +1393,12 @@ function PlanningTimeline({
         ]}
         filtres={filtres}
       />
+      {isForbiddenWeekMode && (
+        <p className="mx-7 mb-3 rounded-md bg-red-100 px-3 py-2 text-sm text-red-700">
+          Ajout de semaines interdites : cliquez sur une semaine pour
+          l'interdire ou la rétablir.
+        </p>
+      )}
       <FullCalendar
         controller={controller}
         plugins={[
