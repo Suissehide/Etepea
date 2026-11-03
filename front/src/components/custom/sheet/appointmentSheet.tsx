@@ -283,7 +283,7 @@ export default function AppointmentSheet({
                     placeholder={
                       thematicOptions.length === 0
                         ? 'Aucune sous-thématique associée'
-                        : 'Sélectionnez une sous-thématique'
+                        : ''
                     }
                   />
                 )}
