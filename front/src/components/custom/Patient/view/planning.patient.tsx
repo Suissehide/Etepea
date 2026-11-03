@@ -1,9 +1,13 @@
 import type { DateSelectInfo } from '@fullcalendar/react'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
+import { MailCheck, UserMinus } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { SLOT } from '../../../../constants/process.constant.ts'
+import { AppointmentApi } from '../../../../api/appointment.api.ts'
+import { APPOINTMENT, SLOT } from '../../../../constants/process.constant.ts'
+import { TOAST_SEVERITY } from '../../../../constants/ui.constant.ts'
+import { useToast } from '../../../../hooks/useToast.ts'
 import { buildCalendarEventsFromSlots } from '../../../../libs/utils.ts'
 import { useAppointmentMutations } from '../../../../queries/useAppointment.ts'
 import { usePathwayTemplateQueries } from '../../../../queries/usePathwayTemplate.ts'
@@ -19,7 +23,13 @@ import type { Soignant } from '../../../../types/soignant.ts'
 import { Select } from '../../../ui/select.tsx'
 import type { CalendarEvent } from '../../Calendar/calendar.tsx'
 import Calendar from '../../Calendar/calendar.tsx'
+import {
+  BAR_BUTTON,
+  SelectAllButton,
+  SelectionBar,
+} from '../../Calendar/selectionBar.tsx'
 import AddAppointmentForm from '../../popup/addAppointmentForm.tsx'
+import { ConfirmDeleteForm } from '../../popup/confirmDeleteForm.tsx'
 import AppointmentSheet from '../../sheet/appointmentSheet.tsx'
 
 interface PlanningPatientProps {
@@ -116,6 +126,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
           backgroundColor: slot.slotTemplate?.color,
           borderColor: slot.slotTemplate?.color,
           extendedProps: {
+            type: 'appointment',
             thematic: soignantsLabel ? thematic : undefined,
           },
         }
@@ -208,7 +219,104 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
     return [...availableEvents, ...appointmentsOutsideTag]
   }, [selectedTag, availableEvents, appointmentEvents, slots])
 
+  // Sélection des rendez-vous du patient, hors mode inscription (tag choisi).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [confirmUnenroll, setConfirmUnenroll] = useState(false)
+  const [bulkPending, setBulkPending] = useState(false)
+  const { toast } = useToast()
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
+  const toggleSelect = useCallback((eventId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(eventId)) {
+        next.add(eventId)
+      }
+      return next
+    })
+  }, [])
+  const selectAll = useCallback((ids: string[]) => {
+    setSelectedIds((prev) => new Set([...prev, ...ids]))
+  }, [])
+  const visibleAppointmentEvents = useMemo(
+    () =>
+      visibleRange
+        ? appointmentEvents.filter(
+            (event) =>
+              event.start >= visibleRange.from && event.start < visibleRange.to,
+          )
+        : [],
+    [appointmentEvents, visibleRange],
+  )
+
+  // Chaque rendez-vous sélectionné, avec la ligne du patient et celles des autres.
+  const selectedAppointments = () =>
+    [...selectedIds].flatMap((eventId) => {
+      const appointmentId = eventId.replace('apt_', '')
+      const appointment = slots
+        ?.flatMap((slot) => slot.appointments ?? [])
+        .find((a) => a.id === appointmentId)
+      const own = appointment?.appointmentPatients?.find(
+        (ap) => ap.patient.id === patient?.id,
+      )
+      return appointment && own ? [{ appointment, own }] : []
+    })
+
+  const runBulk = async (
+    action: (
+      item: ReturnType<typeof selectedAppointments>[number],
+    ) => Promise<unknown>,
+    successTitle: string,
+  ) => {
+    setBulkPending(true)
+    const results = await Promise.allSettled(selectedAppointments().map(action))
+    setBulkPending(false)
+    await queryClient.invalidateQueries({ queryKey: [SLOT.GET_ALL] })
+    await queryClient.invalidateQueries({ queryKey: [APPOINTMENT.GET_ALL] })
+    const failed = results.filter((r) => r.status === 'rejected').length
+    toast(
+      failed
+        ? {
+            title: `${failed} rendez-vous n'ont pas pu être modifiés`,
+            severity: TOAST_SEVERITY.ERROR,
+          }
+        : { title: successTitle, severity: TOAST_SEVERITY.SUCCESS },
+    )
+    clearSelection()
+  }
+
+  const handleConvocationSent = () =>
+    runBulk(
+      ({ appointment, own }) =>
+        AppointmentApi.setConvocationSent({
+          appointmentID: appointment.id,
+          appointmentPatientID: own.id ?? '',
+          convocationSent: true,
+        }),
+      'Convocations marquées envoyées',
+    )
+
+  // Les autres patients restent inscrits ; sans eux, le back supprime le rendez-vous.
+  const handleUnenroll = async () => {
+    await runBulk(
+      ({ appointment, own }) =>
+        AppointmentApi.update({
+          id: appointment.id,
+          appointmentPatients: appointment.appointmentPatients
+            .filter((ap) => ap.id !== own.id)
+            .map((ap) => ({ id: ap.id, patientID: ap.patient.id })),
+        }),
+      'Patient désinscrit',
+    )
+    setConfirmUnenroll(false)
+  }
+
   const handleClickCalendarEvent = (eventId: string) => {
+    if (selectedIds.size > 0) {
+      if (eventId.startsWith('apt_')) {
+        toggleSelect(eventId)
+      }
+      return
+    }
     if (eventId.startsWith('apt_')) {
       handleClickAppointmentEvent(eventId)
     } else {
@@ -303,15 +411,25 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
   return (
     <div className="relative flex-1 min-h-0 overflow-hidden flex flex-col mt-4">
       {/* Pose sur la ligne de la barre d'outils du calendrier, qui lui reserve sa largeur a
-          droite (16rem de Select + 0.5rem) : FullCalendar rend cette barre lui-meme, et greffer
+          droite (16rem de Select + 0.5rem, plus le bouton Tout sélectionner) : FullCalendar rend cette barre lui-meme, et greffer
           le Select dans son DOM — ou reecrire titre et navigation a la main — couterait bien plus
           que ces deux regles. */}
       <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
+        <SelectAllButton
+          events={visibleAppointmentEvents}
+          hidden={!!selectedTag}
+          selectedIds={selectedIds}
+          onSelectAll={selectAll}
+          onClear={clearSelection}
+        />
         <div className="w-64">
           <Select
             searchable
             value={selectedTag}
-            onValueChange={setSelectedTag}
+            onValueChange={(tag) => {
+              clearSelection()
+              setSelectedTag(tag)
+            }}
             placeholder="Afficher les créneaux par tag"
             options={[
               { value: '__all__', label: 'Tout afficher', group: 'all' },
@@ -354,15 +472,54 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
                   }
                 : undefined
             }
+            selectedSlotIds={selectedTag ? undefined : selectedIds}
+            onToggleSelect={selectedTag ? undefined : toggleSelect}
             unselectRef={calendarUnselectRef}
             onRangeChange={handleRangeChange}
             saveDates={false}
             showSecondaryTags={false}
             barre="navigation"
-            classeBarre="px-0 pr-[16.5rem]"
+            classeBarre={selectedTag ? 'px-0 pr-[16.5rem]' : 'px-0 pr-[28rem]'}
           />
         )}
       </div>
+
+      {selectedIds.size > 0 && (
+        <SelectionBar
+          count={selectedIds.size}
+          onDelete={() => setConfirmUnenroll(true)}
+          onClear={clearSelection}
+        >
+          <button
+            type="button"
+            className={BAR_BUTTON}
+            disabled={bulkPending}
+            onClick={handleConvocationSent}
+          >
+            <MailCheck size={16} />
+            Convocation envoyée
+          </button>
+          <button
+            type="button"
+            className={BAR_BUTTON}
+            onClick={() => setConfirmUnenroll(true)}
+          >
+            <UserMinus size={16} />
+            Désinscrire
+          </button>
+        </SelectionBar>
+      )}
+
+      <ConfirmDeleteForm
+        open={confirmUnenroll}
+        setOpen={setConfirmUnenroll}
+        onConfirm={handleUnenroll}
+        loading={bulkPending}
+        title="Désinscrire le patient"
+        description={`Désinscrire ${patient?.firstName ?? ''} ${patient?.lastName ?? ''} de ${selectedIds.size} rendez-vous ? Les autres patients restent inscrits ; un rendez-vous sans patient est supprimé.`}
+        confirmLabel="Désinscrire"
+        confirmLoadingLabel="Désinscription..."
+      />
 
       {openCreateAppointmentModal && (
         <AddAppointmentForm

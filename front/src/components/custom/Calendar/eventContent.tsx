@@ -90,7 +90,7 @@ export const EventContent = ({
     'individual',
     'multiple',
   ])
-  const isSlotOrTemplate = type === 'slot' || type === 'template'
+  const isSelectable = ['slot', 'template', 'appointment'].includes(type ?? '')
   const openAppointment = (appointment: Appointment) =>
     setOpenEventId?.(`appointment_${appointment.id}`)
 
@@ -110,7 +110,7 @@ export const EventContent = ({
       )}
       style={slotStyle(event)}
     >
-      {onToggleSelect && isSlotOrTemplate && !isEditable && (
+      {onToggleSelect && isSelectable && !isEditable && (
         <SelectToggle
           isSelected={isSelected}
           isSelectionMode={Boolean(isSelectionMode)}
