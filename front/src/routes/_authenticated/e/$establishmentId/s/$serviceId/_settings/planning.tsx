@@ -43,6 +43,10 @@ import PlanningExportModal from '@/components/custom/planning/pdf/planning-expor
 import AddSlotForm from '@/components/custom/popup/addSlotForm.tsx'
 import { BulkDuplicateForm } from '@/components/custom/popup/bulkDuplicateForm.tsx'
 import { BulkMoveForm } from '@/components/custom/popup/bulkMoveForm.tsx'
+import {
+  BulkThematicTypeForm,
+  type ThematicTypeChanges,
+} from '@/components/custom/popup/bulkThematicTypeForm.tsx'
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import { CreateForbiddenWeekForm } from '@/components/custom/popup/createForbiddenWeekForm.tsx'
 import { DeleteForbiddenWeekForm } from '@/components/custom/popup/deleteForbiddenWeekForm.tsx'
@@ -92,6 +96,7 @@ import { usePathwayTemplateEditStore } from '@/store/usePathwayTemplateEditStore
 import { usePlanningStore } from '@/store/usePlanningStore.ts'
 import type {
   CreateSlotParamsWithTemplateData,
+  Slot,
   SlotDateRange,
 } from '@/types/slot.ts'
 import type { SlotTemplate } from '@/types/slotTemplate.ts'
@@ -141,6 +146,27 @@ const mondayOfViewedWeek = () => {
   return viewStart
     ? dayjs.utc(viewStart).isoWeekday(1)
     : dayjs.utc().isoWeekday(1)
+}
+
+type SelectedTemplate = { slotId?: string; template: SlotTemplate }
+
+// Le modèle de chaque événement sélectionné, avec l'id du créneau quand c'en est un.
+function selectionTemplates(
+  eventIds: string[],
+  slots: Slot[],
+  slotTemplates: SlotTemplate[],
+): SelectedTemplate[] {
+  return eventIds.flatMap((eventId): SelectedTemplate[] => {
+    const id = eventId.replace(/^.*?_/, '')
+    const slot = eventId.startsWith('slot_')
+      ? slots.find((s) => s.id === id)
+      : undefined
+    if (slot) {
+      return [{ slotId: id, template: slot.slotTemplate }]
+    }
+    const template = slotTemplates.find((t) => t.id === id)
+    return template ? [{ template }] : []
+  })
 }
 
 function Planning() {
@@ -282,6 +308,7 @@ function Planning() {
   const [moveTargetWeek, setMoveTargetWeek] = useState(1)
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
+  const [showThematicTypeModal, setShowThematicTypeModal] = useState(false)
 
   const handleToggleSelect = useCallback((eventId: string) => {
     setSelectedSlotIds((prev) => {
@@ -714,6 +741,32 @@ function Planning() {
     handleClearSelection()
   }
 
+  const selectedTemplates = () =>
+    selectionTemplates(
+      [...selectedSlotIds],
+      slots ?? [],
+      currentPathwayTemplate?.slotTemplates ?? [],
+    )
+
+  const handleBulkThematicType = (changes: ThematicTypeChanges) => {
+    for (const { slotId, template } of selectedTemplates()) {
+      if (slotId) {
+        updateSlot.mutate({
+          id: slotId,
+          slotTemplate: { id: template.id, ...changes },
+        })
+      } else {
+        updateSlotTemplate.mutate({ id: template.id, ...changes })
+      }
+    }
+    toast({
+      title: 'Créneaux modifiés',
+      message: `${selectedSlotIds.size} créneau(x) modifié(s)`,
+      severity: TOAST_SEVERITY.SUCCESS,
+    })
+    handleClearSelection()
+  }
+
   const openDuplicateModal = () => {
     if (editMode) {
       setDuplicateTargetWeek(1)
@@ -738,6 +791,8 @@ function Planning() {
       openDuplicateModal()
     } else if (v === 'move') {
       openMoveModal()
+    } else if (v === 'thematicType') {
+      setShowThematicTypeModal(true)
     } else if (v === 'delete') {
       setShowBulkDeleteModal(true)
     }
@@ -1037,6 +1092,20 @@ function Planning() {
           description="Voulez-vous vraiment supprimer ce créneau ? S'il porte des rendez-vous, il sera conservé plutôt que supprimé."
         />
 
+        <BulkThematicTypeForm
+          open={showThematicTypeModal}
+          setOpen={(open) => {
+            setShowThematicTypeModal(open)
+            if (!open) {
+              setBulkAction('')
+            }
+          }}
+          soignantIdsPerSlot={selectedTemplates().map(({ template }) =>
+            template.soignants.map((soignant) => soignant.id),
+          )}
+          onConfirm={handleBulkThematicType}
+        />
+
         <ConfirmDeleteForm
           open={showBulkDeleteModal}
           setOpen={(open) => {
@@ -1324,6 +1393,7 @@ function SelectionBar({
           options={[
             { value: 'duplicate', label: 'Dupliquer sur une semaine' },
             { value: 'move', label: 'Déplacer sur une semaine' },
+            { value: 'thematicType', label: 'Modifier thématique et type' },
             { value: 'delete', label: 'Supprimer la sélection' },
           ]}
           placeholder="Action..."
