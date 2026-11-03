@@ -360,7 +360,7 @@ function CycleWeekRow({
           </span>
         )
       })}
-      <span className="mr-2 justify-self-end">
+      <span className="mr-1 justify-self-end whitespace-nowrap">
         <span
           className={cn(
             'inline-flex items-center gap-1 rounded-lg px-[7px] py-0.5 text-[11px] font-bold',
