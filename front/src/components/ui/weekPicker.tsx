@@ -61,7 +61,7 @@ export function WeekDay(props: PickerDayProps & WeekDayExtraProps) {
     <PickerDay
       {...other}
       day={day}
-      selected={false}
+      selected={selectedWeekStart ? false : other.selected}
       sx={{
         '--PickerDay-horizontalMargin': '0px',
         borderRadius: 0,

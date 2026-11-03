@@ -689,6 +689,10 @@ function Calendar({
         onChange={handleDateChange}
         semaine={currentView.endsWith('Week')}
         cycle={planningCycle}
+        semainesInterdites={[
+          ...forbiddenWeeks.map((w) => w.startOfWeek),
+          ...(planningCycle?.forbiddenWeekStarts ?? []),
+        ]}
         value={
           anchorEl
             ? dayjs.utc(calendarRef.current?.getApi().getDate())

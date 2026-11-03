@@ -78,6 +78,8 @@ interface Props {
   semaine?: boolean
   /** Cycle du service, pour numéroter les semaines ; absent = numéros ISO. */
   cycle?: PlanningCycle | null
+  /** Débuts des semaines interdites, coloriées en rouge. */
+  semainesInterdites?: string[]
 }
 
 export default function CalendarDatePickerButton({
@@ -126,8 +128,14 @@ function Selecteur({
   value,
   semaine,
   cycle,
+  semainesInterdites = [],
 }: Omit<Props, 'anchorEl' | 'setAnchorEl'>) {
   const date = value ?? dayjs.utc()
+  const interdites = new Set(
+    semainesInterdites.map((d) =>
+      dayjs.utc(d).isoWeekday(1).format('YYYY-MM-DD'),
+    ),
+  )
   const [mois, setMois] = useState(date.startOf('month'))
   const [hoveredDay, setHoveredDay] = useState<Dayjs | null>(null)
 
@@ -146,18 +154,21 @@ function Selecteur({
         onMonthChange={setMois}
         displayWeekNumber
         sx={PICKER_SX}
-        {...(semaine && {
-          slots: { day: WeekDay as React.ComponentType<PickerDayProps> },
-          slotProps: {
-            day: ((ownerState: PickerDayProps) => ({
-              selectedWeekStart: date.isoWeekday(1),
-              hoveredWeekStart: hoveredDay?.isoWeekday(1) ?? null,
-              isForbidden: false,
-              onPointerEnter: () => setHoveredDay(ownerState.day),
-              onPointerLeave: () => setHoveredDay(null),
-            })) as never,
-          },
-        })}
+        slots={{ day: WeekDay as React.ComponentType<PickerDayProps> }}
+        slotProps={{
+          // Hors vue semaine, ni semaine sélectionnée ni survol : le jour sélectionné reste celui de MUI.
+          day: ((ownerState: PickerDayProps) => ({
+            selectedWeekStart: semaine ? date.isoWeekday(1) : null,
+            hoveredWeekStart: semaine
+              ? (hoveredDay?.isoWeekday(1) ?? null)
+              : null,
+            isForbidden: interdites.has(
+              ownerState.day.isoWeekday(1).format('YYYY-MM-DD'),
+            ),
+            onPointerEnter: () => setHoveredDay(ownerState.day),
+            onPointerLeave: () => setHoveredDay(null),
+          })) as never,
+        }}
       />
     </LocalizationProvider>
   )
