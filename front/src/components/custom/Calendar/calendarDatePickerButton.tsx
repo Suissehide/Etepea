@@ -4,7 +4,7 @@ import {
   type PickerDayProps,
 } from '@mui/x-date-pickers'
 import dayjs, { type Dayjs } from 'dayjs'
-import { type Dispatch, type SetStateAction, useState } from 'react'
+import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { PlanningCycle } from '../../../types/planningCycle.ts'
@@ -87,6 +87,22 @@ export default function CalendarDatePickerButton({
   setAnchorEl,
   ...props
 }: Props) {
+  const ouvert = !!anchorEl
+  // Échap ferme ; en capture, pour ne pas vider aussi la sélection du planning.
+  useEffect(() => {
+    if (!ouvert) {
+      return
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        setAnchorEl(null)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [ouvert, setAnchorEl])
+
   if (!anchorEl) {
     return null
   }
