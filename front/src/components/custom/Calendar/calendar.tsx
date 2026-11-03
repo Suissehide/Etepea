@@ -14,7 +14,14 @@ import breezyTheme from '@fullcalendar/react/themes/breezy'
 import timeGridPlugin from '@fullcalendar/react/timegrid'
 import dayjs, { type Dayjs } from 'dayjs'
 import { CalendarOff } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
 
 import { cn } from '../../../libs/utils.ts'
 import { usePlanningStore } from '../../../store/usePlanningStore.ts'
@@ -228,6 +235,14 @@ function Calendar({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [currentView, setCurrentView] = useState(initialView)
   const [currentViewStart, setCurrentViewStart] = useState<string>('')
+  // Le titre se recalcule au rendu de FullCalendar, après celui de la barre : un cycle chargé
+  // après le montage n'y apparaîtrait qu'au rendu suivant.
+  const [, rafraichirBarre] = useReducer((n: number) => n + 1, 0)
+  useEffect(() => {
+    if (planningCycle !== undefined) {
+      rafraichirBarre()
+    }
+  }, [planningCycle])
 
   const slotLayout = useMemo(
     () =>
