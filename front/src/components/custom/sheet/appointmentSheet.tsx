@@ -29,6 +29,7 @@ import {
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
 import type { UpdateAppointmentParams } from '../../../types/appointment.ts'
+import type { Pathway } from '../../../types/pathway.ts'
 import type { Soignant } from '../../../types/soignant.ts'
 import { Button } from '../../ui/button.tsx'
 import { FormField } from '../../ui/formField.tsx'
@@ -51,6 +52,11 @@ interface AppointmentSheetProps {
   soignants?: Soignant[]
   handleDeleteEvent?: (eventID: string) => void
 }
+
+const pathwayLabel = (pathway?: Pathway | null) =>
+  pathway
+    ? `${pathway.template?.name ?? 'Parcours'} du ${dayjs.utc(pathway.startDate).format('D MMMM YYYY')}`
+    : 'Hors parcours'
 
 export default function AppointmentSheet({
   open,
@@ -254,6 +260,14 @@ export default function AppointmentSheet({
               }}
               className="w-full flex-1 flex flex-col min-h-0 gap-3 px-4"
             >
+              <FormField>
+                <Label>Parcours</Label>
+                <Input
+                  value={pathwayLabel(appointment?.slot?.pathway)}
+                  disabled
+                />
+              </FormField>
+
               <FormField>
                 <Label>Soignants</Label>
                 <Input

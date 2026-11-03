@@ -43,11 +43,13 @@ const appointmentInclude = {
 // (slotTemplateID, serviceId), sûre également ; `soignantLinks.soignant`,
 // `location` et `thematic` sont sûres pour les raisons documentées dans
 // slot-template.include.ts (composite pour les liens soignants, scalaire à
-// un seul enregistrement pour location/thematic).
+// un seul enregistrement pour location/thematic). `pathway` et son `template` :
+// clés scalaires à un seul enregistrement, même raisonnement.
 const appointmentWithSlotInclude = {
   ...appointmentInclude,
   slot: {
     include: {
+      pathway: { include: { template: true } },
       slotTemplate: {
         include: { ...soignantLinksInclude, location: true, thematic: true },
       },
