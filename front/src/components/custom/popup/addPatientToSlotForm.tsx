@@ -12,7 +12,6 @@ import {
 import type React from 'react'
 import { useMemo, useState } from 'react'
 
-import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constant.ts'
 import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { useToast } from '../../../hooks/useToast.ts'
@@ -358,7 +357,7 @@ const roundDownToStep = (minutes: number) =>
   Math.max(15, Math.floor(minutes / 15) * 15)
 
 /**
- * Valeurs par défaut d'heure, de durée et de type pour un créneau choisi :
+ * Valeurs par défaut d'heure et de durée pour un créneau choisi :
  * on rejoint le rendez-vous collectif existant s'il y en a un, sinon on
  * propose l'intervalle libre (individuel) ou le créneau entier (collectif
  * vide).
@@ -381,7 +380,6 @@ const getSuggestionDefaults = (
           .utc(existing?.endDate ?? slot.endDate)
           .diff(dayjs.utc(existing?.startDate ?? slot.startDate), 'minute'),
       ).toString(),
-      appointmentType: existing?.type ?? '',
     }
   }
 
@@ -398,7 +396,6 @@ const getSuggestionDefaults = (
     return {
       startTime: intervalStart,
       duration: roundDownToStep(defaultDuration).toString(),
-      appointmentType: '',
     }
   }
 
@@ -408,7 +405,6 @@ const getSuggestionDefaults = (
     duration: roundDownToStep(
       dayjs.utc(slot.endDate).diff(dayjs.utc(slot.startDate), 'minute'),
     ).toString(),
-    appointmentType: '',
   }
 }
 
@@ -497,13 +493,12 @@ const resolveLiveJoinTarget = (
 
 /**
  * Charge utile d'`updateAppointment` pour rejoindre un rendez-vous collectif
- * existant : on conserve sa thématique et son type tels quels (pas de repli
- * sur ceux choisis dans la popup), et toutes ses inscriptions existantes.
+ * existant : on conserve sa thématique telle quelle (pas de repli
+ * sur celle choisie dans la popup), et toutes ses inscriptions existantes.
  */
 const buildJoinPayload = (target: Appointment, patientID: string) => ({
   id: target.id,
   thematicId: target.thematicId,
-  type: target.type,
   appointmentPatients: [
     ...buildExistingAppointmentPatients(target),
     { patientID },
@@ -645,7 +640,6 @@ function AddPatientToSlotContent({
     subThematicID: '',
     startTime: dayjs.utc(),
     duration: '',
-    appointmentType: '',
     motif: '',
   }))
 
@@ -768,7 +762,6 @@ function AddPatientToSlotContent({
     )
     form.setFieldValue('startTime', defaults.startTime)
     form.setFieldValue('duration', defaults.duration)
-    form.setFieldValue('appointmentType', defaults.appointmentType)
     form.setFieldValue('motif', '')
     form.setFieldValue('subThematicID', thematicID)
 
@@ -803,7 +796,6 @@ function AddPatientToSlotContent({
     startTime: Dayjs
     subThematicID: string
     duration: string
-    appointmentType: string
     motif: string
   }) {
     if (!selected || !value.patientID || isBlocked) {
@@ -846,7 +838,6 @@ function AddPatientToSlotContent({
         endDate: end.toISOString(),
         slotID: selected.slot.id,
         thematicId: value.subThematicID || value.thematicID,
-        type: value.appointmentType,
         // Le motif ne concerne que les créneaux individuels ; ailleurs le
         // champ n'est pas affiché et rien ne doit être enregistré.
         motif: selected.isIndividual ? value.motif.trim() : null,
@@ -1024,17 +1015,7 @@ function AddPatientToSlotContent({
           {!areTimeFieldsDisabled && (
             <>
               {subThematicField}
-              <div className="grid grid-cols-3 gap-3">
-                {timeFields}
-                <form.AppField name="appointmentType">
-                  {(field) => (
-                    <field.Select
-                      label="Type"
-                      options={APPOINTMENT_TYPE_OPTIONS}
-                    />
-                  )}
-                </form.AppField>
-              </div>
+              <div className="grid grid-cols-2 gap-3">{timeFields}</div>
 
               <form.Field name="motif">
                 {(field) => (
@@ -1059,20 +1040,8 @@ function AddPatientToSlotContent({
             </>
           )}
 
-          {/* Collectif encore vide : seul le type reste à choisir. */}
-          {areTimeFieldsDisabled && !isJoining && (
-            <>
-              {subThematicField}
-              <form.AppField name="appointmentType">
-                {(field) => (
-                  <field.Select
-                    label="Type"
-                    options={APPOINTMENT_TYPE_OPTIONS}
-                  />
-                )}
-              </form.AppField>
-            </>
-          )}
+          {/* Collectif encore vide : seule la sous-thématique reste à choisir. */}
+          {areTimeFieldsDisabled && !isJoining && subThematicField}
         </PopupBody>
       )}
 

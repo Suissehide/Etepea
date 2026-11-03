@@ -171,7 +171,7 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
     location: slot.slotTemplate?.location?.name ?? '',
     soignants: slot.slotTemplate?.soignants ?? [],
     patients: toRowPatients(appointments),
-    type: single?.type,
+    type: slot.slotTemplate?.type ?? undefined,
     isIndividual,
     capacity: slot.slotTemplate?.capacity ?? 1,
     canBook: bookable && hasSlotAvailability(slot),
@@ -203,7 +203,6 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
         thematic: appointment.thematic ?? row.thematic,
         thematicId: appointment.thematicId,
         patients: toRowPatients([appointment]),
-        type: appointment.type,
         canBook: false,
       })),
       ...getFreeIntervals(slot).map((interval) => ({

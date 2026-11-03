@@ -46,7 +46,6 @@ export const appointmentSchema = z.object({
   // `thematic` = nom (affichage) ; `thematicId` = FK (pré-sélection formulaire).
   thematic: thematicNameFromRelation,
   thematicId: cuid().nullish(),
-  type: appointmentTypeSchema,
   // Motif du rendez-vous — renseigné sur un créneau individuel uniquement.
   motif: z.string().trim().optional().nullable(),
 
@@ -83,6 +82,7 @@ export const slotTemplateSchema = z.object({
   description: z.string().optional().nullable(),
   color: z.string(),
   isIndividual: z.boolean(),
+  type: appointmentTypeSchema,
   capacity: z.number().optional().nullable(),
 
   get soignants() {

@@ -133,6 +133,7 @@ class PathwayTemplateRepository implements PathwayTemplateRepositoryInterface {
               endTime: st.endTime,
               offsetDays: st.offsetDays,
               isIndividual: st.isIndividual,
+              type: st.type,
               capacity: st.capacity,
               thematicId: st.thematicId,
               locationID: st.locationID,

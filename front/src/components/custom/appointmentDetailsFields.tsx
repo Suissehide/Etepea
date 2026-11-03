@@ -1,9 +1,7 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { ReactNode } from 'react'
 
-import { APPOINTMENT_TYPE_OPTIONS } from '../../constants/appointment.constant.ts'
 import { FormField } from '../ui/formField.tsx'
-import { Label } from '../ui/label.tsx'
 import { Select, type SelectOption } from '../ui/select.tsx'
 import { TimePicker } from '../ui/timePicker.tsx'
 
@@ -103,35 +101,5 @@ export function AppointmentTimeFields({
         </div>
       </FormField>
     </div>
-  )
-}
-
-interface AppointmentTypeFieldProps {
-  id?: string
-  value: string
-  onChange: (value: string) => void
-  disabled?: boolean
-  info?: ReactNode
-}
-
-export function AppointmentTypeField({
-  id,
-  value,
-  onChange,
-  disabled = false,
-  info,
-}: AppointmentTypeFieldProps) {
-  return (
-    <FormField>
-      <Label htmlFor={id}>Type</Label>
-      <Select
-        id={id}
-        options={APPOINTMENT_TYPE_OPTIONS}
-        value={value}
-        onValueChange={onChange}
-        disabled={disabled}
-      />
-      {info}
-    </FormField>
   )
 }

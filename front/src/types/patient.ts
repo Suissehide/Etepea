@@ -107,7 +107,6 @@ export type PathwayEnrollment = {
   tag: string
   timeOfDay: TimeOfDay
   thematicID?: string
-  type?: string
   motif?: string
   duration?: number
   startDate: string

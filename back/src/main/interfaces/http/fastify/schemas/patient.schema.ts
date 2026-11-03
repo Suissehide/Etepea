@@ -172,10 +172,6 @@ export const pathwayEnrollmentSchema = z.object({
   tag: z.string().min(1),
   timeOfDay: timeOfDaySchema,
   thematicID: cuid().optional(),
-  type: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.enum(['ambulatory', 'hospital', 'telephonic']).optional(),
-  ),
   motif: z.string().optional(),
   duration: z.number().positive().optional(),
   // Date de début propre au parcours ; à défaut, celle de la requête.

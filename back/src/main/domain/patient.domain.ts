@@ -3,7 +3,6 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import * as XLSX from 'xlsx'
 
-import type { AppointmentType } from '../../generated/enums'
 import {
   type TimeOfDay,
   timeOfDaySchema,
@@ -1003,20 +1002,14 @@ class PatientDomain implements PatientDomainInterface {
     slot: SlotWithTemplateAndAppointmentsRepo,
     patient: PatientWithAppointmentsDomain,
     options: {
-      type?: AppointmentType | null
       motif?: string | null
       thematicId?: string | null
       appointmentDuration: number
       firstAppointmentOnly: boolean
     },
   ): Promise<EnrollmentAppointment[]> {
-    const {
-      type,
-      motif,
-      thematicId,
-      appointmentDuration,
-      firstAppointmentOnly,
-    } = options
+    const { motif, thematicId, appointmentDuration, firstAppointmentOnly } =
+      options
     // `motif` vient du corps de la requête d'inscription : c'est du texte
     // libre saisi par l'utilisateur. `transmissionNotes` est une colonne
     // clinique, que le hook `stripClinicalInput` refuse en entrée à qui n'a
@@ -1055,7 +1048,6 @@ class PatientDomain implements PatientDomainInterface {
         startDate: nextSlot.startDate,
         endDate: nextSlot.endDate,
         thematicId: thematicId ?? undefined,
-        type: type ?? undefined,
         slotID: slot.id,
         patientIDs: [patient.id],
         transmissionNotes,
@@ -1098,7 +1090,6 @@ class PatientDomain implements PatientDomainInterface {
       startDate: slot.startDate,
       endDate: slot.endDate,
       thematicId: thematicId ?? undefined,
-      type: type ?? undefined,
       slotID: slot.id,
       patientIDs: [patient.id],
       transmissionNotes,
@@ -1122,7 +1113,7 @@ class PatientDomain implements PatientDomainInterface {
     firstAppointmentOnly = false,
     enrollmentDate?: Date,
   ): Promise<EnrollmentAppointment[]> {
-    const { type, motif, timeOfDay } = pathwayTemplate
+    const { motif, timeOfDay } = pathwayTemplate
     let slots = [...pathway.slots].sort(
       (a, b) =>
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
@@ -1153,7 +1144,6 @@ class PatientDomain implements PatientDomainInterface {
     for (const slot of slots) {
       try {
         const slotAppointments = await this.enrollInSlot(slot, patient, {
-          type,
           motif,
           thematicId,
           appointmentDuration,

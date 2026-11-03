@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { Check, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { combineDateAndTime } from '../../../libs/utils.ts'
 import { useLocationQueries } from '../../../queries/useLocation.ts'
@@ -80,6 +81,7 @@ function AddSlotForm({
       locationID: '',
       description: '',
       isIndividual: false,
+      type: '',
       capacity: 1,
       color: color ?? '#2563eb',
       recurrence: false,
@@ -107,6 +109,7 @@ function AddSlotForm({
           thematicId: value.thematicId,
           locationID: value.locationID || null,
           isIndividual: value.isIndividual,
+          type: value.type || null,
           capacity: value.capacity,
           description: value.description,
           color: value.color,
@@ -305,7 +308,7 @@ function AddSlotForm({
                 {(field) => (
                   <field.Toggle
                     options={['Individuel', 'Multiple']}
-                    label="Type"
+                    label="Format"
                   />
                 )}
               </form.AppField>
@@ -318,6 +321,16 @@ function AddSlotForm({
                 </form.AppField>
               )}
             </div>
+
+            <form.AppField name="type">
+              {(field) => (
+                <field.Select
+                  options={APPOINTMENT_TYPE_OPTIONS}
+                  label="Type"
+                  placeholder="Non renseigné"
+                />
+              )}
+            </form.AppField>
 
             <div className="flex gap-4 items-center">
               <form.AppField name="color">

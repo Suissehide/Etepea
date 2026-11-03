@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { Check, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { appointmentTypeLabel } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { getTrancheChoice } from '../../../libs/slotAvailability.ts'
 import { generateDurationOptions } from '../../../libs/utils.ts'
@@ -24,10 +25,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../../ui/popup.tsx'
-import {
-  AppointmentTimeFields,
-  AppointmentTypeField,
-} from '../appointmentDetailsFields.tsx'
+import { AppointmentTimeFields } from '../appointmentDetailsFields.tsx'
 
 interface AddAppointmentFormProps {
   open: boolean
@@ -79,7 +77,6 @@ function AddAppointmentForm({
           ? dayjs.utc(endDate).diff(dayjs.utc(startDate), 'minute').toString()
           : '',
       thematicId: '',
-      type: '',
       patientIDs: (defaultPatientIDs ?? []) as string[],
     },
     onSubmit: ({ value }) => {
@@ -96,7 +93,6 @@ function AddAppointmentForm({
               .toISOString(),
         slotID,
         thematicId: value.thematicId,
-        type: value.type,
         patientIDs: value.patientIDs,
       }
       handleCreateAppointment(newAppointment)
@@ -223,6 +219,14 @@ function AddAppointmentForm({
             </FormField>
 
             <FormField>
+              <Label>Type</Label>
+              <Input
+                value={appointmentTypeLabel(slot?.slotTemplate?.type)}
+                disabled
+              />
+            </FormField>
+
+            <FormField>
               <Label>Salle</Label>
               <Input
                 value={
@@ -246,17 +250,6 @@ function AddAppointmentForm({
                 />
               )}
             </form.AppField>
-
-            <form.Field name="type">
-              {(field) => (
-                <AppointmentTypeField
-                  id={field.name}
-                  value={field.state.value}
-                  onChange={(value) => field.handleChange(value)}
-                  info={<FieldInfo field={field} />}
-                />
-              )}
-            </form.Field>
 
             <form.AppField
               name="patientIDs"

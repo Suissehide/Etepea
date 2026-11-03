@@ -63,7 +63,6 @@ class IndicatorCohortRepository implements IndicatorCohortRepositoryInterface {
           appointment: {
             select: {
               startDate: true,
-              type: true,
               slotID: true,
               thematic: { select: { name: true, role: true } },
               slot: {
@@ -80,6 +79,7 @@ class IndicatorCohortRepository implements IndicatorCohortRepositoryInterface {
                   slotTemplate: {
                     select: {
                       isIndividual: true,
+                      type: true,
                       thematic: { select: { name: true, role: true } },
                       soignantLinks: {
                         select: { soignant: { select: { name: true } } },
@@ -100,7 +100,7 @@ class IndicatorCohortRepository implements IndicatorCohortRepositoryInterface {
       return {
         patientId: ap.patientId,
         date: ap.appointment.startDate,
-        type: ap.appointment.type,
+        type: ap.appointment.slot.slotTemplate.type,
         individual: ap.appointment.slot.slotTemplate.isIndividual,
         slotId: ap.appointment.slotID,
         thematicName: thematique?.name ?? null,

@@ -271,7 +271,6 @@ describe('conflits de planification', () => {
       payload: {
         startDate: '2026-04-07T09:15:00.000Z',
         endDate: '2026-04-07T09:45:00.000Z',
-        type: 'ambulatory',
         slotID: s2.id,
         patientIDs: [patientID],
       },

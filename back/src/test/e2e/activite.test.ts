@@ -82,6 +82,7 @@ describe('tableau de bord d activite', () => {
         endTime: new Date(),
         offsetDays: 0,
         isIndividual: true,
+        type: 'ambulatory',
         color: '#fff',
         serviceId,
         establishmentId,
@@ -109,7 +110,6 @@ describe('tableau de bord d activite', () => {
       data: {
         startDate: slot.startDate,
         endDate: slot.endDate,
-        type: 'ambulatory',
         serviceId,
         establishmentId,
         slotID: slot.id,

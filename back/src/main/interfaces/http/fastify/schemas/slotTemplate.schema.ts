@@ -25,6 +25,7 @@ export const createSlotTemplateSchema = slotTemplateSchema
     description: true,
     color: true,
     isIndividual: true,
+    type: true,
     capacity: true,
   })
   .extend({

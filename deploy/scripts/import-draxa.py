@@ -287,6 +287,15 @@ SELECT 'clgx_so_{old}', :'est', :'svc', {q(n)} WHERE NOT EXISTS
 INSERT INTO clgx_soi SELECT {old}, (SELECT id FROM "Soignant" WHERE "serviceId" = :'svc'
   AND lower(name) = lower({q(n)}) ORDER BY id LIMIT 1);""")
 
+    by_slot = defaultdict(list)
+    for r in rdvs:
+        by_slot[slot_of_rdv[r["id"]]].append(r)
+
+    def slot_type(sid):
+        # Le type vit sur le créneau : celui de la majorité de ses rendez-vous.
+        common = Counter(t for r in by_slot[sid] if (t := APPT_TYPE.get(norm(r["type"])))).most_common(1)
+        return q(common[0][0]) + '::"AppointmentType"' if common else "NULL"
+
     tpl_rows, slot_rows, link_rows = [], [], []
     for sid, s in all_slots.items():
         tid = sid.replace("clgx_sl_", "clgx_st_")
@@ -294,7 +303,7 @@ INSERT INTO clgx_soi SELECT {old}, (SELECT id FROM "Soignant" WHERE "serviceId" 
         individual = s["place"] <= 1
         tpl_rows.append("(" + ",".join([
             q(tid), ":'est'", ":'svc'", q(s["start"].strftime("%H:%M:%S")) + "::time",
-            q(s["end"].strftime("%H:%M:%S")) + "::time", "0", q(individual), q(s["place"]),
+            q(s["end"].strftime("%H:%M:%S")) + "::time", "0", q(individual), slot_type(sid), q(s["place"]),
             f"(SELECT id FROM clgx_them WHERE name = {q(s['them'])})",
             f"(SELECT id FROM clgx_loc WHERE name = {q(loc)})" if loc else "NULL",
             q(None if loc else s["loc"]), q(COLORS.get((s["cat"] or "").strip(), "#94a3b8")),
@@ -303,7 +312,7 @@ INSERT INTO clgx_soi SELECT {old}, (SELECT id FROM "Soignant" WHERE "serviceId" 
         if s["soignant"] in SOIGNANTS:
             link_rows.append(f"({q(tid)},(SELECT id FROM clgx_soi WHERE old = {s['soignant']}),:'svc',:'est')")
     out.append(insert("SlotTemplate", ["id", "establishmentId", "serviceId", "startTime", "endTime",
-                                       "offsetDays", "isIndividual", "capacity", "thematicId", "locationID",
+                                       "offsetDays", "isIndividual", "type", "capacity", "thematicId", "locationID",
                                        "description", "color"], tpl_rows))
     out.append(insert("Slot", ["id", "establishmentId", "serviceId", "startDate", "endDate", "slotTemplateID"],
                       slot_rows))
@@ -311,9 +320,6 @@ INSERT INTO clgx_soi SELECT {old}, (SELECT id FROM "Soignant" WHERE "serviceId" 
                       link_rows))
 
     # --- Rendez-vous : 1 Appointment par rdv sur créneau individuel, 1 par créneau collectif --------
-    by_slot = defaultdict(list)
-    for r in rdvs:
-        by_slot[slot_of_rdv[r["id"]]].append(r)
     appt_rows, ap_rows = [], []
     for sid, group in by_slot.items():
         s = all_slots[sid]
@@ -327,19 +333,18 @@ INSERT INTO clgx_soi SELECT {old}, (SELECT id FROM "Soignant" WHERE "serviceId" 
                 start = ts(r["date"], r["heure"])
                 end = s["end"] if s["end"] > start else start + timedelta(minutes=30)
                 aid = f"clgx_ap_{r['id']}"
-                appt_rows.append(appt(aid, start, end, them, r["type"], sid))
+                appt_rows.append(appt(aid, start, end, them, sid))
                 ap_rows.append(appt_patient(aid, r))
         else:
             aid = f"clgx_ap_s{sid[8:]}"
-            common = Counter(r["type"] for r in group if not blank(r["type"])).most_common(1)
-            appt_rows.append(appt(aid, s["start"], s["end"], them, common[0][0] if common else None, sid))
+            appt_rows.append(appt(aid, s["start"], s["end"], them, sid))
             seen = set()
             for r in sorted(group, key=lambda r: -r["id"]):  # un patient une fois par créneau : rdv le plus récent
                 if r["patient_id"] not in seen:
                     seen.add(r["patient_id"])
                     ap_rows.append(appt_patient(aid, r))
     out.append(insert("Appointment", ["id", "establishmentId", "serviceId", "startDate", "endDate",
-                                      "thematicId", "type", "slotID"], appt_rows))
+                                      "thematicId", "slotID"], appt_rows))
     out.append(insert("AppointmentPatient", ["id", "establishmentId", "serviceId", "appointmentId", "patientId",
                                              "accompanying", "status", "rejectionReason", "transmissionNotes",
                                              "convocationSent"],
@@ -370,10 +375,8 @@ WHERE a."serviceId" = :'svc'
         print(f"valeurs hors liste {f}: {dict(c)}", file=sys.stderr)
 
 
-def appt(aid, start, end, them, typ, sid):
-    t = APPT_TYPE.get(norm(typ))
-    return (f"({q(aid)},:'est',:'svc',{q(str(start))},{q(str(end))},{them},"
-            f"{q(t) + ('::\"AppointmentType\"' if t else '')},{q(sid)})")
+def appt(aid, start, end, them, sid):
+    return f"({q(aid)},:'est',:'svc',{q(str(start))},{q(str(end))},{them},{q(sid)})"
 
 
 def appt_patient(aid, r):

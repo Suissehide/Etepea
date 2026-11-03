@@ -29,7 +29,6 @@ export const createAppointmentSchema = appointmentSchema
   .pick({
     startDate: true,
     endDate: true,
-    type: true,
     motif: true,
   })
   .extend({

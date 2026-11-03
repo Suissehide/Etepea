@@ -228,7 +228,6 @@ model Appointment {
   startDate           DateTime
   endDate             DateTime
   thematicId          String?
-  type                AppointmentType?
   // Texte libre saisi à la prise de rendez-vous sur un créneau individuel.
   motif               String?
   slotID              String
@@ -277,6 +276,8 @@ model SlotTemplate {
   offsetDays      Int
 
   isIndividual Boolean
+  // Ambulatoire, hospitalisation ou téléphonique : vaut pour tous les rendez-vous du créneau.
+  type         AppointmentType?
   capacity     Int?
   thematicId   String?
   locationID   String?

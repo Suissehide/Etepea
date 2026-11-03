@@ -214,6 +214,7 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
           endTime: slotTemplate.endTime,
           offsetDays: effectiveOffset,
           isIndividual: slotTemplate.isIndividual,
+          type: slotTemplate.type,
           capacity: slotTemplate.capacity,
           thematicId: slotTemplate.thematicId,
           locationID: slotTemplate.locationID,

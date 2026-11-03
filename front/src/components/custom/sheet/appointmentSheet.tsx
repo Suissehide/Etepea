@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   APPOINTMENT_ACCOMPANYING_OPTIONS,
   APPOINTMENT_STATUS_OPTIONS,
-  APPOINTMENT_TYPE_OPTIONS,
+  appointmentTypeLabel,
 } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { formatDuration } from '../../../libs/utils.ts'
@@ -87,7 +87,6 @@ export default function AppointmentSheet({
   const form = useAppForm({
     defaultValues: {
       thematicId: '',
-      type: '',
       motif: '',
       appointmentPatients: [
         {
@@ -108,7 +107,6 @@ export default function AppointmentSheet({
       const updateAppointmentData: UpdateAppointmentParams = {
         id: appointment.id,
         thematicId: value.thematicId,
-        type: value.type,
         motif: value.motif.trim() || null,
         appointmentPatients: value.appointmentPatients,
       }
@@ -153,7 +151,6 @@ export default function AppointmentSheet({
             form.reset(
               {
                 thematicId: data.thematicId ?? '',
-                type: data.type ?? '',
                 motif: data.motif ?? '',
                 appointmentPatients:
                   data.appointmentPatients?.map((ap) => ({
@@ -289,14 +286,15 @@ export default function AppointmentSheet({
                 )}
               </form.AppField>
 
-              <form.AppField name="type">
-                {(field) => (
-                  <field.Select
-                    options={APPOINTMENT_TYPE_OPTIONS}
-                    label="Type"
-                  />
-                )}
-              </form.AppField>
+              <FormField>
+                <Label>Type</Label>
+                <Input
+                  value={appointmentTypeLabel(
+                    appointment?.slot?.slotTemplate?.type,
+                  )}
+                  disabled
+                />
+              </FormField>
 
               {/* Le motif porte sur le rendez-vous d'un seul patient : il n'a
               de sens que sur un créneau individuel. */}

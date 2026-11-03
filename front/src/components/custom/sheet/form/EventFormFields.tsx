@@ -1,6 +1,7 @@
 import { useStore } from '@tanstack/react-form'
 import { useEffect, useMemo } from 'react'
 
+import { APPOINTMENT_TYPE_OPTIONS } from '../../../../constants/appointment.constant.ts'
 import { withForm } from '../../../../hooks/formConfig.tsx'
 import { useLocationQueries } from '../../../../queries/useLocation.ts'
 import { useThematicQueries } from '../../../../queries/useThematic.ts'
@@ -111,7 +112,10 @@ export const EventFormFields = withForm({
         <div className="flex gap-2 items-center">
           <form.AppField name="isIndividual">
             {(field) => (
-              <field.Toggle options={['Individuel', 'Multiple']} label="Type" />
+              <field.Toggle
+                options={['Individuel', 'Multiple']}
+                label="Format"
+              />
             )}
           </form.AppField>
 
@@ -123,6 +127,16 @@ export const EventFormFields = withForm({
             </form.AppField>
           )}
         </div>
+
+        <form.AppField name="type">
+          {(field) => (
+            <field.Select
+              options={APPOINTMENT_TYPE_OPTIONS}
+              label="Type"
+              placeholder="Non renseigné"
+            />
+          )}
+        </form.AppField>
 
         <form.AppField name="color">
           {(field) => <field.ColorPicker label="Couleur" />}

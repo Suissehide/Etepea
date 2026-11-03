@@ -11,7 +11,6 @@ export type Appointment = {
   slot: Slot
   thematic?: string
   thematicId?: string | null
-  type?: string
   /** Motif du rendez-vous — saisi sur un créneau individuel uniquement. */
   motif?: string | null
   appointmentPatients: AppointmentPatient[]
@@ -20,10 +19,10 @@ export type Appointment = {
 
 export type CreateAppointmentParams = Pick<
   Appointment,
-  'startDate' | 'endDate' | 'thematicId' | 'type' | 'motif'
+  'startDate' | 'endDate' | 'thematicId' | 'motif'
 > & { slotID: string; patientIDs: string[] }
 
 export type UpdateAppointmentParams = Pick<
   Appointment,
-  'id' | 'thematicId' | 'type' | 'motif'
+  'id' | 'thematicId' | 'motif'
 > & { slotID?: string; appointmentPatients: UpdateAppointmentPatientParams[] }

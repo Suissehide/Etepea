@@ -82,6 +82,7 @@ describe('jeu Grille ARS : resultats et export', () => {
         endTime: new Date(),
         offsetDays: 0,
         isIndividual: true,
+        type: 'ambulatory',
         color: '#fff',
         serviceId,
         establishmentId,
@@ -100,7 +101,6 @@ describe('jeu Grille ARS : resultats et export', () => {
       data: {
         startDate: new Date('2026-06-01T09:00:00Z'),
         endDate: new Date('2026-06-01T10:00:00Z'),
-        type: 'ambulatory',
         serviceId,
         establishmentId,
         slotID: slot.id,
@@ -331,6 +331,7 @@ describe('jeu Grille ARS : resultats et export', () => {
         endTime: new Date(),
         offsetDays: 0,
         isIndividual: true,
+        type: 'ambulatory',
         color: '#fff',
         serviceId: serviceA,
         establishmentId,
@@ -362,7 +363,6 @@ describe('jeu Grille ARS : resultats et export', () => {
       data: {
         startDate: new Date('2026-10-05T09:00:00Z'),
         endDate: new Date('2026-10-05T10:30:00Z'),
-        type: 'ambulatory',
         serviceId: serviceA,
         establishmentId,
         slotID: slot.id,

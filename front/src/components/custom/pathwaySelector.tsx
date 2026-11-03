@@ -15,7 +15,6 @@ import type React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 
 import { PatientApi } from '../../api/patient.api.ts'
-import { APPOINTMENT_TYPE_OPTIONS } from '../../constants/appointment.constant.ts'
 import { PATIENT } from '../../constants/process.constant.ts'
 import { SLOT_DURATIONS } from '../../constants/slot.constant.ts'
 import { cn } from '../../libs/utils.ts'
@@ -58,7 +57,6 @@ export interface AddedPathway {
   period: PathwayPeriod
   thematicID: string
   thematicDuration: number | null
-  type: string
   motif: string
   motifRequired: boolean
   startDate: string
@@ -105,7 +103,6 @@ export function usePathwaySelector(patientID?: string) {
         period: 'fullday' as PathwayPeriod,
         thematicID: '',
         thematicDuration: null,
-        type: '',
         motif: '',
         motifRequired: template?.motifRequired ?? false,
         startDate: dayjs.utc().startOf('day').toISOString(),
@@ -118,14 +115,13 @@ export function usePathwaySelector(patientID?: string) {
     tag: p.tag,
     timeOfDay: PERIOD_TO_TIME_OF_DAY[p.period],
     thematicID: p.thematicID || undefined,
-    type: p.type,
     motif: p.motif || undefined,
     duration: p.thematicDuration ?? undefined,
     startDate: p.startDate,
   }))
 
-  // Sans motif ni type, qui n'influent pas sur le parcours retenu : saisir le motif ne relance pas l'aperçu.
-  const previewInput = enrollments.map(({ motif, type, ...rest }) => rest)
+  // Sans le motif, qui n'influe pas sur le parcours retenu : le saisir ne relance pas l'aperçu.
+  const previewInput = enrollments.map(({ motif, ...rest }) => rest)
   const { data } = useQuery({
     queryKey: [PATIENT.ENROLL_PREVIEW, patientID, previewInput],
     queryFn: () => PatientApi.previewEnrollments(previewInput, patientID),
@@ -438,7 +434,7 @@ function PathwayItem({
           <span className="text-xs text-text-light">
             Options des rendez-vous créés · facultatif
           </span>
-          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-2.5">
             <FormField>
               <Label htmlFor={`thematic-${pathway.id}`}>Thématique</Label>
               <Select
@@ -480,17 +476,6 @@ function PathwayItem({
                 onValueChange={(value) =>
                   onUpdate({ thematicDuration: Number(value) })
                 }
-              />
-            </FormField>
-
-            <FormField>
-              <Label htmlFor={`type-${pathway.id}`}>Type</Label>
-              <Select
-                id={`type-${pathway.id}`}
-                placeholder="Non précisé"
-                value={pathway.type}
-                options={APPOINTMENT_TYPE_OPTIONS}
-                onValueChange={(value) => onUpdate({ type: value })}
               />
             </FormField>
           </div>

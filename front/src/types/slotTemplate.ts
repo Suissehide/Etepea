@@ -12,6 +12,8 @@ export type SlotTemplate = {
   thematicId?: string | null
   locationID?: string | null
   isIndividual?: boolean
+  /** Ambulatoire, hospitalisation ou téléphonique : vaut pour tous les rendez-vous du créneau. */
+  type?: string | null
   capacity?: number
   color?: string
   description?: string

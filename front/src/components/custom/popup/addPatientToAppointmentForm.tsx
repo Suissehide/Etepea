@@ -60,7 +60,6 @@ export default function AddPatientToAppointmentForm({
       onConfirm({
         id: row.appointmentId ?? '',
         thematicId: row.thematicId,
-        type: row.type,
         appointmentPatients: value.patientIDs.map((patientID) => {
           const existing = row.patients.find(
             (appointmentPatient) => appointmentPatient.patient.id === patientID,

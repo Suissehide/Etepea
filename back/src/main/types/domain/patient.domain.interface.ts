@@ -1,4 +1,3 @@
-import type { AppointmentType } from '../../../generated/enums'
 import type { TimeOfDay } from '../../interfaces/http/fastify/schemas/patient.schema'
 import type {
   PatientCreateEntityRepo,
@@ -48,7 +47,6 @@ export type PathwayEnrollmentInput = {
   tag: string
   timeOfDay: TimeOfDay
   thematicID?: string
-  type?: AppointmentType
   motif?: string
   duration?: number
   startDate?: Date

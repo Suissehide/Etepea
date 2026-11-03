@@ -17,6 +17,9 @@ export const APPOINTMENT_ACCOMPANYING = {
 }
 
 export const APPOINTMENT_TYPE_OPTIONS = toSelectOptions(APPOINTMENT_TYPE)
+export const appointmentTypeLabel = (type?: string | null) =>
+  (type && (APPOINTMENT_TYPE as Record<string, string>)[type]) ||
+  'Non renseigné'
 export const APPOINTMENT_STATUS_OPTIONS = toSelectOptions(APPOINTMENT_STATUS)
 export const APPOINTMENT_ACCOMPANYING_OPTIONS = toSelectOptions(
   APPOINTMENT_ACCOMPANYING,
