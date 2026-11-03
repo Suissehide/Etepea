@@ -1311,9 +1311,9 @@ function SelectionBar({
   onClear: () => void
 }) {
   return (
-    <div className="absolute bottom-6 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg border border-primary/30 bg-background px-4 py-2 shadow-lg">
+    <div className="absolute bottom-6 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg border border-border-sidebar bg-foreground px-4 py-2 shadow-lg">
       <CheckSquare className="h-4 w-4 text-primary" />
-      <span className="text-sm font-medium text-text-dark">
+      <span className="text-sm font-medium text-text">
         {count} créneau
         {count > 1 ? 'x' : ''} sélectionné
         {count > 1 ? 's' : ''}
@@ -1334,9 +1334,9 @@ function SelectionBar({
       </div>
 
       <Button
-        variant="ghost"
+        variant="gradient"
         size="sm"
-        className="ml-auto text-text-light hover:text-text-dark"
+        className="ml-auto"
         onClick={onClear}
       >
         <X className="h-4 w-4" />
