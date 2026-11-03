@@ -61,8 +61,10 @@ const DropdownFilter = ({
             title={actif ? titreCompteur : undefined}
             aria-label={actif ? `${triggerLabel}, ${titreCompteur}` : undefined}
             className={cn(
-              'gap-[7px] rounded-lg pr-2.5 pl-3 text-foreground',
-              actif && 'border-[#93c5fd] bg-blue-50 hover:bg-blue-100',
+              // Au retour de la liste (Échap), un fond plutôt que l'anneau bleu.
+              'gap-[7px] rounded-lg pr-2.5 pl-3 text-foreground focus-visible:bg-muted focus-visible:ring-0',
+              actif &&
+                'border-[#93c5fd] bg-blue-50 hover:bg-blue-100 focus-visible:bg-blue-100',
             )}
           >
             <TriggerIcon size={16} />

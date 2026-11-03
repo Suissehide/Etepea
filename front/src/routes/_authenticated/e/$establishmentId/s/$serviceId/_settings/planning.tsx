@@ -1010,7 +1010,7 @@ function Planning() {
                     size="icon"
                     aria-label="Plus d'actions"
                     title="Plus d'actions"
-                    className="size-[38px] rounded-lg data-[state=open]:bg-muted"
+                    className="size-[38px] rounded-lg focus-visible:bg-muted focus-visible:ring-0 data-[state=open]:bg-muted"
                   >
                     <Ellipsis size={18} />
                   </Button>
