@@ -418,6 +418,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
             key={selectedTag}
             events={calendarEvents}
             editable={false}
+            overlap={false}
             initialDate={nextAppointmentDate ?? savedDate}
             handleClickEvent={handleClickCalendarEvent}
             handleOpenEvent={handleOpenEvent}
