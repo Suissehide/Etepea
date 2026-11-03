@@ -5,6 +5,7 @@ import {
   conflictWarning,
   describeConflict,
   labelConflicts,
+  patientOverlaps,
 } from './planningConflicts.ts'
 
 const slot = (
@@ -167,5 +168,37 @@ describe('conflictWarning', () => {
     expect(conflictWarning([salle, { ...salle }]).title).toBe(
       'Enregistré, mais 1 conflit',
     )
+  })
+})
+
+describe('patientOverlaps', () => {
+  const rdv = (id: string, start: string, end: string, day = '2099-04-01') => ({
+    id,
+    startDate: `${day}T${start}:00.000Z`,
+    endDate: `${day}T${end}:00.000Z`,
+    appointmentPatients: [{ id: `ap-${id}`, patient }],
+  })
+
+  it('marque les deux rendez-vous à venir qui se chevauchent, pas ceux qui se suivent ni les passés', () => {
+    const slots = [
+      slot('a', '09:00', '12:00', {
+        appointments: [
+          rdv('r1', '09:00', '10:00'),
+          rdv('r3', '10:00', '11:00'),
+        ],
+      }),
+      slot('b', '09:30', '10:00', {
+        appointments: [rdv('r2', '09:30', '10:00')],
+      }),
+      slot('c', '09:00', '10:00', {
+        appointments: [
+          rdv('p1', '09:00', '10:00', '2020-01-01'),
+          rdv('p2', '09:00', '10:00', '2020-01-01'),
+        ],
+      }),
+    ]
+    const labels = patientOverlaps(slots, 'p1')
+    expect([...labels.keys()].sort()).toEqual(['r1', 'r2'])
+    expect(labels.get('r1')).toEqual(['Déjà un rendez-vous 09:30–10:00'])
   })
 })

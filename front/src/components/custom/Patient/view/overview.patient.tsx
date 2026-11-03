@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import {
   AlertTriangle,
+  CalendarX2,
   ChevronRight,
   Eye,
   GripVertical,
@@ -11,6 +12,7 @@ import type React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 
 import { PatientApi } from '../../../../api/patient.api.ts'
+import { patientOverlaps } from '../../../../libs/planningConflicts.ts'
 import {
   ecartEnJours,
   getPathwayProgress,
@@ -33,6 +35,7 @@ import type {
   PatientPathway,
 } from '../../../../types/patient.ts'
 import type { Slot } from '../../../../types/slot.ts'
+import { Etiquette } from '../../../table/etiquette.tsx'
 import { Button } from '../../../ui/button.tsx'
 import { StatutPresence } from '../../pastillePresence.tsx'
 import { ConfirmDeleteForm } from '../../popup/confirmDeleteForm.tsx'
@@ -53,15 +56,30 @@ type Parcours = { nom: string; couleur: string }
 
 const majuscule = (texte: string) => texte.replace(/^./, (c) => c.toUpperCase())
 
+// Étiquette et non bouton : les lignes de rendez-vous sont déjà des boutons.
+function EtiquetteConflit({ conflits }: { conflits: string[] }) {
+  if (conflits.length === 0) {
+    return null
+  }
+  return (
+    <Etiquette ton="danger" title={conflits.join('\n')} className="self-center">
+      <CalendarX2 className="w-3 h-3" />
+      Conflit
+    </Etiquette>
+  )
+}
+
 function ProchainRendezVous({
   slot,
   patientID,
   parcours,
+  conflits,
   onOpen,
 }: {
   slot: Slot
   patientID?: string
   parcours: Parcours | null
+  conflits: string[]
   onOpen: (slot: Slot) => void
 }) {
   const { start, end } = getSlotDisplayRange(slot, patientID)
@@ -87,8 +105,9 @@ function ProchainRendezVous({
       </div>
 
       <div className="flex flex-col gap-1 flex-1 min-w-0">
-        <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary">
           Prochain rendez-vous · {jourRelatif(ecartEnJours(start))}
+          <EtiquetteConflit conflits={conflits} />
         </span>
         <span className="text-[17px] font-semibold text-foreground truncate">
           {debut.format('HH:mm')} – {dayjs.utc(end).format('HH:mm')} ·{' '}
@@ -240,12 +259,14 @@ function AppointmentRow({
   patientID,
   parcours,
   aVenir,
+  conflits,
   onOpen,
 }: {
   slot: Slot
   patientID?: string
   parcours: Parcours | null
   aVenir: boolean
+  conflits: string[]
   onOpen: (slot: Slot) => void
 }) {
   const { start, end } = getSlotDisplayRange(slot, patientID)
@@ -286,7 +307,10 @@ function AppointmentRow({
         </span>
       </span>
 
-      <StatutPresence status={status} aVenir={aVenir} />
+      <span className="flex items-center gap-2">
+        <EtiquetteConflit conflits={conflits} />
+        <StatutPresence status={status} aVenir={aVenir} />
+      </span>
 
       <ChevronRight
         className="h-4 w-4 text-text-sidebar justify-self-end"
@@ -319,6 +343,13 @@ export default function OverviewPatient({
     () => getPathwayStartDates(slots, patient?.id),
     [slots, patient],
   )
+
+  const conflitsParRdv = useMemo(
+    () => patientOverlaps(slots, patient?.id),
+    [slots, patient],
+  )
+  const conflitsDuSlot = (slot: Slot) =>
+    (slot.appointments ?? []).flatMap((a) => conflitsParRdv.get(a.id) ?? [])
 
   const pathwayProgress = useMemo(
     () => getPathwayProgress(slots, patient?.id),
@@ -493,6 +524,7 @@ export default function OverviewPatient({
             slot={prochain}
             patientID={patient?.id}
             parcours={parcoursDuSlot(prochain)}
+            conflits={conflitsDuSlot(prochain)}
             onOpen={handleOpenAppointment}
           />
         )}
@@ -595,6 +627,7 @@ export default function OverviewPatient({
                         patientID={patient?.id}
                         parcours={parcoursDuSlot(slot)}
                         aVenir={onglet === 'upcoming'}
+                        conflits={conflitsDuSlot(slot)}
                         onOpen={handleOpenAppointment}
                       />
                     ))}

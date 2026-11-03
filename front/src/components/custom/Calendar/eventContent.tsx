@@ -118,12 +118,10 @@ export const EventContent = ({
         />
       )}
 
-      {type === 'slot' && (
-        <ConflictBadge
-          labels={conflicts}
-          className="absolute bottom-0.5 right-0.5 z-20"
-        />
-      )}
+      <ConflictBadge
+        labels={conflicts}
+        className="absolute bottom-0.5 right-0.5 z-20"
+      />
 
       {locked && type === 'slot' && (
         <LockedOverlay
