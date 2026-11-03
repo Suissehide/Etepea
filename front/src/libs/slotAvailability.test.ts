@@ -366,4 +366,10 @@ describe('getFreeTranches', () => {
       '11:00',
     ])
   })
+
+  it('une duree plus longue que le creneau donne une seule tranche, le creneau entier', () => {
+    expect(getFreeTranches(creneau([]), 240)).toEqual([
+      { start: '2026-11-02T09:00:00.000Z', end: '2026-11-02T12:00:00.000Z' },
+    ])
+  })
 })

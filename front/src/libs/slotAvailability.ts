@@ -66,11 +66,19 @@ export const getFreeIntervals = (slot: Slot): FreeInterval[] => {
   )
 }
 
+/** Une thématique plus longue que le créneau en prend tout le créneau, plutôt que de le rendre inréservable. */
+const trancheLength = (slot: Slot, minutes: number) =>
+  Math.min(
+    minutes,
+    dayjs.utc(slot.endDate).diff(dayjs.utc(slot.startDate), 'minute'),
+  )
+
 /** Tranches libres d'un créneau découpé depuis son début en pas de `minutes` : on n'y laisse aucun trou. */
 export const getFreeTranches = (
   slot: Slot,
-  minutes: number,
+  duration: number,
 ): FreeInterval[] => {
+  const minutes = trancheLength(slot, duration)
   if (minutes <= 0) {
     return []
   }
@@ -106,10 +114,11 @@ export const getTrancheChoice = (
   minutes?: number
   noFreeTranche?: boolean
 } => {
-  const minutes = durations.find(Boolean)
-  if (!slot?.slotTemplate?.isIndividual || !minutes) {
+  const duration = durations.find(Boolean)
+  if (!slot?.slotTemplate?.isIndividual || !duration) {
     return {}
   }
+  const minutes = trancheLength(slot, duration)
   const tranches = getFreeTranches(slot, minutes)
   return {
     tranches,

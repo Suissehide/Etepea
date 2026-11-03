@@ -386,6 +386,10 @@ function Calendar({
 
   // La v7 sépare le rendu des événements de fond : les créneaux en sont, et portent le même contenu.
   const renduEvenement = (eventContent: EventDisplayInfo) => {
+    // Le miroir de sélection n'est qu'une plage horaire : sans le contenu du créneau.
+    if (eventContent.isMirror) {
+      return null
+    }
     const contenu = (
       <EventContent
         setOpenEventId={handleOpenEvent}
@@ -489,9 +493,11 @@ function Calendar({
         slotHeaderInnerClass="normal-case text-text-light"
         // La hauteur d'une demi-heure de la v6 : plus serrés, les créneaux tronquent leur texte.
         slotMinHeight={35}
-        dayLaneClass={(info) => (info.isToday ? 'bg-primary/8' : undefined)}
-        // Le calque des événements de premier plan couvre la colonne et masquait les créneaux de fond aux clics.
-        dayLaneInnerClass="pointer-events-none"
+        // Les conteneurs des événements (de fond comme de premier plan) couvrent toute la colonne :
+        // seuls les événements eux-mêmes prennent le clic, pas leurs voisins.
+        dayLaneClass={(info) =>
+          cn('[&>*]:pointer-events-none', info.isToday && 'bg-primary/8')
+        }
         // Pas de cadre autour du calendrier, la carte de l'écran l'entoure déjà. En mode
         // édition, la vue s'encadre de rouge.
         viewClass={cn(
@@ -574,7 +580,10 @@ function Calendar({
         // Le thème teinte les événements à partir de leur couleur : créneaux, rendez-vous et
         // semaines interdites gardent la leur, pleine (elle porte son alpha quand il en faut un).
         backgroundEventClass={(info) =>
-          cn('bg-[var(--fc-event-color)] opacity-100', bordureCreneau(info))
+          cn(
+            'pointer-events-auto bg-[var(--fc-event-color)] opacity-100',
+            bordureCreneau(info),
+          )
         }
         // Sans les marges du thème : notre contenu a les siennes, et une demi-heure en a besoin.
         columnEventClass={(info) =>
