@@ -417,11 +417,13 @@ export default function PlanningExportModal({
                 <ChevronRight size={16} />
               </Button>
             </div>
-            <div className="flex-1 min-h-0">
+            <div className="flex min-h-0 flex-1 items-center justify-center p-6 [container-type:size]">
               {/* Une seule semaine : la barre maison et le calendrier pilotent la page. */}
-              <PDFViewer width="100%" height="100%" showToolbar={false}>
-                {previewDocument}
-              </PDFViewer>
+              <div className="aspect-[297/210] w-[min(100cqw,calc(100cqh*297/210))] bg-white shadow-[0_4px_18px_rgba(4,24,43,.12)]">
+                <PDFViewer width="100%" height="100%" showToolbar={false}>
+                  {previewDocument}
+                </PDFViewer>
+              </div>
             </div>
           </div>
         </div>
