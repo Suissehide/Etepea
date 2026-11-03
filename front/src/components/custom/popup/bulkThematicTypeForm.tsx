@@ -80,7 +80,7 @@ export function BulkThematicTypeForm({
         <PopupBody className="flex flex-col gap-4">
           <p className="text-sm text-text-light">
             {count} créneau{count > 1 ? 'x' : ''} sélectionné
-            {count > 1 ? 's' : ''}. Un champ laissé vide reste inchangé.
+            {count > 1 ? 's' : ''}. « Vide » efface la valeur, « Inchangé » la conserve.
           </p>
 
           <FormField>
