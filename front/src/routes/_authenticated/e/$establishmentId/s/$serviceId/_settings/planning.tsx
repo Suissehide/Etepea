@@ -16,23 +16,32 @@ import dayjs from 'dayjs'
 import {
   CalendarArrowUp,
   CalendarDays,
-  CalendarRange,
-  CheckSquare,
   ChevronUp,
   Copy,
+  Ellipsis,
   GanttChart,
   Printer,
   RefreshCw,
-  Settings2,
-  Square,
+  Repeat,
   Tags,
   Trash2,
   X,
 } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
-import { BarreCalendrier } from '@/components/custom/Calendar/barreCalendrier.tsx'
+import {
+  BarreCalendrier,
+  SEGMENT,
+  SEGMENTS,
+} from '@/components/custom/Calendar/barreCalendrier.tsx'
 import Calendar, {
   type CalendarEvent,
 } from '@/components/custom/Calendar/calendar.tsx'
@@ -887,6 +896,15 @@ function Planning() {
 
   const forbiddenWeekList = forbiddenWeeks ?? []
   const templateList = pathwayTemplates ?? []
+  const pathwayFilter = (
+    <PathwayFilter
+      templates={templateList}
+      hiddenIds={hiddenPathwayIds}
+      onToggle={handleTogglePathwayFilter}
+      onReset={handleResetPathwayFilter}
+      onHideAll={handleHideAllPathways}
+    />
+  )
   // En édition de modèle, la grille n'affiche ni semaines interdites ni cycle.
   const calendarModeProps = editMode
     ? {
@@ -899,7 +917,19 @@ function Planning() {
         forbiddenWeeks: forbiddenWeekList,
         weekAnchorDate: undefined,
         planningCycle,
-        barre: 'complete' as const,
+        barre: 'planning' as const,
+        filtresBarre: (
+          <>
+            {pathwayFilter}
+            <LocationFilter
+              locations={locations ?? []}
+              hiddenIds={hiddenLocationIds}
+              onToggle={handleToggleLocationFilter}
+              onReset={handleResetLocationFilter}
+              onHideAll={handleHideAllLocations}
+            />
+          </>
+        ),
       }
 
   const isSlot = openEventId.startsWith('slot_')
@@ -926,103 +956,102 @@ function Planning() {
         </Button>,
       ]}
     >
-      <div className="relative flex-1 bg-background rounded-lg flex flex-col w-full gap-4">
-        <div className="px-6 pt-6 flex items-center justify-between">
+      <div className="relative flex-1 bg-background rounded-lg flex flex-col w-full">
+        <div className="flex items-center gap-4 px-7 pt-[22px] pb-3.5">
           <h1 className="h-9 flex items-center text-text-dark text-xl font-semibold">
             Planning
           </h1>
 
-          <div className="flex justify-end items-center gap-2">
-            <SelectAllButton
-              events={mergedEvents}
-              hidden={view !== 'calendar'}
-              selectedIds={selectedSlotIds}
-              onSelectAll={handleSelectAll}
-              onClear={handleClearSelection}
-            />
-            {!editMode && (
-              <>
-                <PathwayFilter
-                  templates={templateList}
-                  hiddenIds={hiddenPathwayIds}
-                  onToggle={handleTogglePathwayFilter}
-                  onReset={handleResetPathwayFilter}
-                  onHideAll={handleHideAllPathways}
-                />
-
-                <LocationFilter
-                  locations={locations ?? []}
-                  hiddenIds={hiddenLocationIds}
-                  onToggle={handleToggleLocationFilter}
-                  onReset={handleResetLocationFilter}
-                  onHideAll={handleHideAllLocations}
-                />
-
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <Button
-                      variant="outline"
-                      className="font-normal rounded-lg"
-                    >
-                      <Settings2 size={16} />
-                      Actions
-                    </Button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      className="min-w-[280px] bg-primary-foreground rounded shadow-md border border-border p-2 z-50"
-                      align="end"
-                      sideOffset={5}
-                      collisionPadding={8}
-                    >
-                      <DropdownMenu.Item
-                        onSelect={() => setRegenerateOpen(true)}
-                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
-                      >
-                        <RefreshCw size={16} />
-                        Mettre à jour les parcours instanciés
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        onSelect={() => setExportOpen(true)}
-                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
-                      >
-                        <Printer size={16} />
-                        Exporter le planning (PDF)
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        onSelect={() => setCycleOpen(true)}
-                        className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer outline-none hover:bg-primary/20 text-sm select-none"
-                      >
-                        <CalendarRange size={16} />
-                        Configurer le cycle de semaines
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-
-                <ToggleGroup
-                  value={view}
-                  onValueChange={(v: string) => {
-                    if (v) {
-                      setView(v as 'calendar' | 'timeline')
-                      if (v !== 'timeline') {
-                        setIsForbiddenWeekMode(false)
-                      }
+          <SelectAllShortcut
+            events={mergedEvents}
+            disabled={view !== 'calendar'}
+            onSelectAll={handleSelectAll}
+          />
+          {!editMode && (
+            <>
+              <ToggleGroup
+                className={SEGMENTS}
+                value={view}
+                onValueChange={(v: string) => {
+                  if (v) {
+                    setView(v as 'calendar' | 'timeline')
+                    if (v !== 'timeline') {
+                      setIsForbiddenWeekMode(false)
                     }
-                  }}
-                >
-                  <ToggleGroupItem value="calendar">
-                    <CalendarDays className="h-4 w-4" />
-                    Calendrier
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="timeline">
-                    <GanttChart className="h-4 w-4" />
-                    Timeline
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </>
-            )}
-          </div>
+                  }
+                }}
+              >
+                <ToggleGroupItem value="calendar" className={SEGMENT}>
+                  <CalendarDays className="h-4 w-4" />
+                  Calendrier
+                </ToggleGroupItem>
+                <ToggleGroupItem value="timeline" className={SEGMENT}>
+                  <GanttChart className="h-4 w-4" />
+                  Timeline
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              <span className="flex-1" />
+
+              <Button
+                variant="outline"
+                className="h-[38px] rounded-lg px-3.5"
+                onClick={() => setExportOpen(true)}
+              >
+                <Printer size={16} />
+                Exporter
+              </Button>
+
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label="Plus d'actions"
+                    title="Plus d'actions"
+                    className="size-[38px] rounded-lg data-[state=open]:bg-muted"
+                  >
+                    <Ellipsis size={18} />
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  {/* Les actions secondaires vont ici ; Exporter reste à part. */}
+                  <DropdownMenu.Content
+                    className="z-50 w-[310px] rounded-[10px] border border-border bg-primary-foreground p-1 shadow-[0_16px_40px_rgba(4,24,43,.18)]"
+                    align="end"
+                    sideOffset={6}
+                    collisionPadding={8}
+                  >
+                    <DropdownMenu.Item
+                      onSelect={() => setCycleOpen(true)}
+                      className={MORE_ITEM}
+                    >
+                      <Repeat size={16} className="mt-0.5 shrink-0" />
+                      <span className="flex flex-col gap-0.5">
+                        Configurer le cycle de semaines
+                        <span className="text-xs leading-snug text-text-light">
+                          S1, S2… au lieu des numéros de l'année
+                        </span>
+                      </span>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onSelect={() => setRegenerateOpen(true)}
+                      className={MORE_ITEM}
+                    >
+                      <RefreshCw size={16} className="mt-0.5 shrink-0" />
+                      <span className="flex flex-col gap-0.5">
+                        Mettre à jour les parcours instanciés
+                        <span className="text-xs leading-snug text-text-light">
+                          Applique les changements des modèles aux parcours déjà
+                          créés
+                        </span>
+                      </span>
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </>
+          )}
         </div>
 
         {selectedSlotIds.size > 0 && (
@@ -1059,6 +1088,7 @@ function Planning() {
               <div className="flex h-full flex-col">
                 <PlanningTimeline
                   controller={controleurAnnee}
+                  filtres={pathwayFilter}
                   isForbiddenWeekMode={isForbiddenWeekMode}
                   weekNumberCalculation={weekNumberCalculation}
                   events={[...pathwayEvents, ...forbiddenWeekBackgroundEvents]}
@@ -1250,18 +1280,15 @@ type PathwayDeleteTarget = {
   anchor: { getBoundingClientRect: () => DOMRect }
 }
 
-function SelectAllButton({
+// Plus de bouton « Tout sélectionner » : Cmd+A seul.
+function SelectAllShortcut({
   events,
-  hidden,
-  selectedIds,
+  disabled: hidden,
   onSelectAll,
-  onClear,
 }: {
   events: CalendarEvent[]
-  hidden: boolean
-  selectedIds: Set<string>
+  disabled: boolean
   onSelectAll: (ids: string[]) => void
-  onClear: () => void
 }) {
   const disabled = hidden || events.length === 0
   const selectAll = useCallback(
@@ -1292,22 +1319,11 @@ function SelectAllButton({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [disabled, selectAll])
 
-  if (disabled) {
-    return null
-  }
-  const allSelected = events.every((event) => selectedIds.has(event.id))
-  return (
-    <Button
-      variant="outline"
-      className="font-normal rounded-lg"
-      title="Cmd+A"
-      onClick={allSelected ? onClear : selectAll}
-    >
-      {allSelected ? <Square size={16} /> : <CheckSquare size={16} />}
-      {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
-    </Button>
-  )
+  return null
 }
+
+const MORE_ITEM =
+  'flex cursor-pointer gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none select-none data-highlighted:bg-[#f8fafc]'
 
 const BAR_BUTTON =
   'flex h-9 cursor-pointer items-center gap-[7px] rounded-lg px-3 text-sm font-medium text-white hover:bg-white/10'
@@ -1427,6 +1443,7 @@ function SelectionBar({
 
 function PlanningTimeline({
   controller,
+  filtres,
   isForbiddenWeekMode,
   weekNumberCalculation,
   events,
@@ -1436,6 +1453,7 @@ function PlanningTimeline({
   onPathwayClick,
 }: {
   controller: CalendarController
+  filtres: ReactNode
   isForbiddenWeekMode: boolean
   weekNumberCalculation: 'ISO' | ((date: Date) => number)
   events: EventInput[]
@@ -1453,6 +1471,8 @@ function PlanningTimeline({
           { type: 'multiMonthYear', libelle: 'Grille' },
           { type: 'dayGridYear', libelle: 'Liste' },
         ]}
+        disposition="planning"
+        filtres={filtres}
       />
       <FullCalendar
         controller={controller}

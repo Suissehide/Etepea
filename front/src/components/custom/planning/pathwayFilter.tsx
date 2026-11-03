@@ -49,10 +49,7 @@ function PathwayFilter({
   ]
 
   const hiddenCount = hiddenIds.size
-  const triggerLabel =
-    hiddenCount > 0
-      ? `Parcours · ${hiddenCount} masqué${hiddenCount > 1 ? 's' : ''}`
-      : 'Parcours'
+  const visibleCount = filters.filter((filter) => filter.checked).length
 
   // Exactly one of the two actions is offered: reset once something is
   // hidden, hide-all when everything is visible.
@@ -65,7 +62,10 @@ function PathwayFilter({
     <DropdownFilter
       filters={filters}
       onFilterChange={onToggle}
-      triggerLabel={triggerLabel}
+      triggerLabel="Parcours"
+      actif={hiddenCount > 0}
+      compteur={visibleCount}
+      titreCompteur={`${visibleCount} affiché${visibleCount > 1 ? 's' : ''} sur ${filters.length}`}
       TriggerIcon={Route}
       headerAction={headerAction}
     />

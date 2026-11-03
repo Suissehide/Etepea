@@ -147,8 +147,10 @@ interface CalendarProps {
   selectAllow?: (selectInfo: DateSpanApi, eventId: string) => boolean
   editMode?: boolean
   /** complete : vues, aujourd'hui, date ; navigation : sans les vues ; minimale : précédent/suivant. */
-  barre?: 'complete' | 'navigation' | 'minimale'
+  barre?: 'complete' | 'navigation' | 'minimale' | 'planning'
   classeBarre?: string
+  /** Rendus dans la barre, entre le titre et les vues (barre planning). */
+  filtresBarre?: React.ReactNode
   editable?: boolean
   /** false : les créneaux simultanés se partagent la colonne au lieu de se recouvrir. */
   overlap?: boolean
@@ -186,6 +188,7 @@ function Calendar({
   editMode,
   barre = 'complete',
   classeBarre,
+  filtresBarre,
   editable = false,
   overlap = true,
   initialDate,
@@ -423,7 +426,7 @@ function Calendar({
       <BarreCalendrier
         controller={controller}
         vues={
-          barre === 'complete'
+          barre === 'complete' || barre === 'planning'
             ? [
                 { type: 'timeGridWeek' },
                 { type: 'timeGridDay' },
@@ -434,6 +437,8 @@ function Calendar({
         aujourdhui={barre !== 'minimale'}
         onChoisirDate={barre === 'minimale' ? undefined : setAnchorEl}
         className={classeBarre}
+        disposition={barre === 'planning' ? 'planning' : undefined}
+        filtres={filtresBarre}
       />
       <FullCalendar
         ref={calendarRef}
@@ -474,16 +479,16 @@ function Calendar({
                 : `S${cycleWeek}`
           const startStr = start.format('DD MMMM')
           if (!arg.end) {
-            return `${weekLabel} / ${startStr}`
+            return `${weekLabel} · ${startStr}`
           }
           // arg.end.marker est la fin INCLUSIVE de la plage (23:59:59.999 du
           // dernier jour visible), donc on n'enlève pas de jour.
           const end = dayjs.utc(arg.end.marker)
           // Vue "Jour" (plage d'un seul jour) : afficher le jour seul.
           if (end.isSame(start, 'day')) {
-            return `${weekLabel} / ${startStr}`
+            return `${weekLabel} · ${startStr}`
           }
-          return `${weekLabel} / ${startStr} - ${end.format('DD MMMM')}`
+          return `${weekLabel} · ${startStr} - ${end.format('DD MMMM')}`
         }}
         dayHeaderFormat={
           anchorMonday

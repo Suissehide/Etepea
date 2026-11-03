@@ -1,4 +1,4 @@
-import { Check, Filter, type LucideIcon } from 'lucide-react'
+import { Check, ChevronDown, Filter, type LucideIcon } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
 import { Fragment } from 'react'
 
@@ -27,26 +27,54 @@ const DropdownFilter = ({
   triggerLabel = 'Filtres',
   TriggerIcon = Filter,
   headerAction,
+  actif,
+  compteur,
+  titreCompteur,
 }: {
   filters: DropdownFilterItem[]
   onFilterChange: (id: string, checked: boolean) => void
   triggerLabel?: string
   TriggerIcon?: LucideIcon
   headerAction?: DropdownFilterAction
+  /** Fourni : déclencheur à chevron ; vrai, filtre mis en avant avec son compteur. */
+  actif?: boolean
+  compteur?: number
+  titreCompteur?: string
 }) => {
   const HeaderIcon = headerAction?.icon
 
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <Button
-          variant="outline"
-          size="default"
-          className="font-normal rounded-lg"
-        >
-          <TriggerIcon size={16} />
-          {triggerLabel}
-        </Button>
+        {actif === undefined ? (
+          <Button
+            variant="outline"
+            size="default"
+            className="font-normal rounded-lg"
+          >
+            <TriggerIcon size={16} />
+            {triggerLabel}
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            title={actif ? titreCompteur : undefined}
+            aria-label={actif ? `${triggerLabel}, ${titreCompteur}` : undefined}
+            className={cn(
+              'gap-[7px] rounded-lg pr-2.5 pl-3 text-foreground',
+              actif && 'border-[#93c5fd] bg-blue-50 hover:bg-blue-100',
+            )}
+          >
+            <TriggerIcon size={16} />
+            {triggerLabel}
+            {actif && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-[5px] text-xs font-bold text-white">
+                {compteur}
+              </span>
+            )}
+            <ChevronDown size={14} className="text-text-light" />
+          </Button>
+        )}
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
