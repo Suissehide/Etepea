@@ -118,15 +118,17 @@ const templateWeek = (n: number): Week => ({
 })
 
 function summary(mode: BulkWeekMode, count: number, from: Week, to: Week) {
-  const where = to.range ? `${to.short}, ${to.range}` : to.short
+  const name = to.forbidden ? 'semaine interdite' : to.short
+  // « nov. » porte déjà le point final.
+  const where = to.range ? `${name}, ${to.range}` : `${name}.`
   if (mode === 'duplicate') {
     return count > 1
-      ? `${count} créneaux seront créés en ${where}. ${from.short} ne change pas.`
-      : `1 créneau sera créé en ${where}. ${from.short} ne change pas.`
+      ? `${count} créneaux seront créés en ${where} ${from.short} ne change pas.`
+      : `1 créneau sera créé en ${where} ${from.short} ne change pas.`
   }
   return count > 1
-    ? `Les ${count} créneaux de ${from.short} passeront en ${where}. ${from.short} sera vidée de ces créneaux.`
-    : `Le créneau de ${from.short} passera en ${where}. ${from.short} sera vidée de ce créneau.`
+    ? `Les ${count} créneaux de ${from.short} passeront en ${where} ${from.short} sera vidée de ces créneaux.`
+    : `Le créneau de ${from.short} passera en ${where} ${from.short} sera vidée de ce créneau.`
 }
 
 export function BulkWeekForm(props: BulkWeekFormProps) {
@@ -136,6 +138,13 @@ export function BulkWeekForm(props: BulkWeekFormProps) {
   const [target, setTarget] = useState<Dayjs | number | null>(null)
 
   const source = props.sourceWeek
+  const forbiddenKeys = new Set(
+    (props.forbiddenWeeks ?? []).map((w) =>
+      dayjs.utc(w.startOfWeek).format('YYYY-MM-DD'),
+    ),
+  )
+  // Chaîne plutôt que Set : une dépendance stable d'un rendu à l'autre.
+  const forbiddenJoined = [...forbiddenKeys].join()
   useEffect(() => {
     if (!open) {
       return
@@ -143,19 +152,21 @@ export function BulkWeekForm(props: BulkWeekFormProps) {
     if (props.editMode) {
       setTarget((source as number) + 1)
     } else {
-      const next = (source as Dayjs).add(1, 'week')
+      // Première semaine ni passée ni interdite après la source.
+      let next = (source as Dayjs).add(1, 'week')
       const current = dayjs.utc().isoWeekday(1).startOf('day')
-      setTarget(next.isBefore(current) ? current : next)
+      next = next.isBefore(current) ? current : next
+      const skip = forbiddenJoined.split(',')
+      while (skip.includes(next.format('YYYY-MM-DD'))) {
+        next = next.add(1, 'week')
+      }
+      setTarget(next)
     }
-  }, [open, props.editMode, source])
+  }, [open, props.editMode, source, forbiddenJoined])
 
   const calendar: CalendarContext = {
     cycle: props.planningCycle,
-    forbidden: new Set(
-      (props.forbiddenWeeks ?? []).map((w) =>
-        dayjs.utc(w.startOfWeek).format('YYYY-MM-DD'),
-      ),
-    ),
+    forbidden: forbiddenKeys,
   }
   const weekOf = (value: Dayjs | number): Week =>
     props.editMode
