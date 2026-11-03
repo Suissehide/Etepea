@@ -188,8 +188,7 @@ export function NotificationsPanel({
       <div className="px-[18px] py-2.5 border-t border-border text-xs text-text-light flex items-center justify-between">
         <span>Conservées 30 jours</span>
         <Link
-          to="/user/settings"
-          hash="notifications"
+          to="/user/notifications"
           onClick={onClose}
           className="text-primary font-medium"
         >

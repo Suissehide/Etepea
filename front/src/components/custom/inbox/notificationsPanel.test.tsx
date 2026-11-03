@@ -56,8 +56,8 @@ const renderPanel = async (ui: ReactNode) => {
   })
   const settingsRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/user/settings',
-    component: () => <div>Reglages du compte</div>,
+    path: '/user/notifications',
+    component: () => <div>Preferences de notification</div>,
   })
   const router = createRouter({
     routeTree: rootRoute.addChildren([indexRoute, settingsRoute]),
@@ -100,7 +100,7 @@ describe('NotificationsPanel', () => {
     expect(screen.getByText(/^Notification ·/)).toBeInTheDocument()
   })
 
-  it('le lien Preferences navigue vers /user/settings#notifications et ferme le panneau', async () => {
+  it('le lien Preferences navigue vers /user/notifications et ferme le panneau', async () => {
     const u = userEvent.setup()
     const onClose = vi.fn()
     const router = await renderPanel(
@@ -112,9 +112,10 @@ describe('NotificationsPanel', () => {
       />,
     )
     await u.click(screen.getByRole('link', { name: 'Préférences' }))
-    expect(await screen.findByText('Reglages du compte')).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/user/settings')
-    expect(router.state.location.hash).toBe('notifications')
+    expect(
+      await screen.findByText('Preferences de notification'),
+    ).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/user/notifications')
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 })

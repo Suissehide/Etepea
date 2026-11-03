@@ -33,6 +33,7 @@ import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperAdminEstablishmentIdRouteImport } from './routes/_authenticated/super-admin/$establishmentId'
 import { Route as AuthenticatedSuperAdminAccessLogRouteImport } from './routes/_authenticated/super-admin/access-log'
 import { Route as AuthenticatedSuperAdminUsersRouteImport } from './routes/_authenticated/super-admin/users'
+import { Route as AuthenticatedUserNotificationsRouteImport } from './routes/_authenticated/user/notifications'
 import { Route as AuthenticatedUserSettingsRouteImport } from './routes/_authenticated/user/settings'
 import { Route as AuthenticatedEEstablishmentIdAdminRouteImport } from './routes/_authenticated/e/$establishmentId/admin'
 import { Route as AuthenticatedSuperAdminPdfPresetsIndexRouteImport } from './routes/_authenticated/super-admin/pdf-presets/index'
@@ -198,6 +199,12 @@ const AuthenticatedSuperAdminUsersRoute =
     id: '/users',
     path: '/users',
     getParentRoute: () => AuthenticatedSuperAdminRoute,
+  } as any)
+const AuthenticatedUserNotificationsRoute =
+  AuthenticatedUserNotificationsRouteImport.update({
+    id: '/user/notifications',
+    path: '/user/notifications',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedUserSettingsRoute =
   AuthenticatedUserSettingsRouteImport.update({
@@ -429,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/$establishmentId': typeof AuthenticatedSuperAdminEstablishmentIdRoute
   '/super-admin/access-log': typeof AuthenticatedSuperAdminAccessLogRoute
   '/super-admin/users': typeof AuthenticatedSuperAdminUsersRoute
+  '/user/notifications': typeof AuthenticatedUserNotificationsRoute
   '/user/settings': typeof AuthenticatedUserSettingsRoute
   '/patient/': typeof AuthenticatedPatientIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
@@ -484,6 +492,7 @@ export interface FileRoutesByTo {
   '/super-admin/$establishmentId': typeof AuthenticatedSuperAdminEstablishmentIdRoute
   '/super-admin/access-log': typeof AuthenticatedSuperAdminAccessLogRoute
   '/super-admin/users': typeof AuthenticatedSuperAdminUsersRoute
+  '/user/notifications': typeof AuthenticatedUserNotificationsRoute
   '/user/settings': typeof AuthenticatedUserSettingsRoute
   '/patient': typeof AuthenticatedPatientIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
@@ -540,6 +549,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/$establishmentId': typeof AuthenticatedSuperAdminEstablishmentIdRoute
   '/_authenticated/super-admin/access-log': typeof AuthenticatedSuperAdminAccessLogRoute
   '/_authenticated/super-admin/users': typeof AuthenticatedSuperAdminUsersRoute
+  '/_authenticated/user/notifications': typeof AuthenticatedUserNotificationsRoute
   '/_authenticated/user/settings': typeof AuthenticatedUserSettingsRoute
   '/_authenticated/patient/': typeof AuthenticatedPatientIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
@@ -599,6 +609,7 @@ export interface FileRouteTypes {
     | '/super-admin/$establishmentId'
     | '/super-admin/access-log'
     | '/super-admin/users'
+    | '/user/notifications'
     | '/user/settings'
     | '/patient/'
     | '/super-admin/'
@@ -654,6 +665,7 @@ export interface FileRouteTypes {
     | '/super-admin/$establishmentId'
     | '/super-admin/access-log'
     | '/super-admin/users'
+    | '/user/notifications'
     | '/user/settings'
     | '/patient'
     | '/super-admin'
@@ -709,6 +721,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/$establishmentId'
     | '/_authenticated/super-admin/access-log'
     | '/_authenticated/super-admin/users'
+    | '/_authenticated/user/notifications'
     | '/_authenticated/user/settings'
     | '/_authenticated/patient/'
     | '/_authenticated/super-admin/'
@@ -922,6 +935,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/super-admin/users'
       preLoaderRoute: typeof AuthenticatedSuperAdminUsersRouteImport
       parentRoute: typeof AuthenticatedSuperAdminRoute
+    }
+    '/_authenticated/user/notifications': {
+      id: '/_authenticated/user/notifications'
+      path: '/user/notifications'
+      fullPath: '/user/notifications'
+      preLoaderRoute: typeof AuthenticatedUserNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/user/settings': {
       id: '/_authenticated/user/settings'
@@ -1310,6 +1330,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsSoignantRoute: typeof AuthenticatedSettingsSoignantRoute
   AuthenticatedSettingsThematicRoute: typeof AuthenticatedSettingsThematicRoute
   AuthenticatedSettingsUserRoute: typeof AuthenticatedSettingsUserRoute
+  AuthenticatedUserNotificationsRoute: typeof AuthenticatedUserNotificationsRoute
   AuthenticatedUserSettingsRoute: typeof AuthenticatedUserSettingsRoute
   AuthenticatedPatientIndexRoute: typeof AuthenticatedPatientIndexRoute
   AuthenticatedEEstablishmentIdAdminRoute: typeof AuthenticatedEEstablishmentIdAdminRouteWithChildren
@@ -1332,6 +1353,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsSoignantRoute: AuthenticatedSettingsSoignantRoute,
   AuthenticatedSettingsThematicRoute: AuthenticatedSettingsThematicRoute,
   AuthenticatedSettingsUserRoute: AuthenticatedSettingsUserRoute,
+  AuthenticatedUserNotificationsRoute: AuthenticatedUserNotificationsRoute,
   AuthenticatedUserSettingsRoute: AuthenticatedUserSettingsRoute,
   AuthenticatedPatientIndexRoute: AuthenticatedPatientIndexRoute,
   AuthenticatedEEstablishmentIdAdminRoute:

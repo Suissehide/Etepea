@@ -1,11 +1,6 @@
-import {
-  createFileRoute,
-  useLocation,
-  useNavigate,
-  useRouter,
-} from '@tanstack/react-router'
-import { ArrowLeft, Bell, Hospital, Shield, UserRoundPen } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
+import { ArrowLeft, Hospital, Shield, UserRoundPen } from 'lucide-react'
+import { useState } from 'react'
 
 import { AuthApi } from '../../../api/auth.api.ts'
 import { ServiceMembersApi } from '../../../api/serviceMembers.api.ts'
@@ -14,7 +9,6 @@ import {
   MesSoignants,
 } from '../../../components/custom/mesSoignants.tsx'
 import DashboardLayout from '../../../components/dashboard.layout.tsx'
-import { NotificationPrefs } from '../../../components/settings/notificationPrefs.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
@@ -36,13 +30,6 @@ function UserSettings() {
   const updateUser = useAuthStore((state) => state.update)
   const { toast } = useToast()
   const affectations = affectationsDe(user)
-  // Sans `<ScrollRestoration />` dans l'app, le defilement jusqu'a `#notifications` est fait ici.
-  const hash = useLocation({ select: (location) => location.hash })
-  useEffect(() => {
-    if (hash === 'notifications') {
-      document.getElementById('notifications')?.scrollIntoView()
-    }
-  }, [hash])
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingServices, setIsUpdatingServices] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
@@ -175,18 +162,6 @@ function UserSettings() {
               </div>
             </form>
           </div>
-        </div>
-
-        {/* Préférences de notification */}
-        <div className="mt-4" id="notifications">
-          <div className="flex items-center gap-2 mb-4">
-            <Bell className="h-4 w-4" />
-            <h3 className="text-md font-semibold text-text-dark">
-              Notifications
-            </h3>
-            <div className="mt-1 ml-1 flex-1 border-t border-border" />
-          </div>
-          <NotificationPrefs />
         </div>
 
         {affectations.length > 0 && (

@@ -1,5 +1,5 @@
 import { useRouter } from '@tanstack/react-router'
-import { ChevronDown, LogOut, Settings, Zap } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Settings, Zap } from 'lucide-react'
 import { Fragment, type JSX } from 'react'
 
 import { useLogout } from '../../../queries/useAuth.ts'
@@ -126,6 +126,12 @@ function Sidebar({
                   onClick={() => router.navigate({ to: '/user/settings' })}
                 >
                   Réglages
+                </PopoverMenuItem>
+                <PopoverMenuItem
+                  icon={<Bell className="w-4 h-4" />}
+                  onClick={() => router.navigate({ to: '/user/notifications' })}
+                >
+                  Notifications
                 </PopoverMenuItem>
                 <PopoverSeparator />
                 <PopoverMenuItem
