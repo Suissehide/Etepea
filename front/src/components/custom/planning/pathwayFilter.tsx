@@ -8,7 +8,7 @@ import DropdownFilter, {
 
 export const NO_PATHWAY_KEY = '__no_pathway__'
 
-const NO_PATHWAY_COLOR = '#94a3b8'
+export const NO_PATHWAY_COLOR = '#94a3b8'
 
 type PathwayFilterProps = {
   templates: PathwayTemplate[]

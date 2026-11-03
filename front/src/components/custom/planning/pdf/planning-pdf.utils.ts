@@ -28,6 +28,12 @@ const WEEKDAY_COUNT = 5
 
 const dayKeyOf = (date: string) => dayjs.utc(date).format('YYYY-MM-DD')
 
+/** Numéro affiché dans le planning : position dans le cycle, sinon numéro ISO. */
+export const weekLabelOf = (weekStart: Dayjs, cycle?: PlanningCycle | null) =>
+  cycle
+    ? `${cycleWeekNumber(weekStart, cycle) ?? '—'}`
+    : `${weekStart.isoWeek()}`
+
 const isWeekday = (slot: Slot) =>
   dayjs.utc(slot.startDate).isoWeekday() <= WEEKDAY_COUNT
 
@@ -71,9 +77,7 @@ export function buildPlanningWeeks(
     return {
       weekStart,
       isoWeek: weekStart.isoWeek(),
-      weekLabel: cycle
-        ? `${cycleWeekNumber(weekStart, cycle) ?? '—'}`
-        : `${weekStart.isoWeek()}`,
+      weekLabel: weekLabelOf(weekStart, cycle),
       isClosed: closedWeekKeys.has(weekStart.format('YYYY-MM-DD')),
       startMinute,
       endMinute,
