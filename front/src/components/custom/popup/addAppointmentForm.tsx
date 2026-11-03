@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { Check, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { appointmentTypeLabel } from '../../../constants/appointment.constant.ts'
+import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import {
   appointmentRange,
@@ -16,10 +16,12 @@ import {
   thematicLabelByID,
 } from '../../../libs/utils.ts'
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
-import { useSlotByIDQuery } from '../../../queries/useSlot.ts'
+import { useSlotByIDQuery, useSlotMutations } from '../../../queries/useSlot.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
 import type { CreateAppointmentParams } from '../../../types/appointment.ts'
+import type { Slot } from '../../../types/slot.ts'
 import type { Soignant } from '../../../types/soignant.ts'
+import type { Thematic } from '../../../types/thematic.ts'
 import { Button } from '../../ui/button.tsx'
 import { FieldInfo } from '../../ui/fieldInfo.tsx'
 import { FormField } from '../../ui/formField.tsx'
@@ -33,6 +35,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../../ui/popup.tsx'
+import { Select, type SelectOption } from '../../ui/select.tsx'
 import { AppointmentTimeFields } from '../appointmentDetailsFields.tsx'
 
 interface AddAppointmentFormProps {
@@ -67,6 +70,12 @@ function AddAppointmentForm({
   const { thematics } = useThematicQueries()
   const { patients } = usePatientQueries()
   const { slot } = useSlotByIDQuery(slotID)
+  const { updateSlot } = useSlotMutations()
+  // Thématique et type appartiennent au créneau : undefined tant qu'on n'y touche pas.
+  const [slotThematicId, setSlotThematicId] = useState<string>()
+  const [slotType, setSlotType] = useState<string>()
+  const thematicId = slotThematicId ?? slot?.slotTemplate?.thematicId ?? ''
+  const slotTypeValue = slotType ?? slot?.slotTemplate?.type ?? ''
   const patientOptions =
     patients
       ?.map((patient) => ({
@@ -88,6 +97,16 @@ function AddAppointmentForm({
       patientIDs: (defaultPatientIDs ?? []) as string[],
     },
     onSubmit: ({ value }) => {
+      if (slot && (slotThematicId !== undefined || slotType !== undefined)) {
+        updateSlot.mutate({
+          id: slot.id,
+          slotTemplate: {
+            id: slot.slotTemplate.id,
+            thematicId: thematicId || null,
+            type: slotTypeValue || null,
+          },
+        })
+      }
       const newAppointment: CreateAppointmentParams = {
         startDate: start.toISOString(),
         endDate: end.toISOString(),
@@ -128,7 +147,7 @@ function AddAppointmentForm({
     slot,
     [
       thematics?.find((t) => t.id === subThematicID)?.duration,
-      thematics?.find((t) => t.id === slot?.slotTemplate?.thematicId)?.duration,
+      thematics?.find((t) => t.id === thematicId)?.duration,
     ],
     startTime,
   )
@@ -222,27 +241,15 @@ function AddAppointmentForm({
               />
             </FormField>
 
-            <FormField>
-              <Label>Thématique</Label>
-              <Input
-                value={
-                  thematicLabelByID(
-                    thematics,
-                    slot?.slotTemplate?.thematicId,
-                    slot?.slotTemplate?.thematic,
-                  ) ?? 'Aucune thématique'
-                }
-                disabled
-              />
-            </FormField>
-
-            <FormField>
-              <Label>Type</Label>
-              <Input
-                value={appointmentTypeLabel(slot?.slotTemplate?.type)}
-                disabled
-              />
-            </FormField>
+            <SlotThematicTypeFields
+              slot={slot}
+              thematics={thematics ?? []}
+              thematicOptions={thematicOptions}
+              thematicId={thematicId}
+              type={slotTypeValue}
+              onThematicChange={setSlotThematicId}
+              onTypeChange={setSlotType}
+            />
 
             <FormField>
               <Label>Salle</Label>
@@ -320,3 +327,63 @@ function AddAppointmentForm({
 }
 
 export default AddAppointmentForm
+
+// Thématique et type du créneau : les changer ici les change pour tout le créneau.
+function SlotThematicTypeFields({
+  slot,
+  thematics,
+  thematicOptions,
+  thematicId,
+  type,
+  onThematicChange,
+  onTypeChange,
+}: {
+  slot?: Slot
+  thematics: Thematic[]
+  thematicOptions: SelectOption[]
+  thematicId: string
+  type: string
+  onThematicChange: (value: string) => void
+  onTypeChange: (value: string) => void
+}) {
+  // La thématique actuelle reste proposée, même si aucun soignant du créneau ne la pratique.
+  const currentId = slot?.slotTemplate?.thematicId
+  const options =
+    currentId && !thematicOptions.some((o) => o.value === currentId)
+      ? [
+          {
+            value: currentId,
+            label:
+              thematicLabelByID(
+                thematics,
+                currentId,
+                slot?.slotTemplate?.thematic,
+              ) ?? '',
+          },
+          ...thematicOptions,
+        ]
+      : thematicOptions
+  return (
+    <>
+      <FormField>
+        <Label>Thématique</Label>
+        <Select
+          options={options}
+          placeholder="Aucune thématique"
+          value={thematicId}
+          onValueChange={onThematicChange}
+        />
+      </FormField>
+
+      <FormField>
+        <Label>Type</Label>
+        <Select
+          options={APPOINTMENT_TYPE_OPTIONS}
+          placeholder="Non renseigné"
+          value={type}
+          onValueChange={onTypeChange}
+        />
+      </FormField>
+    </>
+  )
+}
