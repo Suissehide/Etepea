@@ -6,7 +6,6 @@ import {
   RotateCcw,
   Route as RouteIcon,
   Search,
-  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -95,8 +94,6 @@ function PatientList() {
   const [isExporting, setIsExporting] = useState(false)
   const userId = useAuthStore((state) => state.user?.id) ?? 'anonyme'
   const tableId = `patient/${serviceId}/${userId}`
-  const [resetSignal, setResetSignal] = useState(0)
-  const [columnFiltersActive, setColumnFiltersActive] = useState(false)
 
   useEffect(() => {
     localStorage.setItem(
@@ -177,13 +174,6 @@ function PatientList() {
     )
   }
 
-  const resetFilters = () => {
-    setStatus(DEFAULT_STATUS)
-    setSelectedTags([])
-    setErrorsOnly(false)
-    setResetSignal((n) => n + 1)
-  }
-
   const handleExport = async () => {
     setIsExporting(true)
     try {
@@ -261,8 +251,6 @@ function PatientList() {
                 isLoading={isPending}
                 isRowMuted={(patient) => Boolean(patient.exitDate)}
                 onRowClick={(patient) => handleRedirectPatient(patient.id)}
-                resetSignal={resetSignal}
-                onColumnFiltersActiveChange={setColumnFiltersActive}
                 toolbar={
                   <>
                     <Input
@@ -313,15 +301,6 @@ function PatientList() {
                       <AlertTriangle className="w-4 h-4" />
                       Erreurs · {errorCount}
                     </Button>
-                    {(status !== DEFAULT_STATUS ||
-                      selectedTags.length > 0 ||
-                      errorsOnly ||
-                      columnFiltersActive) && (
-                      <Button variant="ghost" onClick={resetFilters}>
-                        <X className="w-4 h-4" />
-                        Réinitialiser
-                      </Button>
-                    )}
                   </>
                 }
                 toolbarEnd={
