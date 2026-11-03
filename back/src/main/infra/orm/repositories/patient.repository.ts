@@ -17,6 +17,7 @@ import type { TenantContextInterface } from '../../../types/utils/tenant-context
 // `escapeLikePattern` vivait en tete de ce fichier ; extrait pour servir aussi le filtre
 // « compte » de la lecture plateforme des deux journaux.
 import { escapeLikePattern } from '../../../utils/like-pattern'
+import { countOverlaps } from '../../../utils/planning-conflicts'
 import { asValues } from '../../../utils/service-field-types'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -98,6 +99,7 @@ class PatientRepository implements PatientRepositoryInterface {
   }
 
   async findAllWithTags(): Promise<PatientWithTagsEntityRepo[]> {
+    const now = new Date()
     const patients = await this.prisma.patient.findMany({
       // La liste rend les patients ayant un sous-dossier dans le SERVICE courant, pas tous ceux
       // de l'etablissement : avant ce filtre, les deux
@@ -115,8 +117,11 @@ class PatientRepository implements PatientRepositoryInterface {
           select: {
             appointment: {
               select: {
+                startDate: true,
+                endDate: true,
                 slot: {
                   select: {
+                    archivedAt: true,
                     pathway: {
                       select: {
                         id: true,
@@ -161,6 +166,15 @@ class PatientRepository implements PatientRepositoryInterface {
         const tags = orderedMainTags(appointmentPatients, pathwayPriorities)
         return {
           ...patient,
+          appointmentConflicts: countOverlaps(
+            appointmentPatients.flatMap(({ appointment }) =>
+              appointment &&
+              !appointment.slot?.archivedAt &&
+              appointment.endDate > now
+                ? [appointment]
+                : [],
+            ),
+          ),
           pathwayTemplateTags: tags.map((t) => t.mainTag),
           pathwayTagColors: Object.fromEntries(
             tags.map((t) => [t.mainTag, t.color]),

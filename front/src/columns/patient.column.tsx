@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import dayjs from 'dayjs'
-import { AlertTriangle, Eye } from 'lucide-react'
+import { AlertTriangle, CalendarX2, Eye } from 'lucide-react'
 import { useState } from 'react'
 
 import {
@@ -175,18 +175,30 @@ export const getPatientColumns = ({
     columnHelper.display({
       id: 'enrollmentAlert',
       header: '',
-      size: 32,
+      size: 72,
       cell: ({ row }) => {
         const count = row.original.enrollmentIssues?.length ?? 0
-        if (count === 0) {
+        const conflicts = row.original.appointmentConflicts ?? 0
+        if (count === 0 && conflicts === 0) {
           return null
         }
         return (
-          <div className="flex items-center justify-center">
-            <Etiquette ton="alerte">
-              <AlertTriangle className="w-3 h-3" />
-              {count}
-            </Etiquette>
+          <div className="flex items-center justify-center gap-1">
+            {count > 0 && (
+              <Etiquette ton="alerte">
+                <AlertTriangle className="w-3 h-3" />
+                {count}
+              </Etiquette>
+            )}
+            {conflicts > 0 && (
+              <Etiquette
+                ton="danger"
+                title={`${conflicts} conflit${conflicts > 1 ? 's' : ''} : rendez-vous à la même heure`}
+              >
+                <CalendarX2 className="w-3 h-3" />
+                {conflicts}
+              </Etiquette>
+            )}
           </div>
         )
       },

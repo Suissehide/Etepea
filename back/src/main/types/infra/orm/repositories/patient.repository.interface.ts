@@ -9,6 +9,8 @@ export type PatientWithTagsEntityRepo = Patient & {
   pathwayTemplateTags: string[]
   // Couleur de chaque tag pour ce patient ; seule `findAllWithTags` la pose.
   pathwayTagColors?: Record<string, string>
+  // Rendez-vous à venir qui se chevauchent ; seule `findAllWithTags` le pose.
+  appointmentConflicts?: number
   enrollmentIssues: EnrollmentIssueEntityRepo[]
   // Date d'entree dans le service courant : vit sur PatientServiceFile, mais
   // `findAllWithTags` joint deja le sous-dossier filtre sur le service (comme pour

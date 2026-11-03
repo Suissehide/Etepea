@@ -31,6 +31,14 @@ export type PlanningConflict =
 const overlaps = (a: Interval, b: Interval) =>
   a.startDate < b.endDate && a.endDate > b.startDate
 
+// Paires qui se chevauchent : deux rendez-vous du même patient à la même heure.
+export const countOverlaps = (intervals: Interval[]) =>
+  intervals.reduce(
+    (count, a, index) =>
+      count + intervals.slice(index + 1).filter((b) => overlaps(a, b)).length,
+    0,
+  )
+
 // Une plage vide (parcours sans inscrit) ne dispute la salle à personne.
 const isOccupied = (slot: ConflictSlot) =>
   slot.appointments.some((a) => a.appointmentPatients.length > 0)
