@@ -32,8 +32,6 @@ const WEEKDAYS = [
   ['sam', 'S'],
   ['dim', 'D'],
 ]
-const HATCHED =
-  'bg-[repeating-linear-gradient(135deg,#f8fafc_0_6px,#eef2f6_6px_8px)]'
 
 const mondayOf = (date: Dayjs) => date.isoWeekday(1).startOf('day')
 
@@ -228,7 +226,7 @@ export function PlanningCycleForm({
             <LegendItem swatch="border-[1.5px] border-primary">
               Cette semaine
             </LegendItem>
-            <LegendItem swatch={cn('border border-border', HATCHED)}>
+            <LegendItem swatch="border border-red-200 bg-red-50">
               Semaine interdite : non comptée
             </LegendItem>
           </div>
@@ -285,7 +283,7 @@ function weekTag(number: number | null, isStart: boolean) {
   if (number === null) {
     return {
       label: 'Interdite',
-      className: 'text-[#94a3b8]',
+      className: 'bg-red-100 text-red-700',
       title: 'Semaine interdite : elle ne peut pas être S1',
     }
   }
@@ -327,7 +325,7 @@ function CycleWeekRow({
         isStart
           ? 'cursor-default bg-primary font-semibold text-white'
           : forbidden
-            ? cn('cursor-not-allowed text-[#94a3b8]', HATCHED)
+            ? 'cursor-not-allowed bg-red-50 text-[#94a3b8]'
             : 'cursor-pointer bg-transparent hover:shadow-[inset_0_0_0_1.5px_#93c5fd]',
         isToday &&
           !isStart &&
