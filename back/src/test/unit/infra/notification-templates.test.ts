@@ -6,7 +6,7 @@ import {
   notificationSubject,
 } from '../../../main/infra/mail/notification-templates'
 
-const FRONT_URL = 'https://medisync.test'
+const FRONT_URL = 'https://etepea.test'
 const START = new Date('2026-10-22T09:00:00.000Z') // jeu. 22/10 à 09:00
 const AFTER = new Date('2026-10-23T10:00:00.000Z') // ven. 23/10 à 10:00
 
