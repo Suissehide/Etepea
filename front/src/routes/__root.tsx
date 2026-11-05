@@ -88,6 +88,14 @@ function RootErrorComponent({ error }: ErrorComponentProps) {
 function Root() {
   return (
     <>
+      {environment === 'demo' && (
+        <div
+          role="status"
+          className="sticky top-0 z-50 bg-amber-100 px-4 py-1.5 text-center text-sm font-medium text-amber-800 border-b border-amber-200"
+        >
+          Environnement de démonstration, ne saisissez pas de données réelles
+        </div>
+      )}
       <Outlet />
       <React.Suspense>
         <TanStackRouterDevtools position="bottom-left" />
