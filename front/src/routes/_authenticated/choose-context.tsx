@@ -55,7 +55,7 @@ function ChooseContext() {
   return (
     <div className="min-h-screen w-full bg-background px-4 py-6 sm:px-8">
       <p className="text-2xl font-bold">
-        <span className="text-primary">Medi</span>Sync
+        <span className="text-primary">Ete</span>pea
       </p>
 
       <main className="mx-auto mt-10 grid max-w-5xl gap-10 md:mt-24 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16">

@@ -14,7 +14,7 @@ const build = (sendMail: jest.Mock | null) => {
   const mailer = new Mailer({
     mailTransport: sendMail ? { sendMail } : null,
     logger: { debug: log, error: log, info: log, trace: log, warn: log },
-    config: { smtpFrom: 'MediSync <no-reply@test>' },
+    config: { smtpFrom: 'Etepea <no-reply@test>' },
   } as unknown as IocContainer)
   return { mailer, logs }
 }
@@ -36,7 +36,7 @@ describe('Mailer', () => {
     expect(sendMail).toHaveBeenCalledTimes(2)
     expect(sendMail).toHaveBeenLastCalledWith({
       ...MAIL,
-      from: 'MediSync <no-reply@test>',
+      from: 'Etepea <no-reply@test>',
     })
     expect(logs.at(-1)).toBe('Mail invitation envoyé')
     expect(logs.join('\n')).not.toMatch(/jeton|personne@/)

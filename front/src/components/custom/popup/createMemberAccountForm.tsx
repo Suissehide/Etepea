@@ -149,7 +149,7 @@ function CreateMemberAccountForm() {
                     ? buildAccessLinkUrl(created.accessLink.token)
                     : null
                 }
-                existingAccountMessage="Elle avait déjà un compte MediSync : un e-mail l'a prévenue, elle se connecte avec son mot de passe habituel."
+                existingAccountMessage="Elle avait déjà un compte Etepea : un e-mail l'a prévenue, elle se connecte avec son mot de passe habituel."
               />
             </PopupBody>
             <PopupFooter>
