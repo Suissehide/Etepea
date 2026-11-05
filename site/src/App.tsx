@@ -45,8 +45,8 @@ function Nav({ t, lang }: { t: Copy; lang: Lang }) {
           href={`/${lang}/`}
           className="mr-auto flex items-center gap-2 font-semibold tracking-tight"
         >
-          <span className="inline-block size-3 rounded-full border-[3px] border-brand-light" />
-          Etepea
+          <LogoMark />
+          etepea
         </a>
         <div className="hidden items-center md:flex">
           {t.nav.links.map(([label, href]) => (
@@ -74,6 +74,44 @@ function Nav({ t, lang }: { t: Copy; lang: Lang }) {
         </a>
       </nav>
     </header>
+  );
+}
+
+const FAINT = [
+  [0, 0],
+  [17, 0],
+  [0, 17],
+  [34, 17],
+  [17, 34],
+  [34, 34],
+];
+
+function LogoMark() {
+  return (
+    <svg viewBox="0 0 47 47" aria-hidden="true" className="size-4 shrink-0">
+      {FAINT.map(([x, y]) => (
+        <rect
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width="13"
+          height="13"
+          rx="3"
+          fill="currentColor"
+          opacity="0.22"
+        />
+      ))}
+      <rect x="0" y="34" width="13" height="13" rx="3" fill="currentColor" />
+      <rect x="17" y="17" width="13" height="13" rx="3" fill="currentColor" />
+      <rect
+        x="34"
+        y="0"
+        width="13"
+        height="13"
+        rx="3"
+        className="fill-brand-light"
+      />
+    </svg>
   );
 }
 
@@ -525,7 +563,10 @@ function Footer({ t }: { t: Copy }) {
     <footer className="border-t border-white/10 px-4 py-12">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 text-sm text-white/60 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-base font-semibold text-white">Etepea</p>
+          <p className="flex items-center gap-2 text-base font-semibold text-white">
+            <LogoMark />
+            etepea
+          </p>
           <p className="mt-1">{t.footer.tagline}</p>
         </div>
         <div className="flex flex-wrap gap-6">
