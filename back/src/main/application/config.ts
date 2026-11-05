@@ -80,7 +80,7 @@ const configSchema = z.object({
   smtpFrom: z
     .string()
     .optional()
-    .transform((val) => val || 'Etepea <no-reply@medisync.local>'),
+    .transform((val) => val || 'Etepea <no-reply@etepea.local>'),
 })
 const envVarNames = [
   'CORS_ORIGIN',
