@@ -16,7 +16,7 @@ export const layout = (
   cta: string,
 ): string => `
 <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f2937">
-  <h1 style="font-size:22px"><span style="color:#2563eb">Medi</span>Sync</h1>
+  <h1 style="font-size:22px"><span style="color:#2563eb">Ete</span>pea</h1>
   ${paragraphs.map((p) => `<p>${p}</p>`).join('\n  ')}
   <p><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${cta}</a></p>
   <p style="font-size:12px;color:#6b7280">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>${escapeHtml(link)}</p>
