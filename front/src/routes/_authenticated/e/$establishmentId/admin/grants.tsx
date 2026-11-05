@@ -159,5 +159,3 @@ function GrantsAdmin() {
     </DashboardLayout>
   )
 }
-
-export default GrantsAdmin

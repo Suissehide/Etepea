@@ -58,5 +58,3 @@ function SuperAdminEstablishmentsList() {
     </DashboardLayout>
   )
 }
-
-export default SuperAdminEstablishmentsList

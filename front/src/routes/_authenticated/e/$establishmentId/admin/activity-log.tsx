@@ -27,5 +27,3 @@ function ActivityLogPage() {
   const { services } = useServicesQuery()
   return <JournalActivite services={services ?? []} />
 }
-
-export default ActivityLogPage

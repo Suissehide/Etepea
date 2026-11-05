@@ -34,5 +34,3 @@ function UserNotifications() {
     </DashboardLayout>
   )
 }
-
-export default UserNotifications

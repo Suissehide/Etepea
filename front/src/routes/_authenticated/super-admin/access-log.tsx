@@ -278,5 +278,3 @@ function SuperAdminAccessLogPage() {
     </DashboardLayout>
   )
 }
-
-export default SuperAdminAccessLogPage

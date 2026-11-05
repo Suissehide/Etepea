@@ -122,5 +122,3 @@ function PatientAccessLogPage() {
     </DashboardLayout>
   )
 }
-
-export default PatientAccessLogPage

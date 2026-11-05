@@ -74,5 +74,3 @@ function Pending() {
     </div>
   )
 }
-
-export default Pending
