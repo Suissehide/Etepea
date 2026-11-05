@@ -46,7 +46,7 @@ function Nav({ t, lang }: { t: Copy; lang: Lang }) {
           className="mr-auto flex items-center gap-2 font-semibold tracking-tight"
         >
           <LogoMark />
-          etepea
+          etepe<span className="text-brand-light">a</span>
         </a>
         <div className="hidden items-center md:flex">
           {t.nav.links.map(([label, href]) => (
@@ -565,7 +565,7 @@ function Footer({ t }: { t: Copy }) {
         <div>
           <p className="flex items-center gap-2 text-base font-semibold text-white">
             <LogoMark />
-            etepea
+            etepe<span className="text-brand-light">a</span>
           </p>
           <p className="mt-1">{t.footer.tagline}</p>
         </div>
