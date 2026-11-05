@@ -49,6 +49,7 @@
     "prisma:migrate:reset": "npm run with:dotenv -- -e .env -e .env.local prisma migrate reset",
     "prisma:migrate:reset:test": "npm run with:dotenv -- -e .env.test.local -e .env.test -- prisma migrate reset",
     "prisma:seed": "prisma db seed",
+    "seed:demo": "tsx prisma/seed-demo.ts",
     "prisma:seed:test": "npm run with:dotenv -- -e .env.test.local -e .env.test -- prisma db seed",
     "prisma:studio": "prisma studio",
     "sonar:scan": "wireit",
