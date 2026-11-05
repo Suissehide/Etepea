@@ -9,10 +9,10 @@ export const IMAGES = {
   hero: img("etepea-care-team", 2400, 1400),
   pillA: img("etepea-calendar", 300, 160),
   pillB: img("etepea-group", 300, 160),
-  planning: img("etepea-planning", 1400, 1400),
-  agenda: img("etepea-desk"),
-  suivi: img("etepea-notes"),
-  diagnostic: img("etepea-dialogue", 2000, 800),
+  planning: "/screens/planning.jpg",
+  agenda: "/screens/agenda.jpg",
+  suivi: "/screens/suivi.jpg",
+  diagnostic: "/screens/patients.jpg",
   cta: img("etepea-light", 2400, 1200),
 };
 
@@ -55,8 +55,8 @@ const fr = {
         text: "La participation de chaque patient, lue d'un coup d'œil.",
       },
       diagnostic: {
-        title: "Diagnostic éducatif structuré",
-        text: "Qualité de vie, connaissances, facteurs de risque, objectifs négociés : des modèles qui n'activent que les champs utiles à votre service.",
+        title: "Dossiers patients et diagnostic éducatif",
+        text: "Tous vos patients, leurs parcours et leur bilan éducatif partagé, avec des modèles qui n’activent que les champs utiles à votre service.",
       },
     },
   },
@@ -188,8 +188,8 @@ const en: typeof fr = {
         text: "Every patient's attendance, readable at a glance.",
       },
       diagnostic: {
-        title: "Structured educational assessment",
-        text: "Quality of life, knowledge, risk factors, agreed goals: templates that only enable the fields your service needs.",
+        title: "Patient records and educational assessment",
+        text: "Every patient, their pathways and their shared educational assessment, with templates that only enable the fields your service needs.",
       },
     },
   },
