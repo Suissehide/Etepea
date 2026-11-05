@@ -214,5 +214,3 @@ function SuperAdminEstablishmentDetail() {
     </DashboardLayout>
   )
 }
-
-export default SuperAdminEstablishmentDetail

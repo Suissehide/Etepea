@@ -220,5 +220,3 @@ function Index() {
     </AuthLayout>
   )
 }
-
-export default Index

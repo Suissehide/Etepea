@@ -227,5 +227,3 @@ const RetourConnexion = () => {
     </Button>
   )
 }
-
-export default AccessLinkPage

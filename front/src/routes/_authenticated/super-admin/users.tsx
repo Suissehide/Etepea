@@ -24,5 +24,3 @@ function SuperAdminUsers() {
     </DashboardLayout>
   )
 }
-
-export default SuperAdminUsers

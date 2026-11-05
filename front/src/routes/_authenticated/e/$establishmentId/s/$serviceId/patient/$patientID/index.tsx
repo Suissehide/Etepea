@@ -261,5 +261,3 @@ function PatientDetails() {
     </DashboardLayout>
   )
 }
-
-export default PatientDetails
