@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo layout
 
-This directory (`front/`) is the React/Vite frontend. It is one of several apps under `Etepea/`: `back/` (Node/Fastify API, its own `CLAUDE.md`), `deploy/` (Docker compose for Postgres + app), `docs/`.
+This directory (`front/`) is the React/Vite frontend. It is one of several apps under `MediSync/`: `back/` (Node/Fastify API, its own `CLAUDE.md`), `deploy/` (Docker compose for Postgres + app), `docs/`.
 
 Dev server runs on port **4270** (`vite.config.ts`, `strictPort: true`) — the back's CORS config expects exactly this port, so don't let Vite fall back to another one silently.
 

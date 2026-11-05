@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo layout
 
-This directory (`back/`) is the Node/Fastify API. It is one of several apps under `Etepea/`: `front/` (React frontend), `deploy/` (Docker compose for Postgres + app), `docs/`. The root README (`Etepea/README.md`) is in French and contains the host-machine setup.
+This directory (`back/`) is the Node/Fastify API. It is one of several apps under `MediSync/`: `front/` (React frontend), `deploy/` (Docker compose for Postgres + app), `docs/`. The root README (`MediSync/README.md`) is in French and contains the host-machine setup.
 
 Before `npm start`, the Postgres container and the external `proxy` Docker network must exist:
 
