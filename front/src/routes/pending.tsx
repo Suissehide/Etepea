@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Lock } from 'lucide-react'
 
+import { Logo } from '@/components/custom/logo'
 import { Button } from '../components/ui/button.tsx'
 import { useLogout } from '../queries/useAuth.ts'
 import { defaultTenantContext } from '../utils/tenant-context.ts'
@@ -36,7 +37,7 @@ function Pending() {
     <div className="overflow-hidden w-full h-screen flex relative">
       <div className="absolute top-6 left-2">
         <h1 className="px-2 text-3xl font-bold">
-          <span className="text-primary">Ete</span>pea
+          <Logo />
         </h1>
       </div>
 

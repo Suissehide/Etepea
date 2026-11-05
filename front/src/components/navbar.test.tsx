@@ -542,7 +542,7 @@ describe('onglets de la barre de navigation', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-        'Etepea',
+        'etepea',
       )
     })
     expect(
@@ -575,7 +575,7 @@ describe('logo de la barre de navigation', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-        'Etepea',
+        'etepea',
       )
     })
     expect(screen.queryByTitle('Tableau de bord')).not.toBeInTheDocument()

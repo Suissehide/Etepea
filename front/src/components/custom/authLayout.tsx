@@ -1,5 +1,6 @@
 import type React from 'react'
 
+import { Logo } from '@/components/custom/logo'
 import { cn } from '../../libs/utils.ts'
 
 // Le décor commun des pages publiques d'authentification : logo et carrés animés.
@@ -7,7 +8,7 @@ export const AuthLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="overflow-hidden w-full h-screen flex relative">
     <div className="absolute top-6 left-2 z-20">
       <h1 className="px-2 text-3xl font-bold">
-        <span className="text-primary">Ete</span>pea
+        <Logo />
       </h1>
     </div>
 
