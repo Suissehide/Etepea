@@ -41,6 +41,6 @@ export const Logo = ({ className }: { className?: string }) => (
     )}
   >
     <LogoMark />
-    etepea
+    etepe<span className="text-primary">a</span>
   </span>
 )
