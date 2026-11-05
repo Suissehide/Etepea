@@ -10,7 +10,7 @@
 -- rendez-vous ou des inscriptions hors import (ids sans prefixe `clgx_`),
 -- ARRETER et regarder, ce sont des saisies faites dans l'application.
 --
---   docker exec -i medisync-postgres psql -U postgres -d medisync \
+--   docker exec -i etepea-postgres psql -U postgres -d etepea \
 --     -f - < deploy/scripts/reset-creneaux-reconstitues.sql
 
 \set ON_ERROR_STOP on

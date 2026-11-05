@@ -7,7 +7,7 @@
 -- `start:migrate:production`, soit `prisma migrate deploy` puis `node`). Une
 -- base de prod n'a donc jamais recu ce modele.
 --
---   docker exec -i <conteneur-postgres> psql -U postgres -d medisync \
+--   docker exec -i <conteneur-postgres> psql -U postgres -d etepea \
 --     -f - < deploy/scripts/preset-pdf-reference.sql
 --
 -- Le contenu est copie de `back/src/main/utils/pdf-design/reference-preset.ts`,

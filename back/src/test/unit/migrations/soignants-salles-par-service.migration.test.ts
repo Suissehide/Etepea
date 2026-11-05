@@ -4,7 +4,7 @@ import { config as loadDotenv } from 'dotenv'
 import { Client } from 'pg'
 
 // Joue la VRAIE migration `soignants_salles_par_service` — le fichier sur disque — sur des bases
-// Postgres jetables, creees et detruites ici, jamais `medisync` ni `medisync_test`. Meme principe
+// Postgres jetables, creees et detruites ici, jamais `etepea` ni `etepea_test`. Meme principe
 // et meme raison d'etre un test « unit » que `patient-service-file.migration.test.ts` (voir son
 // en-tete) : les migrations anterieures, puis un jeu de donnees, puis la cible.
 //
@@ -17,7 +17,7 @@ jest.setTimeout(180_000)
 const BACK_ROOT = join(__dirname, '../../../..')
 const MIGRATIONS_DIR = join(BACK_ROOT, 'prisma/migrations')
 const TARGET_MIGRATION = '20260929100000_soignants_salles_par_service'
-const PREFIX = 'medisync_migr_soignants'
+const PREFIX = 'etepea_migr_soignants'
 
 type PgConn = { host: string; port: number; user: string; password: string }
 

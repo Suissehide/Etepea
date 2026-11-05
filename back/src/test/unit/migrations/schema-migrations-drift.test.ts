@@ -34,10 +34,10 @@ const BACK_ROOT = join(__dirname, '../../../..')
 const PRISMA_DIR = join(BACK_ROOT, 'prisma')
 const PRISMA_BIN = join(BACK_ROOT, 'node_modules/.bin/prisma')
 
-// Nom distinctif : jamais "medisync" ni "medisync_test", pour qu'un DROP DATABASE de ce
+// Nom distinctif : jamais "etepea" ni "etepea_test", pour qu'un DROP DATABASE de ce
 // fichier ne puisse par construction jamais viser une base qui compte (meme convention que
 // `patient-service-file.migration.test.ts`).
-const SHADOW_DB = 'medisync_migr_check_drift_shadow'
+const SHADOW_DB = 'etepea_migr_check_drift_shadow'
 
 // `prisma migrate diff --from-migrations` exige une base "shadow" pour rejouer l'historique
 // et en deriver l'etat resultant (voir le message d'erreur de la commande elle-meme si ce
@@ -88,7 +88,7 @@ const resolveConnection = (): PgConn => {
     throw new Error(
       'Test de derive schema/migrations : impossible de resoudre la connexion Postgres. ' +
         'DATABASE_URL est absent une fois back/.env.test.local et back/.env.test charges. Sur ' +
-        'cette machine, Postgres ecoute sur le port 5433 (conteneur medisync-postgres) — voir ' +
+        'cette machine, Postgres ecoute sur le port 5433 (conteneur etepea-postgres) — voir ' +
         'back/.env.test.local.',
     )
   }
@@ -191,7 +191,7 @@ describe('schema.prisma et les migrations — aucune derive silencieuse', () => 
       throw new Error(
         `Test de derive schema/migrations : connexion a Postgres impossible sur ${conn.host}:` +
           `${conn.port} (utilisateur "${conn.user}"). Verifier que le conteneur ` +
-          `medisync-postgres tourne et publie bien sur ce port. Cause : ${(err as Error).message}`,
+          `etepea-postgres tourne et publie bien sur ce port. Cause : ${(err as Error).message}`,
       )
     }
     await dropDatabaseIfExists(maint, SHADOW_DB)

@@ -14,7 +14,7 @@ migration qui les recopie.
 
 Cette migration a été répétée avec succès pendant le développement, sur une
 copie jetable de la base de développement (`pg_dump` → restauration →
-`prisma migrate deploy`, jamais sur `medisync` elle-même) : **0 choix
+`prisma migrate deploy`, jamais sur `etepea` elle-même) : **0 choix
 archivé créé sur les dix champs** (toutes les valeurs saisies sont des clés
 du catalogue ETP), 2 934 sous-dossiers, 2 911 avec `data` non vide et 2 808
 avec `clinicalData` non vide — exactement le nombre de lignes source ayant au
@@ -47,7 +47,7 @@ sauvegarde aussi fraîche que possible juste avant la migration.
 échoue, **ne pas continuer**.
 
 Commande de restauration, à garder sous la main pour l'étape 6 (retour
-arrière) — elle restaure toujours la base du conteneur `medisync-postgres`
+arrière) — elle restaure toujours la base du conteneur `etepea-postgres`
 joignable depuis l'endroit où elle s'exécute, jamais un hôte distant (voir le
 garde-fou de `deploy/scripts/restore-db-dump.sh`) :
 

@@ -131,7 +131,7 @@ Un seul serveur de dev à la fois, donc : si le port est occupé, arrêtez l'ins
 
 ### Tests de bout en bout du back
 
-Les tests de bout en bout (`back/src/test/e2e/`) visent une base séparée, `medisync_test`, configurée par
+Les tests de bout en bout (`back/src/test/e2e/`) visent une base séparée, `etepea_test`, configurée par
 `back/.env.test` (jamais celle de développement) :
 
 ```shell
@@ -148,7 +148,7 @@ Pour rejouer une de ces sauvegardes en local :
 deploy/scripts/restore-db-dump.sh ~/Downloads/2026-09-09T22:00:00.057Z.sql.gz
 ```
 
-Le script recrée la base du conteneur `medisync-postgres` et y restaure le dump. **L'opération est destructive** : la
+Le script recrée la base du conteneur `etepea-postgres` et y restaure le dump. **L'opération est destructive** : la
 base de développement locale est supprimée, d'où la confirmation demandée (contournable avec `--yes`).
 
 Quelques points à connaître :

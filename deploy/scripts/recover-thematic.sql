@@ -6,7 +6,7 @@
 -- est le SQL de reparation a rejouer sur la base de PROD.
 --
 --   deploy/scripts/restore-db-dump.sh <dump-de-la-veille>
---   docker exec -i medisync-postgres psql -U postgres -d medisync -At \
+--   docker exec -i etepea-postgres psql -U postgres -d etepea -At \
 --     -v name='Mes facteurs de risque' -f - \
 --     < deploy/scripts/recover-thematic.sql > /tmp/reparation.sql
 --

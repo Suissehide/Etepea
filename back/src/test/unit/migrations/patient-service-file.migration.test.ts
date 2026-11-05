@@ -6,18 +6,18 @@ import { z } from 'zod/v4'
 
 // Ce test joue la VRAIE migration `patient_service_file` — le fichier sur disque, pas une
 // copie — sur une base Postgres jetable, créée et détruite pour l'occasion. Il ne touche
-// jamais `medisync` (base de développement de Léo) ni `medisync_test` (base des tests e2e).
+// jamais `etepea` (base de développement de Léo) ni `etepea_test` (base des tests e2e).
 //
 // Pourquoi un test "unit" plutôt qu'un test "e2e", alors qu'il ouvre une vraie connexion
 // Postgres ? Parce que `npm run test:e2e` dépend (via wireit) de `prisma:migrate:deploy:test`,
-// qui applique TOUTES les migrations en attente sur `medisync_test` avant même que Jest ne
-// démarre. Or `medisync_test` est peuplée par `prisma db seed`, qui crée volontairement DEUX
+// qui applique TOUTES les migrations en attente sur `etepea_test` avant même que Jest ne
+// démarre. Or `etepea_test` est peuplée par `prisma db seed`, qui crée volontairement DEUX
 // services par établissement (pour éprouver le cloisonnement inter-services des étapes
 // précédentes) — exactement la situation que la garde du service unique refuse. Tant qu'un
 // autre chantier n'a pas changé cela, `prisma:migrate:deploy:test` échoue avant que Jest ne
 // s'exécute, et AUCUN test e2e ne peut tourner, celui-ci compris. Le projet "unit" ne dépend
 // que de `prisma:generate` : ce test y est donc autonome, et continue de s'exécuter même
-// quand `medisync_test` est dans cet état.
+// quand `etepea_test` est dans cet état.
 //
 // Ne jamais faire silencieusement l'impasse : si Postgres n'est pas joignable, ou si une base
 // ne peut pas être créée, les hooks ci-dessous lèvent avec un message explicite plutôt que
@@ -36,9 +36,9 @@ const TARGET_MIGRATION_SQL = join(
   'migration.sql',
 )
 
-// Préfixe distinctif : jamais "medisync" ni "medisync_test", pour qu'un DROP DATABASE de ce
+// Préfixe distinctif : jamais "etepea" ni "etepea_test", pour qu'un DROP DATABASE de ce
 // fichier ne puisse par construction jamais viser une base qui compte.
-const PREFIX = 'medisync_migr_check'
+const PREFIX = 'etepea_migr_check'
 const TEMPLATE_DB = `${PREFIX}_template`
 const SCENARIOS = {
   ok: `${PREFIX}_ok`,
@@ -58,7 +58,7 @@ type PgConn = { host: string; port: number; user: string; password: string }
 
 // Reprend la convention de dotenv-cli utilisée par les scripts `*:test` (`-e .env.test.local
 // -e .env.test`) : le premier fichier présent l'emporte. Seuls l'hôte, le port et les
-// identifiants sont repris d'ici — jamais le nom de base qu'ils portent (`medisync_test`) :
+// identifiants sont repris d'ici — jamais le nom de base qu'ils portent (`etepea_test`) :
 // ce test ouvre ses propres bases, sous son propre préfixe.
 const loadTestEnvFiles = (): void => {
   for (const file of ['.env.test.local', '.env.test']) {
@@ -76,7 +76,7 @@ const resolveConnection = (): PgConn => {
     throw new Error(
       'Test de migration : impossible de resoudre la connexion Postgres. DATABASE_URL est ' +
         'absent une fois back/.env.test.local et back/.env.test charges. Sur cette machine, ' +
-        'Postgres ecoute sur le port 5433 (conteneur medisync-postgres) — voir back/.env.test.local.',
+        'Postgres ecoute sur le port 5433 (conteneur etepea-postgres) — voir back/.env.test.local.',
     )
   }
   let url: URL
@@ -449,7 +449,7 @@ const STRUCTURAL_ZERO_LABELS = [
   'Inscriptions orphelines',
 ] as const
 
-describe('migration patient_service_file — base jetable, jamais medisync ni medisync_test', () => {
+describe('migration patient_service_file — base jetable, jamais etepea ni etepea_test', () => {
   let conn: PgConn
   let maint: Client
 
@@ -461,7 +461,7 @@ describe('migration patient_service_file — base jetable, jamais medisync ni me
     } catch (err) {
       throw new Error(
         `Test de migration : connexion a Postgres impossible sur ${conn.host}:${conn.port} ` +
-          `(utilisateur "${conn.user}"). Verifier que le conteneur medisync-postgres tourne ` +
+          `(utilisateur "${conn.user}"). Verifier que le conteneur etepea-postgres tourne ` +
           `et publie bien sur ce port. Cause : ${(err as Error).message}`,
       )
     }

@@ -7,7 +7,7 @@ import { z } from 'zod/v4'
 import { answerParamsSchema } from '../../../main/interfaces/http/fastify/schemas/indicatorSet.schema'
 import { ARS_PRESET } from '../../../main/utils/indicators/ars-preset'
 
-// Joue la VRAIE migration `indicator_sets` sur des bases jetables (jamais `medisync` ni `medisync_test`), sans test.skip.
+// Joue la VRAIE migration `indicator_sets` sur des bases jetables (jamais `etepea` ni `etepea_test`), sans test.skip.
 
 jest.setTimeout(180_000)
 
@@ -19,7 +19,7 @@ const TARGET_SQL = join(
   '20261010200000_indicator_sets',
   'migration.sql',
 )
-const PREFIX = 'medisync_migr_indic'
+const PREFIX = 'etepea_migr_indic'
 const TEMPLATE_DB = `${PREFIX}_template`
 
 type PgConn = { host: string; port: number; user: string; password: string }

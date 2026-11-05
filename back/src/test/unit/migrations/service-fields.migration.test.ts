@@ -6,7 +6,7 @@ import { z } from 'zod/v4'
 
 import { ETP_FIELD_PRESET } from '../../../main/utils/etp-field-preset'
 
-// Joue la VRAIE migration `service_fields` sur des bases jetables (jamais `medisync` ni `medisync_test`), sans test.skip.
+// Joue la VRAIE migration `service_fields` sur des bases jetables (jamais `etepea` ni `etepea_test`), sans test.skip.
 
 jest.setTimeout(180_000)
 
@@ -18,7 +18,7 @@ const TARGET_SQL = join(
   '20261010120000_service_fields',
   'migration.sql',
 )
-const PREFIX = 'medisync_migr_fields'
+const PREFIX = 'etepea_migr_fields'
 const TEMPLATE_DB = `${PREFIX}_template`
 
 const TEN_COLUMNS = [

@@ -6,7 +6,7 @@ import { z } from 'zod/v4'
 
 import { DEFAULT_CATEGORIES } from '../../../main/utils/service-field-types'
 
-// Joue la VRAIE migration `service_field_categories` sur des bases jetables (jamais `medisync` ni `medisync_test`), sans test.skip.
+// Joue la VRAIE migration `service_field_categories` sur des bases jetables (jamais `etepea` ni `etepea_test`), sans test.skip.
 
 jest.setTimeout(180_000)
 
@@ -14,7 +14,7 @@ const BACK_ROOT = join(__dirname, '../../../..')
 const MIGRATIONS_DIR = join(BACK_ROOT, 'prisma/migrations')
 const TARGET = '20261011090000_service_field_categories'
 const TARGET_SQL = join(MIGRATIONS_DIR, TARGET, 'migration.sql')
-const PREFIX = 'medisync_migr_cat'
+const PREFIX = 'etepea_migr_cat'
 const TEMPLATE_DB = `${PREFIX}_template`
 
 type PgConn = { host: string; port: number; user: string; password: string }
