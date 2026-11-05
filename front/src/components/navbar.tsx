@@ -255,7 +255,7 @@ function Navbar({ toggleSidebar }: NavbarProps) {
   const retour = courant?.scale === 'service' ? courant : serviceDeRetour(user)
   const logo = (
     <>
-      <span className="text-primary">Medi</span>Sync
+      <span className="text-primary">Ete</span>pea
     </>
   )
 

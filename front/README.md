@@ -1,4 +1,4 @@
-# MediSync — front
+# Etepea — front
 
 SPA React 19 + Vite. L'installation, la configuration et le démarrage de l'ensemble du projet sont décrits dans le
 [README racine](../README.md) ; les conventions du front, dans [CLAUDE.md](./CLAUDE.md).

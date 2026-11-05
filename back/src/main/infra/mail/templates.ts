@@ -16,7 +16,7 @@ export const layout = (
   cta: string,
 ): string => `
 <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f2937">
-  <h1 style="font-size:22px"><span style="color:#2563eb">Medi</span>Sync</h1>
+  <h1 style="font-size:22px"><span style="color:#2563eb">Ete</span>pea</h1>
   ${paragraphs.map((p) => `<p>${p}</p>`).join('\n  ')}
   <p><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none">${cta}</a></p>
   <p style="font-size:12px;color:#6b7280">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>${escapeHtml(link)}</p>
@@ -35,12 +35,12 @@ export const invitationMail = ({
 }): Mail => {
   const where = establishmentName ? ` pour ${establishmentName}` : ''
   const asWhat = soignantName ? `, en tant que ${soignantName}` : ''
-  const intro = `Un accès à MediSync a été ouvert à votre nom${where}${asWhat}.`
+  const intro = `Un accès à Etepea a été ouvert à votre nom${where}${asWhat}.`
   const validity =
     "Ce lien est personnel, à usage unique et valable 30 jours. Si vous n'attendiez pas cet e-mail, ignorez-le."
   return {
     to,
-    subject: 'Votre accès à MediSync',
+    subject: 'Votre accès à Etepea',
     text: `${intro}\n\nChoisissez votre mot de passe en ouvrant ce lien :\n${link}\n\n${validity}`,
     html: layout(
       [
@@ -62,12 +62,12 @@ export const passwordResetMail = ({
   link: string
 }): Mail => {
   const intro =
-    'Une réinitialisation du mot de passe de votre compte MediSync a été demandée.'
+    'Une réinitialisation du mot de passe de votre compte Etepea a été demandée.'
   const validity =
     "Ce lien est à usage unique et valable 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé."
   return {
     to,
-    subject: 'Réinitialisation de votre mot de passe MediSync',
+    subject: 'Réinitialisation de votre mot de passe Etepea',
     text: `${intro}\n\nChoisissez un nouveau mot de passe en ouvrant ce lien :\n${link}\n\n${validity}`,
     html: layout(
       [escapeHtml(intro), escapeHtml(validity)],
@@ -86,12 +86,12 @@ export const memberAddedMail = ({
   link: string
   establishmentName: string
 }): Mail => {
-  const intro = `Vous avez désormais accès à ${establishmentName} sur MediSync.`
+  const intro = `Vous avez désormais accès à ${establishmentName} sur Etepea.`
   const how =
     'Connectez-vous avec votre adresse et votre mot de passe habituels.'
   return {
     to,
-    subject: 'Nouvel accès sur MediSync',
+    subject: 'Nouvel accès sur Etepea',
     text: `${intro}\n\n${how}\n${link}`,
     html: layout([escapeHtml(intro), escapeHtml(how)], link, 'Se connecter'),
   }

@@ -1,6 +1,6 @@
-# MediSync
+# Etepea
 
-MediSync est l'outil interne d'un **service de réadaptation** qui anime un programme d'**éducation thérapeutique
+Etepea est l'outil interne d'un **service de réadaptation** qui anime un programme d'**éducation thérapeutique
 du patient (ETP)**. Il sert à construire les parcours du programme (séances collectives et rendez-vous individuels),
 à les planifier sur l'année, à suivre la participation des patients inclus et à tenir leur dossier éducatif.
 

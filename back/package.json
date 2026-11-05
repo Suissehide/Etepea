@@ -1,7 +1,7 @@
 {
-  "name": "medisync-backend",
+  "name": "etepea-backend",
   "version": "0.0.1",
-  "description": "MediSync Backend",
+  "description": "Etepea Backend",
   "main": "src/main/index.ts",
   "keywords": [],
   "author": "",

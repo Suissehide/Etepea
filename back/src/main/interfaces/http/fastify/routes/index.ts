@@ -69,7 +69,7 @@ const routes: FastifyPluginAsyncZod = async (fastify) => {
   })
 
   fastify.get('/', () => {
-    return { name: 'MediSync API', status: 'running' }
+    return { name: 'Etepea API', status: 'running' }
   })
 
   await fastify.register(healthcheckRouter)
