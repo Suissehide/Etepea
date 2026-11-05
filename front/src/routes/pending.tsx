@@ -36,7 +36,7 @@ function Pending() {
     <div className="overflow-hidden w-full h-screen flex relative">
       <div className="absolute top-6 left-2">
         <h1 className="px-2 text-3xl font-bold">
-          <span className="text-primary">Medi</span>Sync
+          <span className="text-primary">Ete</span>pea
         </h1>
       </div>
 

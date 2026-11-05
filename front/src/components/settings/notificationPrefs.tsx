@@ -350,7 +350,7 @@ export function NotificationPrefs() {
 
       <div className="border-t border-border pt-4">
         <p className="text-sm text-text-dark mb-2">
-          À {email}, sans données de santé : un lien ouvre MediSync.
+          À {email}, sans données de santé : un lien ouvre Etepea.
         </p>
         <RadioGroup.Root
           value={data.digest}

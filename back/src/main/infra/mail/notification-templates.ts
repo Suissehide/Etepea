@@ -7,7 +7,7 @@ export type MailableNotification = {
   payload: Record<string, unknown>
 }
 
-const CTA = 'Ouvrir MediSync'
+const CTA = 'Ouvrir Etepea'
 const FOOTER = 'Vous recevez cet e-mail selon vos préférences de notification.'
 const ROOM_UNKNOWN = 'salle non précisée'
 const COLLEAGUE_UNKNOWN = 'Un collègue'
@@ -52,16 +52,16 @@ const withDate = (connector: string, v: unknown): string => {
 }
 
 const SUBJECTS: Record<NotificationType, string> = {
-  REMINDER: 'MediSync : rappel de séance',
-  PATIENT_ADDED: 'MediSync : patient ajouté',
-  APPOINTMENT_MOVED: 'MediSync : séance modifiée',
-  APPOINTMENT_CANCELLED: 'MediSync : séance annulée',
-  ABSENT: 'MediSync : absence',
-  SLOT_ALMOST_FULL: 'MediSync : créneau presque complet',
-  DIAGNOSTIC_DUE: 'MediSync : diagnostic à réaliser',
-  PATHWAY_END: 'MediSync : fin de parcours',
-  TASK_DUE: 'MediSync : tâche à échéance',
-  MENTION: 'MediSync : mention dans une tâche',
+  REMINDER: 'Etepea : rappel de séance',
+  PATIENT_ADDED: 'Etepea : patient ajouté',
+  APPOINTMENT_MOVED: 'Etepea : séance modifiée',
+  APPOINTMENT_CANCELLED: 'Etepea : séance annulée',
+  ABSENT: 'Etepea : absence',
+  SLOT_ALMOST_FULL: 'Etepea : créneau presque complet',
+  DIAGNOSTIC_DUE: 'Etepea : diagnostic à réaliser',
+  PATHWAY_END: 'Etepea : fin de parcours',
+  TASK_DUE: 'Etepea : tâche à échéance',
+  MENTION: 'Etepea : mention dans une tâche',
 }
 
 export const notificationSubject = (type: NotificationType): string =>
@@ -146,8 +146,8 @@ export const digestMail = (
   const lines = items.map(notificationLine)
   const daySuffix = safeDateOnly(day)
   const subject = daySuffix
-    ? `MediSync : vos notifications du ${daySuffix}`
-    : 'MediSync : vos notifications'
+    ? `Etepea : vos notifications du ${daySuffix}`
+    : 'Etepea : vos notifications'
   return {
     to,
     subject,
