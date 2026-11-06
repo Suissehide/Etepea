@@ -50,3 +50,15 @@ export function cycleWeekNumber(
 
   return position + 1
 }
+
+/** S7 dans le cycle, « Fermée » pour une semaine interdite, s45 sans cycle. */
+export function libelleSemaineDu(
+  date: Dayjs,
+  cycle?: PlanningCycle | null,
+): string {
+  const semaine = cycle ? cycleWeekNumber(date, cycle) : undefined
+  if (semaine === undefined) {
+    return `s${date.isoWeek()}`
+  }
+  return semaine === null ? 'Fermée' : `S${semaine}`
+}

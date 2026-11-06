@@ -27,7 +27,7 @@ import { cn } from '../../../libs/utils.ts'
 import { usePlanningStore } from '../../../store/usePlanningStore.ts'
 import type { Appointment } from '../../../types/appointment.ts'
 import type { PlanningCycle } from '../../../types/planningCycle.ts'
-import { cycleWeekNumber } from '../../../utils/weekCycle.ts'
+import { libelleSemaineDu } from '../../../utils/weekCycle.ts'
 import { BarreCalendrier } from './barreCalendrier.tsx'
 import CalendarDatePickerButton from './calendarDatePickerButton.tsx'
 import { EventContent } from './eventContent.tsx'
@@ -481,16 +481,7 @@ function Calendar({
               start.startOf('isoWeek').diff(anchorMonday, 'week') + 1
             return `Semaine ${weekNum}`
           }
-          // Cycle du service s'il est configuré, numéro ISO sinon.
-          const cycleWeek = planningCycle
-            ? cycleWeekNumber(start, planningCycle)
-            : undefined
-          const weekLabel =
-            cycleWeek === undefined
-              ? `s${start.isoWeek()}`
-              : cycleWeek === null
-                ? 'Fermée'
-                : `S${cycleWeek}`
+          const weekLabel = libelleSemaineDu(start, planningCycle)
           const startStr = start.format('DD MMMM')
           if (!arg.end) {
             return `${weekLabel} · ${startStr}`
