@@ -1,4 +1,8 @@
-import type { CalendarController } from '@fullcalendar/react'
+import type {
+  ButtonStateMap,
+  CalendarController,
+  ViewApi,
+} from '@fullcalendar/react'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -8,8 +12,19 @@ import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group.tsx'
 
 export type VueCalendrier = { type: string; libelle?: string }
 
+/** Ce que la barre utilise du contrôleur : l'agenda, sans FullCalendar, fournit le sien. */
+export type ControleurBarre = Pick<
+  CalendarController,
+  'prev' | 'next' | 'today'
+> & {
+  changeView?: CalendarController['changeView']
+  view?: Pick<ViewApi, 'title' | 'type'>
+  getButtonState: () => Pick<ButtonStateMap, 'prev' | 'next' | 'today'> &
+    Partial<ButtonStateMap>
+}
+
 type Props = {
-  controller: CalendarController
+  controller: ControleurBarre
   /** Sans libellé, celui de la locale de FullCalendar. */
   vues?: VueCalendrier[]
   aujourdhui?: boolean
@@ -92,7 +107,7 @@ export function BarreCalendrier({
           <ToggleGroup
             className={SEGMENTS}
             value={vue?.type}
-            onValueChange={(type) => type && controller.changeView(type)}
+            onValueChange={(type) => type && controller.changeView?.(type)}
           >
             {vues.map(({ type, libelle }) => (
               <ToggleGroupItem
