@@ -600,22 +600,26 @@ class PatientDomain implements PatientDomainInterface {
     const firstAppointmentOnly = matchingTemplate?.firstAppointmentOnly ?? false
 
     // Trouver les parcours disponibles par tag
-    const found = firstAppointmentOnly
-      ? await this.pathwayRepository.findByTemplateTagWithFutureSlots(
-          enrollment.tag,
-          startDate,
-        )
-      : await this.pathwayRepository.findByTemplateTagAndDate(
-          enrollment.tag,
-          startDate,
-        )
+    const found = await this.pathwayRepository.findByTemplateTagWithFutureSlots(
+      enrollment.tag,
+      startDate,
+    )
+    const startOfDay = new Date(startDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const firstSlotTime = (pathway: PathwayWithSlotsRepo) =>
+      Math.min(
+        ...pathway.slots.map((slot) => new Date(slot.startDate).getTime()),
+      )
     // Créneaux verrouillés ou supprimés ignorés (aperçu, choix et inscription), comme AppointmentDomain.create.
-    const pathways = found
-      .map((pathway) => ({
+    // La date « au plus tôt » se compare aux créneaux, pas à Pathway.startDate : un cycle déjà commencé est écarté.
+    const pathways = this.startingAfter(
+      found.map((pathway) => ({
         ...pathway,
         slots: pathway.slots.filter((slot) => !slot.locked && !slot.archivedAt),
-      }))
-      .filter((pathway) => pathway.slots.length > 0)
+      })),
+      startOfDay,
+      firstAppointmentOnly,
+    ).sort((a, b) => firstSlotTime(a) - firstSlotTime(b))
 
     if (pathways.length === 0) {
       return {
@@ -804,7 +808,9 @@ class PatientDomain implements PatientDomainInterface {
     const isAfter = (slot: { startDate: Date }) =>
       new Date(slot.startDate) >= notBefore
     if (!firstAppointmentOnly) {
-      return pathways.filter((pathway) => pathway.slots.every(isAfter))
+      return pathways.filter(
+        (pathway) => pathway.slots.length > 0 && pathway.slots.every(isAfter),
+      )
     }
     return pathways
       .map((pathway) => ({ ...pathway, slots: pathway.slots.filter(isAfter) }))
