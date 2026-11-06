@@ -13,8 +13,10 @@ import { scopedStorageName } from '../../../../store/scoped-storage.ts'
 import { useAuthStore } from '../../../../store/useAuthStore.ts'
 import type { Patient } from '../../../../types/patient.ts'
 import type { PdfDesignSummary } from '../../../../types/pdfDesignList.ts'
+import type { Slot } from '../../../../types/slot.ts'
 import { Button } from '../../../ui/button.tsx'
 import { Select } from '../../../ui/select.tsx'
+import { ToggleGroup, ToggleGroupItem } from '../../../ui/toggle-group.tsx'
 import { assetIdsDe } from '../../pdf-design/assets.ts'
 import ProgrammePDF from './programme.pdf.tsx'
 
@@ -55,6 +57,26 @@ const lireDernierDesign = (): string | null => {
   }
 }
 
+// Programme complet depuis la premiere seance (MDS-78), ou seulement la suite.
+export type PorteeRdv = 'a-venir' | 'tous'
+
+export const creneauxDuProgramme = (
+  slots: Slot[] | undefined,
+  patientId: string,
+  portee: PorteeRdv,
+  now: dayjs.Dayjs = dayjs(),
+): Slot[] =>
+  (slots ?? [])
+    .filter((slot) =>
+      slot.appointments?.some((appointment) =>
+        appointment.appointmentPatients?.some(
+          (ap) => ap.patient.id === patientId,
+        ),
+      ),
+    )
+    .filter((s) => portee === 'tous' || dayjs(s.startDate).isAfter(now))
+    .sort((a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)))
+
 interface ProgrammePDFModalProps {
   patient: Patient
   onClose: () => void
@@ -89,24 +111,12 @@ export default function ProgrammePDFModal({
     [availableDesigns, selectedDesignId],
   )
 
-  const patientSlots = useMemo(() => {
-    if (!slots || !patient) {
-      return []
-    }
+  const [portee, setPortee] = useState<PorteeRdv>('tous')
 
-    const now = dayjs()
-    const filtered = slots.filter((slot) =>
-      slot.appointments?.some((appointment) =>
-        appointment.appointmentPatients?.some(
-          (ap) => ap.patient.id === patient.id,
-        ),
-      ),
-    )
-
-    return filtered
-      .filter((s) => dayjs(s.startDate).isAfter(now))
-      .sort((a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)))
-  }, [slots, patient])
+  const patientSlots = useMemo(
+    () => (patient ? creneauxDuProgramme(slots, patient.id, portee) : []),
+    [slots, patient, portee],
+  )
 
   // Les semaines interdites signalent les fermetures du service entre deux
   // semaines du programme.
@@ -168,6 +178,16 @@ export default function ProgrammePDFModal({
             Aperçu du programme - {patient.lastName} {patient.firstName}
           </h2>
           <div className="flex items-center gap-4">
+            <ToggleGroup
+              aria-label="Rendez-vous à inclure"
+              value={portee}
+              onValueChange={(valeur) =>
+                valeur && setPortee(valeur as PorteeRdv)
+              }
+            >
+              <ToggleGroupItem value="tous">Programme complet</ToggleGroupItem>
+              <ToggleGroupItem value="a-venir">À venir</ToggleGroupItem>
+            </ToggleGroup>
             {availableDesigns.length > 1 && (
               <div className="w-56">
                 <label htmlFor="programme-design" className="sr-only">

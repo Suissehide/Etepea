@@ -327,7 +327,7 @@ export default function CalendarPages({
   if (entries.length === 0) {
     return (
       <Page size="A4" style={styles.calendarPage}>
-        <Text style={styles.emptyMessage}>Aucun rendez-vous à venir.</Text>
+        <Text style={styles.emptyMessage}>Aucun rendez-vous.</Text>
       </Page>
     )
   }
