@@ -38,7 +38,11 @@ describe('parcours prérequis', () => {
   }
 
   // Une instance de parcours d'un seul créneau collectif.
-  const createPathway = async (templateID: string, start: string) => {
+  const createPathway = async (
+    templateID: string,
+    start: string,
+    closed: { locked?: boolean; archivedAt?: Date } = {},
+  ) => {
     const startDate = new Date(start)
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
     const slotTemplate = await testDb.slotTemplate.create({
@@ -65,6 +69,7 @@ describe('parcours prérequis', () => {
         slotTemplateID: slotTemplate.id,
         serviceId,
         establishmentId,
+        ...closed,
       },
     })
     return pathway.id
@@ -228,5 +233,39 @@ describe('parcours prérequis', () => {
       '2027-01-19T09:00:00.000Z',
       '2027-01-12T09:00:00.000Z',
     ])
+  })
+
+  it('ignore les créneaux verrouillés ou supprimés, à l aperçu comme à l inscription', async () => {
+    const t = await createTemplate('VERROU', [])
+    await createPathway(t, '2027-02-02T09:00:00.000Z', { locked: true })
+    await createPathway(t, '2027-02-09T09:00:00.000Z', {
+      archivedAt: new Date(),
+    })
+    const open = await createPathway(t, '2027-02-16T09:00:00.000Z')
+
+    const preview = await inject('POST', '/patient/enroll/preview', {
+      pathways: [
+        { tag: 'VERROU', timeOfDay: 'ALL_DAY', startDate: '2027-02-01' },
+      ],
+    })
+    expect(preview.json()[0].startDate).toBe('2027-02-16T09:00:00.000Z')
+
+    const created = await inject('POST', '/patient', {
+      firstName: 'Grace',
+      lastName: 'Hopper',
+    })
+    const patientId = created.json().id as string
+    const res = await inject('POST', `/patient/${patientId}/enroll`, {
+      patientID: patientId,
+      startDate: '2027-02-01T00:00:00.000Z',
+      pathways: [{ tag: 'VERROU', timeOfDay: 'ALL_DAY' }],
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().failedEnrollments).toEqual([])
+    const appointments = await testDb.appointment.findMany({
+      where: { appointmentPatients: { some: { patientId } } },
+      select: { slot: { select: { pathwayID: true } } },
+    })
+    expect(appointments.map((apt) => apt.slot.pathwayID)).toEqual([open])
   })
 })

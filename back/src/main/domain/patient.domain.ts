@@ -600,7 +600,7 @@ class PatientDomain implements PatientDomainInterface {
     const firstAppointmentOnly = matchingTemplate?.firstAppointmentOnly ?? false
 
     // Trouver les parcours disponibles par tag
-    const pathways = firstAppointmentOnly
+    const found = firstAppointmentOnly
       ? await this.pathwayRepository.findByTemplateTagWithFutureSlots(
           enrollment.tag,
           startDate,
@@ -609,6 +609,13 @@ class PatientDomain implements PatientDomainInterface {
           enrollment.tag,
           startDate,
         )
+    // Créneaux verrouillés ou supprimés ignorés (aperçu, choix et inscription), comme AppointmentDomain.create.
+    const pathways = found
+      .map((pathway) => ({
+        ...pathway,
+        slots: pathway.slots.filter((slot) => !slot.locked && !slot.archivedAt),
+      }))
+      .filter((pathway) => pathway.slots.length > 0)
 
     if (pathways.length === 0) {
       return {
