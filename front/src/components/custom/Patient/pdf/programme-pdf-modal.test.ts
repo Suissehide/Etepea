@@ -1,7 +1,13 @@
+import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 
 import type { PdfDesignSummary } from '../../../../types/pdfDesignList.ts'
-import { chooseDesign, designsProposables } from './programme-pdf-modal.tsx'
+import type { Slot } from '../../../../types/slot.ts'
+import {
+  chooseDesign,
+  creneauxDuProgramme,
+  designsProposables,
+} from './programme-pdf-modal.tsx'
 
 const design = (id: string, isDefault = false): PdfDesignSummary => ({
   id,
@@ -81,5 +87,33 @@ describe('designsProposables', () => {
       [design('modele')],
     )
     expect(liste.map((d) => d.id)).toEqual(['modele'])
+  })
+})
+
+describe('creneauxDuProgramme', () => {
+  const now = dayjs('2026-06-15T12:00:00Z')
+  const slot = (id: string, startDate: string, patientId = 'p1') =>
+    ({
+      id,
+      startDate,
+      appointments: [{ appointmentPatients: [{ patient: { id: patientId } }] }],
+    }) as unknown as Slot
+
+  const slots = [
+    slot('futur', '2026-06-20T09:00:00Z'),
+    slot('passe', '2026-06-01T09:00:00Z'),
+    slot('autre', '2026-06-21T09:00:00Z', 'p2'),
+  ]
+
+  it('ne garde que les rendez-vous a venir avec « a-venir »', () => {
+    expect(
+      creneauxDuProgramme(slots, 'p1', 'a-venir', now).map((s) => s.id),
+    ).toEqual(['futur'])
+  })
+
+  it('reprend les rendez-vous passes, tries par date, avec « tous »', () => {
+    expect(
+      creneauxDuProgramme(slots, 'p1', 'tous', now).map((s) => s.id),
+    ).toEqual(['passe', 'futur'])
   })
 })
