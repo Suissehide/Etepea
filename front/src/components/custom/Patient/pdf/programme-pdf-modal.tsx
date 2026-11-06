@@ -57,7 +57,7 @@ const lireDernierDesign = (): string | null => {
   }
 }
 
-// Programme complet depuis la premiere seance (MDS-78), ou seulement la suite.
+// Seances a venir (defaut) ou programme complet depuis la premiere seance (MDS-78).
 export type PorteeRdv = 'a-venir' | 'tous'
 
 export const creneauxDuProgramme = (
@@ -111,7 +111,7 @@ export default function ProgrammePDFModal({
     [availableDesigns, selectedDesignId],
   )
 
-  const [portee, setPortee] = useState<PorteeRdv>('tous')
+  const [portee, setPortee] = useState<PorteeRdv>('a-venir')
 
   const patientSlots = useMemo(
     () => (patient ? creneauxDuProgramme(slots, patient.id, portee) : []),
@@ -185,8 +185,8 @@ export default function ProgrammePDFModal({
                 valeur && setPortee(valeur as PorteeRdv)
               }
             >
-              <ToggleGroupItem value="tous">Programme complet</ToggleGroupItem>
               <ToggleGroupItem value="a-venir">À venir</ToggleGroupItem>
+              <ToggleGroupItem value="tous">Programme complet</ToggleGroupItem>
             </ToggleGroup>
             {availableDesigns.length > 1 && (
               <div className="w-56">
