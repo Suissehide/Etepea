@@ -56,12 +56,14 @@ export type EnrollPatientInPathwaysInput = {
   patientData: PatientCreateEntityDomain
   startDate?: Date
   pathways: PathwayEnrollmentInput[]
+  optionalsWithinPrincipal?: boolean
 }
 
 export type EnrollExistingPatientInPathwaysInput = {
   patientID: string
   startDate?: Date
   pathways: PathwayEnrollmentInput[]
+  optionalsWithinPrincipal?: boolean
 }
 
 export type EnrollmentPreview = {
@@ -162,6 +164,7 @@ export interface PatientDomainInterface {
   previewEnrollments: (
     pathways: PathwayEnrollmentInput[],
     patientID?: string,
+    optionalsWithinPrincipal?: boolean,
   ) => Promise<EnrollmentPreview[]>
   countAppointmentsInPathway: (
     patientID: string,

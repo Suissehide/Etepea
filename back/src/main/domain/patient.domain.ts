@@ -63,6 +63,7 @@ const formatDate = (value: Date | string | null | undefined): string =>
   value ? dayjs(value).format('DD/MM/YYYY') : ''
 
 type TemplateFlags = { id: string; mainTag: string; optional: boolean }
+type PrincipalSpan = { start?: Date; end?: Date }
 // Les deux boucles d'inscription (processEnrollments, enrollInSlot) attrapent toute erreur
 // levee par un depot pour la transformer en echec partiel plutot qu'en 500 : la reponse
 // (`failedEnrollments[].reason`, affichee a l'ecran par front/src/queries/usePatient.tsx) et le
@@ -477,6 +478,7 @@ class PatientDomain implements PatientDomainInterface {
       enrollmentData.pathways,
       enrollmentData.startDate,
       userID,
+      enrollmentData.optionalsWithinPrincipal,
     )
   }
 
@@ -492,6 +494,7 @@ class PatientDomain implements PatientDomainInterface {
       enrollmentData.pathways,
       enrollmentData.startDate,
       userID,
+      enrollmentData.optionalsWithinPrincipal,
     )
   }
 
@@ -567,6 +570,8 @@ class PatientDomain implements PatientDomainInterface {
     patientAppointments: AppointmentPatientWithAppointmentDomain[],
     enrollment: PathwayEnrollmentInput,
     startDate: Date,
+    // Optionnel borné : tous ses rendez-vous doivent finir avant cette date.
+    notAfter: Date | null,
     // Aperçu : motif non exigé, et fins simulées des prérequis de la même demande (par templateID).
     preview?: { prerequisiteEnds: Map<string, Date> },
   ): Promise<
@@ -646,15 +651,28 @@ class PatientDomain implements PatientDomainInterface {
     const notBefore = ends.length
       ? new Date(Math.max(...ends.map((d) => d.getTime())))
       : null
-    const eligiblePathways = notBefore
+    const afterPrerequisites = notBefore
       ? this.startingAfter(pathways, notBefore, firstAppointmentOnly)
       : pathways
+
+    if (afterPrerequisites.length === 0) {
+      return {
+        failure: {
+          slotTemplate: { id: enrollment.tag, name: enrollment.tag },
+          reason: `Aucun parcours "${enrollment.tag}" ne commence après la fin des parcours prérequis (${dayjs(notBefore).format('DD/MM/YYYY HH:mm')})`,
+        },
+      }
+    }
+
+    const eligiblePathways = notAfter
+      ? this.endingBefore(afterPrerequisites, notAfter, firstAppointmentOnly)
+      : afterPrerequisites
 
     if (eligiblePathways.length === 0) {
       return {
         failure: {
           slotTemplate: { id: enrollment.tag, name: enrollment.tag },
-          reason: `Aucun parcours "${enrollment.tag}" ne commence après la fin des parcours prérequis (${dayjs(notBefore).format('DD/MM/YYYY HH:mm')})`,
+          reason: `Aucun parcours "${enrollment.tag}" ne se termine avant la fin du parcours principal (${dayjs(notAfter).format('DD/MM/YYYY HH:mm')})`,
         },
       }
     }
@@ -686,6 +704,7 @@ class PatientDomain implements PatientDomainInterface {
     patient: PatientWithAppointmentsDomain,
     enrollment: PathwayEnrollmentInput,
     startDate: Date,
+    notAfter: Date | null,
   ): Promise<{
     enrollment?: EnrollmentResult['enrollments'][number]
     failure?: EnrollmentResult['failedEnrollments'][number]
@@ -695,6 +714,7 @@ class PatientDomain implements PatientDomainInterface {
       patient.appointmentPatients,
       enrollment,
       startDate,
+      notAfter,
     )
     if ('failure' in found) {
       return { failure: found.failure }
@@ -721,6 +741,7 @@ class PatientDomain implements PatientDomainInterface {
   async previewEnrollments(
     pathways: PathwayEnrollmentInput[],
     patientID?: string,
+    optionalsWithinPrincipal = false,
   ): Promise<EnrollmentPreview[]> {
     const appointments = patientID
       ? (await this.patientRepository.findByID(patientID)).appointmentPatients
@@ -728,24 +749,35 @@ class PatientDomain implements PatientDomainInterface {
     const templates = await this.pathwayTemplateRepository.findAll()
     const prerequisiteEnds = new Map<string, Date>()
     const previews: EnrollmentPreview[] = []
-    let principalStart: Date | undefined
+    let span: PrincipalSpan = {}
     for (const enrollment of await this.orderByPrerequisites(pathways)) {
+      const now = new Date()
       const startDate = await this.startDateOf(
         enrollment,
         templates,
         patientID ?? null,
-        principalStart,
-        new Date(),
+        span.start,
+        now,
       )
-      const preview = await this.previewEnrollment(
+      const notAfter = optionalsWithinPrincipal
+        ? await this.principalEndFor(
+            enrollment,
+            templates,
+            patientID ?? null,
+            span.end,
+            now,
+          )
+        : null
+      const { preview, end } = await this.previewEnrollment(
         { ...enrollment, startDate },
         patientID ?? null,
         appointments,
         prerequisiteEnds,
+        notAfter,
       )
-      if (preview.startDate && !this.isOptional(enrollment, templates)) {
-        principalStart = this.earliest(principalStart, preview.startDate)
-      }
+      span = this.principalSpanAfter(enrollment, templates, span, [
+        { startDate: preview.startDate, endDate: end },
+      ])
       previews[pathways.indexOf(enrollment)] = preview
     }
     return previews
@@ -762,22 +794,47 @@ class PatientDomain implements PatientDomainInterface {
     return a && a < b ? a : b
   }
 
-  private principalStartAfter(
+  // Début et fin des parcours principaux déjà traités dans la demande.
+  private principalSpanAfter(
     enrollment: PathwayEnrollmentInput,
     templates: TemplateFlags[],
-    appointments: EnrollmentResult['enrollments'][number]['appointments'],
-    current: Date | undefined,
-  ): Date | undefined {
+    span: PrincipalSpan,
+    appointments: { startDate?: Date | null; endDate?: Date | null }[],
+  ): PrincipalSpan {
     if (this.isOptional(enrollment, templates)) {
-      return current
+      return span
     }
-    return appointments.reduce(
-      (start, a) =>
-        a.success && a.startDate
+    return appointments.reduce<PrincipalSpan>(
+      ({ start, end }, a) => ({
+        start: a.startDate
           ? this.earliest(start, new Date(a.startDate))
           : start,
-      current,
+        end: a.endDate && (!end || end < a.endDate) ? new Date(a.endDate) : end,
+      }),
+      span,
     )
+  }
+
+  // Fin du parcours principal qui borne un optionnel : celui de la demande, sinon celui en cours.
+  private async principalEndFor(
+    enrollment: PathwayEnrollmentInput,
+    templates: TemplateFlags[],
+    patientID: string | null,
+    principalEnd: Date | undefined,
+    now: Date,
+  ): Promise<Date | null> {
+    if (!this.isOptional(enrollment, templates)) {
+      return null
+    }
+    const end =
+      principalEnd ??
+      (patientID
+        ? await this.appointmentRepository.findLastEndDateForPatient(
+            patientID,
+            templates.filter((t) => !t.optional).map((t) => t.id),
+          )
+        : null)
+    return end && end > now ? end : null
   }
 
   // Sans date saisie, un parcours optionnel part au début du premier parcours principal :
@@ -812,12 +869,14 @@ class PatientDomain implements PatientDomainInterface {
     patientID: string | null,
     appointments: AppointmentPatientWithAppointmentDomain[],
     prerequisiteEnds: Map<string, Date>,
-  ): Promise<EnrollmentPreview> {
+    notAfter: Date | null,
+  ): Promise<{ preview: EnrollmentPreview; end?: Date }> {
     const found = await this.findPathwayForTag(
       patientID,
       appointments,
       enrollment,
       enrollment.startDate,
+      notAfter,
       { prerequisiteEnds },
     ).catch((error) => {
       const { reason, logLine } = describeEnrollmentFailure(
@@ -829,10 +888,12 @@ class PatientDomain implements PatientDomainInterface {
     })
     if ('failure' in found) {
       return {
-        tag: enrollment.tag,
-        startDate: null,
-        from: enrollment.startDate,
-        reason: found.failure.reason,
+        preview: {
+          tag: enrollment.tag,
+          startDate: null,
+          from: enrollment.startDate,
+          reason: found.failure.reason,
+        },
       }
     }
     const startOfDay = new Date(enrollment.startDate)
@@ -865,9 +926,12 @@ class PatientDomain implements PatientDomainInterface {
       prerequisiteEnds.set(templateID, new Date(end))
     }
     return {
-      tag: enrollment.tag,
-      startDate: taken[0] ? new Date(taken[0].startDate) : null,
-      from: enrollment.startDate,
+      preview: {
+        tag: enrollment.tag,
+        startDate: taken[0] ? new Date(taken[0].startDate) : null,
+        from: enrollment.startDate,
+      },
+      end: taken.length ? new Date(end) : undefined,
     }
   }
 
@@ -886,6 +950,22 @@ class PatientDomain implements PatientDomainInterface {
     }
     return pathways
       .map((pathway) => ({ ...pathway, slots: pathway.slots.filter(isAfter) }))
+      .filter((pathway) => pathway.slots.length > 0)
+  }
+
+  // Miroir de startingAfter : parcours entier fini avant la date, ou ses seuls créneaux finis avant.
+  private endingBefore(
+    pathways: PathwayWithSlotsRepo[],
+    notAfter: Date,
+    firstAppointmentOnly: boolean,
+  ): PathwayWithSlotsRepo[] {
+    const isBefore = (slot: { endDate: Date }) =>
+      new Date(slot.endDate) <= notAfter
+    if (!firstAppointmentOnly) {
+      return pathways.filter((pathway) => pathway.slots.every(isBefore))
+    }
+    return pathways
+      .map((pathway) => ({ ...pathway, slots: pathway.slots.filter(isBefore) }))
       .filter((pathway) => pathway.slots.length > 0)
   }
 
@@ -925,6 +1005,7 @@ class PatientDomain implements PatientDomainInterface {
     pathwayTemplates: EnrollPatientInPathwaysInput['pathways'],
     defaultStartDate: Date | undefined,
     userID: string,
+    optionalsWithinPrincipal = false,
   ): Promise<EnrollmentResult> {
     // Point de passage unique de l'inscription en parcours (enrollPatientInPathways et
     // enrollExistingPatientInPathways y mènent toutes deux) : c'est donc ici, et nulle part
@@ -940,7 +1021,7 @@ class PatientDomain implements PatientDomainInterface {
       startDate: Date
     }[] = []
     let currentPatient = patient
-    let principalStart: Date | undefined
+    let span: PrincipalSpan = {}
     const templates = await this.pathwayTemplateRepository
       .findAll()
       .catch(() => [])
@@ -954,20 +1035,30 @@ class PatientDomain implements PatientDomainInterface {
           enrollment,
           templates,
           patient.id,
-          principalStart,
+          span.start,
           startDate,
         )
+        const notAfter = optionalsWithinPrincipal
+          ? await this.principalEndFor(
+              enrollment,
+              templates,
+              patient.id,
+              span.end,
+              new Date(),
+            )
+          : null
         const outcome = await this.enrollPatientInTag(
           currentPatient,
           enrollment,
           startDate,
+          notAfter,
         )
         if (outcome.enrollment) {
-          principalStart = this.principalStartAfter(
+          span = this.principalSpanAfter(
             enrollment,
             templates,
-            outcome.enrollment.appointments,
-            principalStart,
+            span,
+            outcome.enrollment.appointments.filter((a) => a.success),
           )
           enrollments.push(outcome.enrollment)
           appointmentIds.push(

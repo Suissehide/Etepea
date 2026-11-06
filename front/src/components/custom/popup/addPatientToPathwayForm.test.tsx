@@ -60,6 +60,8 @@ const json = (body: unknown) => ({
 })
 
 let enrolled: PathwayEnrollment[] | null = null
+let enrolledWithin: boolean | undefined
+let previewWithin: boolean | undefined
 
 const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   const url = input.toString()
@@ -72,6 +74,7 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     return { ...json([]), url }
   }
   if (path.endsWith('/patient/enroll/preview')) {
+    previewWithin = body.optionalsWithinPrincipal
     return {
       ...json(
         body.pathways.map((p: PathwayEnrollment) => ({
@@ -84,6 +87,7 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   }
   if (path.endsWith('/patient/p1/enroll')) {
     enrolled = body.pathways
+    enrolledWithin = body.optionalsWithinPrincipal
     return {
       ...json({ patient: {}, enrollments: [], failedEnrollments: [] }),
       url,
@@ -129,6 +133,8 @@ const rows = (list = 0) =>
 
 beforeEach(() => {
   enrolled = null
+  enrolledWithin = undefined
+  previewWithin = undefined
   useAuthStore.setState({ context })
   useToastStore.setState({ toasts: [] })
   vi.stubGlobal('fetch', fetchMock)
@@ -225,5 +231,24 @@ describe('AddPatientToPathwayForm', () => {
     )
     await waitFor(() => expect(enrolled?.[0]).toMatchObject({ tag: 'RI' }))
     expect(enrolled?.[0].startDate).toBeUndefined()
+  })
+
+  it("l'interrupteur des optionnels part avec l'aperçu et l'inscription", async () => {
+    await renderForm()
+    await addPathway('RI')
+    await addPathway('STRESS', 'optionnel')
+    await screen.findByText('Départ le 07/12/2026')
+    expect(previewWithin).toBe(false)
+
+    await userEvent.click(
+      screen.getByRole('switch', {
+        name: 'Rendez-vous compris dans la durée du parcours principal',
+      }),
+    )
+    await waitFor(() => expect(previewWithin).toBe(true))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Inscrire à 1 parcours' }),
+    )
+    await waitFor(() => expect(enrolledWithin).toBe(true))
   })
 })

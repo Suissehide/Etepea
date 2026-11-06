@@ -12,7 +12,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import type React from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 
 import { PatientApi } from '../../api/patient.api.ts'
 import { PATIENT } from '../../constants/process.constant.ts'
@@ -30,6 +30,7 @@ import { FormField } from '../ui/formField.tsx'
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
 import { Select } from '../ui/select.tsx'
+import { Switch } from '../ui/switch.tsx'
 
 const DURATION_OPTIONS = SLOT_DURATIONS.map((d) => ({
   value: String(d),
@@ -72,6 +73,7 @@ export function usePathwaySelector(patientID?: string) {
     null,
   )
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [withinPrincipal, setWithinPrincipal] = useState(false)
 
   const templateOf = useCallback(
     (tag: string) => (pathwayTemplates ?? []).find((t) => t.mainTag === tag),
@@ -132,8 +134,14 @@ export function usePathwaySelector(patientID?: string) {
   // Sans le motif, qui n'influe pas sur le parcours retenu : le saisir ne relance pas l'aperçu.
   const previewInput = enrollments.map(({ motif, ...rest }) => rest)
   const { data } = useQuery({
-    queryKey: [PATIENT.ENROLL_PREVIEW, patientID, previewInput],
-    queryFn: () => PatientApi.previewEnrollments(previewInput, patientID),
+    queryKey: [
+      PATIENT.ENROLL_PREVIEW,
+      patientID,
+      previewInput,
+      withinPrincipal,
+    ],
+    queryFn: () =>
+      PatientApi.previewEnrollments(previewInput, patientID, withinPrincipal),
     enabled: previewInput.length > 0,
     placeholderData: keepPreviousData,
   })
@@ -198,6 +206,7 @@ export function usePathwaySelector(patientID?: string) {
     setAddedPathways([])
     setExpandedPathwayId(null)
     setDraggedIndex(null)
+    setWithinPrincipal(false)
   }, [])
 
   return {
@@ -213,6 +222,8 @@ export function usePathwaySelector(patientID?: string) {
     addedPathways,
     expandedPathwayId,
     draggedIndex,
+    withinPrincipal,
+    setWithinPrincipal,
     handleAddTags,
     toggleExpand,
     updatePathway,
@@ -516,6 +527,8 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
     previews,
     expandedPathwayId,
     draggedIndex,
+    withinPrincipal,
+    setWithinPrincipal,
     handleAddTags,
     toggleExpand,
     updatePathway,
@@ -525,6 +538,7 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
     handleDragOver,
     handleDragEnd,
   } = state
+  const withinPrincipalId = useId()
 
   const hasOptional =
     tagOptions.some((o) => o.optional) || addedPathways.some((p) => p.optional)
@@ -549,6 +563,19 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
               : ', par priorité'}
           </span>
         </span>
+        {optional && (
+          <label
+            htmlFor={withinPrincipalId}
+            className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+          >
+            <Switch
+              id={withinPrincipalId}
+              checked={withinPrincipal}
+              onCheckedChange={setWithinPrincipal}
+            />
+            Rendez-vous compris dans la durée du parcours principal
+          </label>
+        )}
         <Select
           searchable
           clearable={false}

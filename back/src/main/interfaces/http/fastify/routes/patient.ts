@@ -280,6 +280,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
           patientData: request.body.patientData,
           startDate: request.body.startDate,
           pathways: request.body.pathways,
+          optionalsWithinPrincipal: request.body.optionalsWithinPrincipal,
         },
         request.user.userID,
       )
@@ -301,6 +302,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
       patientDomain.previewEnrollments(
         request.body.pathways,
         request.body.patientID,
+        request.body.optionalsWithinPrincipal,
       ),
   )
 
@@ -323,6 +325,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
           patientID: request.body.patientID,
           startDate: request.body.startDate,
           pathways: request.body.pathways,
+          optionalsWithinPrincipal: request.body.optionalsWithinPrincipal,
         },
         request.user.userID,
       )

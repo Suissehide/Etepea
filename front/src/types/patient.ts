@@ -118,11 +118,13 @@ export type PathwayEnrollment = {
 export type EnrollPatientParams = {
   patientData: CreatePatientParams
   pathways: PathwayEnrollment[]
+  optionalsWithinPrincipal?: boolean
 }
 
 export type EnrollExistingPatientParams = {
   patientID: string
   pathways: PathwayEnrollment[]
+  optionalsWithinPrincipal?: boolean
 }
 
 export type EnrollmentPreview = {

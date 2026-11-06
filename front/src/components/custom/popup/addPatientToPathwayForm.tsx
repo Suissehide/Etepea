@@ -29,7 +29,11 @@ export function AddPatientToPathwayForm({
 
   const submit = () =>
     enrollExistingPatient.mutate(
-      { patientID: patient.id, pathways: pathwayState.plannableEnrollments },
+      {
+        patientID: patient.id,
+        pathways: pathwayState.plannableEnrollments,
+        optionalsWithinPrincipal: pathwayState.withinPrincipal,
+      },
       { onSuccess: () => setOpen(false) },
     )
 
