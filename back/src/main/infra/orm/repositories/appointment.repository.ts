@@ -283,6 +283,24 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
     return row?.endDate ?? null
   }
 
+  async findFirstStartDateForPatient(
+    patientID: string,
+    templateIDs: string[],
+    from: Date,
+  ): Promise<Date | null> {
+    const row = await this.prisma.appointment.findFirst({
+      where: {
+        ...this.scope,
+        startDate: { gte: from },
+        appointmentPatients: { some: { patientId: patientID } },
+        slot: { pathway: { templateID: { in: templateIDs } } },
+      },
+      orderBy: { startDate: 'asc' },
+      select: { startDate: true },
+    })
+    return row?.startDate ?? null
+  }
+
   async deleteOrphanedByIds(appointmentIDs: string[]): Promise<number> {
     if (appointmentIDs.length === 0) {
       return 0

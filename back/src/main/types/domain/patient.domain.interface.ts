@@ -67,6 +67,7 @@ export type EnrollExistingPatientInPathwaysInput = {
 export type EnrollmentPreview = {
   tag: string
   startDate: Date | null
+  from: Date
   reason?: string
 }
 
@@ -159,7 +160,7 @@ export interface PatientDomainInterface {
     userID: string,
   ) => Promise<EnrollmentResult>
   previewEnrollments: (
-    pathways: (PathwayEnrollmentInput & { startDate: Date })[],
+    pathways: PathwayEnrollmentInput[],
     patientID?: string,
   ) => Promise<EnrollmentPreview[]>
   countAppointmentsInPathway: (

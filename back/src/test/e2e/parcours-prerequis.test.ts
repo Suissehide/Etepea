@@ -25,13 +25,18 @@ describe('parcours prérequis', () => {
       payload: payload as never,
     })
 
-  const createTemplate = async (mainTag: string, prerequisiteIDs: string[]) => {
+  const createTemplate = async (
+    mainTag: string,
+    prerequisiteIDs: string[],
+    optional = false,
+  ) => {
     const res = await inject('POST', '/pathway-template', {
       name: mainTag,
       color: '#123456',
       mainTag,
       slotTemplateIDs: [],
       prerequisiteIDs,
+      optional,
     })
     expect(res.statusCode).toBe(201)
     return res.json().id as string
@@ -267,5 +272,89 @@ describe('parcours prérequis', () => {
       select: { slot: { select: { pathwayID: true } } },
     })
     expect(appointments.map((apt) => apt.slot.pathwayID)).toEqual([open])
+  })
+
+  describe('parcours optionnels (MDS-68)', () => {
+    let stressAfterRc: string
+    let rc: string
+
+    beforeAll(async () => {
+      rc = await createTemplate('OPT-RC', [])
+      const stress = await createTemplate('OPT-STRESS', [], true)
+      await createPathway(rc, '2027-03-23T09:00:00.000Z')
+      await createPathway(stress, '2027-03-09T09:00:00.000Z')
+      stressAfterRc = await createPathway(stress, '2027-03-30T09:00:00.000Z')
+    })
+
+    const stressPathwayOf = async (patientId: string) =>
+      (
+        await testDb.appointment.findMany({
+          where: {
+            appointmentPatients: { some: { patientId } },
+            slot: { pathway: { templateID: { not: rc } } },
+          },
+          select: { slot: { select: { pathwayID: true } } },
+        })
+      ).map((apt) => apt.slot.pathwayID)
+
+    const newPatient = async (firstName: string) =>
+      (
+        await inject('POST', '/patient', { firstName, lastName: 'Optionnel' })
+      ).json().id as string
+
+    it("fait partir l'optionnel au début du principal demandé, sans date saisie", async () => {
+      const res = await inject('POST', '/patient/enroll/preview', {
+        pathways: [
+          { tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' },
+          { tag: 'OPT-RC', timeOfDay: 'ALL_DAY' },
+        ],
+      })
+      expect(res.statusCode).toBe(200)
+      const [stress, principal] = res.json()
+      expect(principal.startDate).toBe('2027-03-23T09:00:00.000Z')
+      expect(stress.from).toBe('2027-03-23T09:00:00.000Z')
+      expect(stress.startDate).toBe('2027-03-30T09:00:00.000Z')
+    })
+
+    it('garde la date saisie à la main', async () => {
+      const res = await inject('POST', '/patient/enroll/preview', {
+        pathways: [
+          { tag: 'OPT-RC', timeOfDay: 'ALL_DAY' },
+          { tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY', startDate: '2027-03-01' },
+        ],
+      })
+      expect(res.json()[1].startDate).toBe('2027-03-09T09:00:00.000Z')
+    })
+
+    it("inscrit l'optionnel après le début du principal de la même demande", async () => {
+      const patientId = await newPatient('Mêmedemande')
+      const res = await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [
+          { tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' },
+          { tag: 'OPT-RC', timeOfDay: 'ALL_DAY' },
+        ],
+      })
+      expect(res.json().failedEnrollments).toEqual([])
+      expect(await stressPathwayOf(patientId)).toEqual([stressAfterRc])
+    })
+
+    it("part du principal déjà inscrit quand la demande n'en contient pas", async () => {
+      const patientId = await newPatient('Dejainscrit')
+      await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [{ tag: 'OPT-RC', timeOfDay: 'ALL_DAY' }],
+      })
+      const preview = await inject('POST', '/patient/enroll/preview', {
+        patientID: patientId,
+        pathways: [{ tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' }],
+      })
+      expect(preview.json()[0].startDate).toBe('2027-03-30T09:00:00.000Z')
+      await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [{ tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' }],
+      })
+      expect(await stressPathwayOf(patientId)).toEqual([stressAfterRc])
+    })
   })
 })

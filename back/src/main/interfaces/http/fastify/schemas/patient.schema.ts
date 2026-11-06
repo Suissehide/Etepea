@@ -196,15 +196,15 @@ export const enrollExistingPatientInPathwaysSchema = z.object({
 
 export const enrollmentPreviewSchema = z.object({
   patientID: cuid().optional(),
-  pathways: z.array(
-    pathwayEnrollmentSchema.extend({ startDate: z.coerce.date() }),
-  ),
+  pathways: z.array(pathwayEnrollmentSchema),
 })
 
 export const enrollmentPreviewResponseSchema = z.array(
   z.object({
     tag: z.string(),
     startDate: z.date().nullable(),
+    // Date « au plus tôt » retenue, saisie ou automatique.
+    from: z.date(),
     reason: z.string().optional(),
   }),
 )

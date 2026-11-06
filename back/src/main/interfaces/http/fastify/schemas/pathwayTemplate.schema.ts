@@ -31,6 +31,7 @@ export const createPathwayTemplateSchema = pathwayTemplateSchema
     motifRequired: true,
     firstAppointmentOnly: true,
     prerequisiteIDs: true,
+    optional: true,
   })
   .extend({
     slotTemplateIDs: z.array(cuid()),

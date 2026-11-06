@@ -62,6 +62,7 @@ const orEmpty = (value: string | null | undefined): string => value ?? ''
 const formatDate = (value: Date | string | null | undefined): string =>
   value ? dayjs(value).format('DD/MM/YYYY') : ''
 
+type TemplateFlags = { id: string; mainTag: string; optional: boolean }
 // Les deux boucles d'inscription (processEnrollments, enrollInSlot) attrapent toute erreur
 // levee par un depot pour la transformer en echec partiel plutot qu'en 500 : la reponse
 // (`failedEnrollments[].reason`, affichee a l'ecran par front/src/queries/usePatient.tsx) et le
@@ -718,23 +719,92 @@ class PatientDomain implements PatientDomainInterface {
   // Date du premier rendez-vous que chaque inscription obtiendrait, sans rien écrire. Comme à
   // l'inscription, les prérequis passent d'abord et leur fin simulée décale les parcours qui en dépendent.
   async previewEnrollments(
-    pathways: (PathwayEnrollmentInput & { startDate: Date })[],
+    pathways: PathwayEnrollmentInput[],
     patientID?: string,
   ): Promise<EnrollmentPreview[]> {
     const appointments = patientID
       ? (await this.patientRepository.findByID(patientID)).appointmentPatients
       : []
+    const templates = await this.pathwayTemplateRepository.findAll()
     const prerequisiteEnds = new Map<string, Date>()
     const previews: EnrollmentPreview[] = []
+    let principalStart: Date | undefined
     for (const enrollment of await this.orderByPrerequisites(pathways)) {
-      previews[pathways.indexOf(enrollment)] = await this.previewEnrollment(
+      const startDate = await this.startDateOf(
         enrollment,
+        templates,
+        patientID ?? null,
+        principalStart,
+        new Date(),
+      )
+      const preview = await this.previewEnrollment(
+        { ...enrollment, startDate },
         patientID ?? null,
         appointments,
         prerequisiteEnds,
       )
+      if (preview.startDate && !this.isOptional(enrollment, templates)) {
+        principalStart = this.earliest(principalStart, preview.startDate)
+      }
+      previews[pathways.indexOf(enrollment)] = preview
     }
     return previews
+  }
+
+  private isOptional(
+    enrollment: PathwayEnrollmentInput,
+    templates: TemplateFlags[],
+  ): boolean {
+    return !!templates.find((t) => t.mainTag === enrollment.tag)?.optional
+  }
+
+  private earliest(a: Date | undefined, b: Date): Date {
+    return a && a < b ? a : b
+  }
+
+  private principalStartAfter(
+    enrollment: PathwayEnrollmentInput,
+    templates: TemplateFlags[],
+    appointments: EnrollmentResult['enrollments'][number]['appointments'],
+    current: Date | undefined,
+  ): Date | undefined {
+    if (this.isOptional(enrollment, templates)) {
+      return current
+    }
+    return appointments.reduce(
+      (start, a) =>
+        a.success && a.startDate
+          ? this.earliest(start, new Date(a.startDate))
+          : start,
+      current,
+    )
+  }
+
+  // Sans date saisie, un parcours optionnel part au début du premier parcours principal :
+  // celui de la demande, sinon celui où le patient est déjà inscrit (MDS-68).
+  private async startDateOf(
+    enrollment: PathwayEnrollmentInput,
+    templates: TemplateFlags[],
+    patientID: string | null,
+    principalStart: Date | undefined,
+    fallback: Date,
+  ): Promise<Date> {
+    if (enrollment.startDate) {
+      return enrollment.startDate
+    }
+    if (!this.isOptional(enrollment, templates)) {
+      return fallback
+    }
+    const start =
+      principalStart ??
+      (patientID
+        ? await this.appointmentRepository.findFirstStartDateForPatient(
+            patientID,
+            templates.filter((t) => !t.optional).map((t) => t.id),
+            fallback,
+          )
+        : null)
+    return start && start > fallback ? start : fallback
   }
 
   private async previewEnrollment(
@@ -761,6 +831,7 @@ class PatientDomain implements PatientDomainInterface {
       return {
         tag: enrollment.tag,
         startDate: null,
+        from: enrollment.startDate,
         reason: found.failure.reason,
       }
     }
@@ -796,6 +867,7 @@ class PatientDomain implements PatientDomainInterface {
     return {
       tag: enrollment.tag,
       startDate: taken[0] ? new Date(taken[0].startDate) : null,
+      from: enrollment.startDate,
     }
   }
 
@@ -829,7 +901,12 @@ class PatientDomain implements PatientDomainInterface {
       templates.find((t) => t.mainTag === e.tag)?.prerequisiteIDs ?? []
     const idOf = (e: PathwayEnrollmentInput) =>
       templates.find((t) => t.mainTag === e.tag)?.id
-    const remaining = [...enrollments]
+    // Les principaux avant les optionnels, qui partent de leur début.
+    const remaining = [...enrollments].sort(
+      (a, b) =>
+        Number(this.isOptional(a, templates)) -
+        Number(this.isOptional(b, templates)),
+    )
     const ordered: T[] = []
     while (remaining.length > 0) {
       const ready = remaining.findIndex(
@@ -863,18 +940,35 @@ class PatientDomain implements PatientDomainInterface {
       startDate: Date
     }[] = []
     let currentPatient = patient
+    let principalStart: Date | undefined
+    const templates = await this.pathwayTemplateRepository
+      .findAll()
+      .catch(() => [])
 
     for (const enrollment of await this.orderByPrerequisites(
       pathwayTemplates,
     )) {
-      const startDate = enrollment.startDate ?? defaultStartDate ?? new Date()
+      let startDate = enrollment.startDate ?? defaultStartDate ?? new Date()
       try {
+        startDate = await this.startDateOf(
+          enrollment,
+          templates,
+          patient.id,
+          principalStart,
+          startDate,
+        )
         const outcome = await this.enrollPatientInTag(
           currentPatient,
           enrollment,
           startDate,
         )
         if (outcome.enrollment) {
+          principalStart = this.principalStartAfter(
+            enrollment,
+            templates,
+            outcome.enrollment.appointments,
+            principalStart,
+          )
           enrollments.push(outcome.enrollment)
           appointmentIds.push(
             ...outcome.enrollment.appointments.flatMap((a) =>

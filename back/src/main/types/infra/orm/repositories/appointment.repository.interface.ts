@@ -71,4 +71,9 @@ export interface AppointmentRepositoryInterface {
     patientID: string,
     templateIDs: string[],
   ) => Promise<Date | null>
+  findFirstStartDateForPatient: (
+    patientID: string,
+    templateIDs: string[],
+    from: Date,
+  ) => Promise<Date | null>
 }

@@ -18,6 +18,44 @@ const MODES = [
   },
 ]
 
+function SettingSwitch({
+  checked,
+  onCheckedChange,
+  title,
+  description,
+}: {
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+  title: string
+  description: string
+}) {
+  const id = useId()
+  return (
+    <label htmlFor={id} className="flex gap-3 items-start cursor-pointer">
+      <Switch.Root
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        aria-describedby={`${id}-description`}
+        className="mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 bg-slate-300 data-[state=checked]:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
+        <Switch.Thumb className="block size-4 rounded-full bg-white shadow transition-transform duration-150 data-[state=checked]:translate-x-4" />
+      </Switch.Root>
+      <span>
+        <span className="block text-sm font-medium text-foreground">
+          {title}
+        </span>
+        <span
+          id={`${id}-description`}
+          className="block text-xs text-text-light leading-snug text-pretty"
+        >
+          {description}
+        </span>
+      </span>
+    </label>
+  )
+}
+
 export const PathwayEnrollmentSettings = withForm({
   defaultValues: {
     name: '',
@@ -25,6 +63,7 @@ export const PathwayEnrollmentSettings = withForm({
     mainTag: '',
     motifRequired: false,
     firstAppointmentOnly: false,
+    optional: false,
   },
   render: function Render({ form }) {
     const id = useId()
@@ -71,33 +110,23 @@ export const PathwayEnrollmentSettings = withForm({
 
         <form.AppField name="motifRequired">
           {(field) => (
-            <label
-              htmlFor={`${id}-switch`}
-              className="flex gap-3 items-start cursor-pointer"
-            >
-              <Switch.Root
-                id={`${id}-switch`}
-                checked={field.state.value}
-                onCheckedChange={field.handleChange}
-                aria-describedby={`${id}-motif`}
-                className="mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-150 bg-slate-300 data-[state=checked]:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                <Switch.Thumb className="block size-4 rounded-full bg-white shadow transition-transform duration-150 data-[state=checked]:translate-x-4" />
-              </Switch.Root>
-              <span>
-                <span className="block text-sm font-medium text-foreground">
-                  Demander un motif à l’inscription
-                </span>
-                <span
-                  id={`${id}-motif`}
-                  className="block text-xs text-text-light leading-snug text-pretty"
-                >
-                  Un champ « Motif » à remplir s’affiche quand on ajoute un
-                  patient. Le motif est recopié dans les notes de transmission
-                  de chaque rendez-vous créé.
-                </span>
-              </span>
-            </label>
+            <SettingSwitch
+              checked={field.state.value}
+              onCheckedChange={field.handleChange}
+              title="Demander un motif à l’inscription"
+              description="Un champ « Motif » à remplir s’affiche quand on ajoute un patient. Le motif est recopié dans les notes de transmission de chaque rendez-vous créé."
+            />
+          )}
+        </form.AppField>
+
+        <form.AppField name="optional">
+          {(field) => (
+            <SettingSwitch
+              checked={field.state.value}
+              onCheckedChange={field.handleChange}
+              title="Parcours optionnel"
+              description="Proposé à part à l’inscription (stress, psy…) : il part au plus tôt au début du parcours principal du patient."
+            />
           )}
         </form.AppField>
       </section>

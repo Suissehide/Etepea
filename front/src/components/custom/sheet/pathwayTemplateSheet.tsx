@@ -70,6 +70,7 @@ export default function PathwayTemplateSheet({
       mainTag: '',
       motifRequired: false,
       firstAppointmentOnly: false,
+      optional: false,
     },
     onSubmit: ({ value }) => {
       if (!pathwayTemplate?.id) {
@@ -85,6 +86,7 @@ export default function PathwayTemplateSheet({
         prerequisiteIDs,
         motifRequired: value.motifRequired,
         firstAppointmentOnly: value.firstAppointmentOnly,
+        optional: value.optional,
       }
 
       updatePathwayTemplate.mutate(updatedPathwayTemplateData)
@@ -113,6 +115,7 @@ export default function PathwayTemplateSheet({
         mainTag: pathwayTemplate.mainTag ?? '',
         motifRequired: pathwayTemplate.motifRequired ?? false,
         firstAppointmentOnly: pathwayTemplate.firstAppointmentOnly ?? false,
+        optional: pathwayTemplate.optional ?? false,
       },
       { keepDefaultValues: true },
     )
