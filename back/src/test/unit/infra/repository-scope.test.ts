@@ -1278,7 +1278,7 @@ describe('scoping pathwayTemplate et pathway', () => {
     const ctx = new TenantContext()
     const repo = new PathwayRepository(buildContainer(prisma, ctx))
     await ctx.run(tenant, async () => {
-      await repo.findByTemplateTagAndDate('tag', new Date())
+      await repo.findByTemplateTagWithFutureSlots('tag', new Date())
       await repo.findTracking(2026, 3)
       await repo.create({
         startDate: '2026-03-02',
