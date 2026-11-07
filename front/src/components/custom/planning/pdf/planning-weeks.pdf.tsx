@@ -60,6 +60,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#6b7280',
   },
+  filterNote: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1e40af',
+  },
   closureBlock: {
     flexShrink: 0,
     height: CLOSURE_HEIGHT,
@@ -233,7 +240,13 @@ function SlotBlock({ placed, height }: { placed: PlacedSlot; height: number }) {
   )
 }
 
-function WeekPage({ week }: { week: PlanningWeek }) {
+function WeekPage({
+  week,
+  filterNote,
+}: {
+  week: PlanningWeek
+  filterNote?: string
+}) {
   const rowsHeight = week.isClosed
     ? AVAILABLE_ROWS_HEIGHT - CLOSURE_HEIGHT - CLOSURE_MARGIN
     : AVAILABLE_ROWS_HEIGHT
@@ -245,6 +258,7 @@ function WeekPage({ week }: { week: PlanningWeek }) {
     <Page size="A4" orientation="landscape" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.title}>Semaine {week.weekLabel}</Text>
+        {filterNote && <Text style={styles.filterNote}>{filterNote}</Text>}
         <Text style={styles.subtitle}>
           du {week.weekStart.format('DD/MM/YYYY')} au{' '}
           {week.weekStart.add(4, 'day').format('DD/MM/YYYY')}
@@ -332,11 +346,22 @@ function WeekPage({ week }: { week: PlanningWeek }) {
   )
 }
 
-export default function PlanningWeeksPDF({ weeks }: { weeks: PlanningWeek[] }) {
+export default function PlanningWeeksPDF({
+  weeks,
+  filterNote,
+}: {
+  weeks: PlanningWeek[]
+  /** Rappel des filtres en tête de page (« Soignants : … »). */
+  filterNote?: string
+}) {
   return (
     <Document>
       {weeks.map((week) => (
-        <WeekPage key={week.weekStart.format('YYYY-MM-DD')} week={week} />
+        <WeekPage
+          key={week.weekStart.format('YYYY-MM-DD')}
+          week={week}
+          filterNote={filterNote}
+        />
       ))}
     </Document>
   )

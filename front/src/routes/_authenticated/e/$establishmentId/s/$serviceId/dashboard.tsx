@@ -2,12 +2,22 @@ import type { DateSelectInfo } from '@fullcalendar/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import dayjs from 'dayjs'
-import { CalendarRange, DoorOpen, Route as RouteIcon, X } from 'lucide-react'
+import {
+  CalendarRange,
+  DoorOpen,
+  Printer,
+  Route as RouteIcon,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Calendar, {
   type CalendarEvent,
 } from '@/components/custom/Calendar/calendar.tsx'
+import { NO_PATHWAY_KEY } from '@/components/custom/planning/pathwayFilter.tsx'
+import PlanningExportModal, {
+  NO_SOIGNANT_KEY,
+} from '@/components/custom/planning/pdf/planning-export-modal.tsx'
 import AddAppointmentForm from '@/components/custom/popup/addAppointmentForm.tsx'
 import AddPatientForm from '@/components/custom/popup/addPatientForm.tsx'
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
@@ -16,7 +26,9 @@ import ToggleVerrouilles, {
   useAfficherVerrouilles,
 } from '@/components/custom/toggleVerrouilles.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import { SLOT } from '@/constants/process.constant.ts'
+import { useCan } from '@/hooks/useCan.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import { isSlotVisible } from '@/libs/slotAvailability.ts'
 import { buildCalendarEventsFromSlots, containsKeyword } from '@/libs/utils.ts'
@@ -164,6 +176,34 @@ function Dashboard() {
   const [slotSoignants, setSlotSoignants] = useState<Soignant[]>([])
   const calendarUnselectRef = useRef<(() => void) | null>(null)
   const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
+  const [exportOpen, setExportOpen] = useState(false)
+  const canExportPdf = useCan('pdf:export')
+
+  // L'export part de ce que montre le tableau de bord : la sélection de soignants
+  // ou de parcours devient le filtre de départ (pas d'équivalent pour les salles).
+  const exportExclusions = () => {
+    if (mode === 'soignant' && selectedIDs.length > 0) {
+      return {
+        initialExcludedSoignantIds: new Set([
+          NO_SOIGNANT_KEY,
+          ...soignants
+            .filter((s) => !selectedIDs.includes(s.id))
+            .map((s) => s.id),
+        ]),
+      }
+    }
+    if (mode === 'pathway' && selectedPathwayTemplateIDs.length > 0) {
+      return {
+        initialExcludedPathwayIds: new Set([
+          NO_PATHWAY_KEY,
+          ...(pathwayTemplates ?? [])
+            .filter((t) => !selectedPathwayTemplateIDs.includes(t.id))
+            .map((t) => t.id),
+        ]),
+      }
+    }
+    return {}
+  }
 
   useEffect(() => {
     if (slots) {
@@ -323,6 +363,17 @@ function Dashboard() {
                 <X className="h-4 w-4" />
               </button>
             )}
+            <span className="flex-1" />
+            {canExportPdf && (
+              <Button
+                variant="outline"
+                className="h-[38px] rounded-lg px-3.5"
+                onClick={() => setExportOpen(true)}
+              >
+                <Printer size={16} />
+                Exporter
+              </Button>
+            )}
           </div>
 
           <div className="flex-1 min-h-0 overflow-hidden">
@@ -420,6 +471,14 @@ function Dashboard() {
           eventID={isAppointment ? appointmentId : ''}
           soignants={slotSoignants}
         />
+
+        {exportOpen && (
+          <PlanningExportModal
+            initialDate={visibleRange?.from ?? savedDate}
+            {...exportExclusions()}
+            onClose={() => setExportOpen(false)}
+          />
+        )}
       </div>
     </DashboardLayout>
   )

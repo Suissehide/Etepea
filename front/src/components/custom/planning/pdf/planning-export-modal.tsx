@@ -6,11 +6,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
+  Clock,
   Download,
   FileDown,
+  type LucideIcon,
   Minus,
   Plus,
+  Route as RouteIcon,
   Search,
+  Users,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { Fragment, useCallback, useMemo, useState } from 'react'
@@ -20,19 +24,33 @@ import { useForbiddenWeekQueries } from '../../../../queries/useForbiddenWeek.ts
 import { usePathwayTemplateQueries } from '../../../../queries/usePathwayTemplate.ts'
 import { usePlanningCycleQueries } from '../../../../queries/usePlanningCycle.ts'
 import { useSlotsInRangeQuery } from '../../../../queries/useSlot.ts'
+import { useSoignantQueries } from '../../../../queries/useSoignant.ts'
+import type { Slot } from '../../../../types/slot.ts'
 import { Button } from '../../../ui/button.tsx'
 import {
+  PopoverAnchor,
   PopoverContent,
   PopoverRoot,
   PopoverTrigger,
 } from '../../../ui/popover.tsx'
 import { NO_PATHWAY_COLOR, NO_PATHWAY_KEY } from '../pathwayFilter.tsx'
+import ExportCustomPeriod, {
+  type PeriodBound,
+} from './export-custom-period.tsx'
+import {
+  type ExportPeriod,
+  MAX_WEEK_COUNT,
+  periodOfMonths,
+} from './export-period.ts'
 import { buildPlanningWeeks, weekLabelOf } from './planning-pdf.utils.ts'
 import PlanningWeeksPDF from './planning-weeks.pdf.tsx'
 
 const MIN_WEEK_COUNT = 1
-const MAX_WEEK_COUNT = 12
 const DEFAULT_WEEK_COUNT = 4
+/** Au-delà, la génération du PDF se fait sentir : on prévient. */
+const SLOW_EXPORT_WEEKS = 12
+export const NO_SOIGNANT_KEY = '__no_soignant__'
+const NO_SOIGNANT_COLOR = '#94a3b8'
 const WEEKDAYS = [
   ['lun', 'L'],
   ['mar', 'M'],
@@ -44,17 +62,55 @@ const WEEKDAYS = [
 ]
 const CALENDAR_COLUMNS = 'grid-cols-[36px_repeat(7,minmax(0,1fr))_64px]'
 
+type PeriodMode = 'weeks' | 'semester' | 'year'
+const MONTHS_OF: Record<Exclude<PeriodMode, 'weeks'>, number> = {
+  semester: 6,
+  year: 12,
+}
+
+type FilterItem = { id: string; name: string; color: string; group?: string }
+
 interface PlanningExportModalProps {
   /** Date affichée dans le planning, utilisée comme semaine de départ. */
   initialDate?: string
   /** Parcours masqués dans le planning, repris comme exclusions de départ. */
   initialExcludedPathwayIds?: Set<string>
+  /** Soignants à écarter au départ (ceux non cochés sur le tableau de bord). */
+  initialExcludedSoignantIds?: Set<string>
   onClose: () => void
+}
+
+const toggleIn = (prev: Set<string>, id: string) => {
+  const next = new Set(prev)
+  if (!next.delete(id)) {
+    next.add(id)
+  }
+  return next
+}
+
+// Un créneau sort s'il est dans un parcours retenu ET a au moins un soignant
+// retenu (« Sans soignant » pour ceux qui n'en ont pas).
+export const isSlotExported = (
+  slot: Slot,
+  excludedPathwayIds: Set<string>,
+  excludedSoignantIds: Set<string>,
+) => {
+  if (slot.archivedAt) {
+    return false
+  }
+  if (excludedPathwayIds.has(slot.pathway?.template?.id ?? NO_PATHWAY_KEY)) {
+    return false
+  }
+  const soignants = slot.slotTemplate?.soignants ?? []
+  return soignants.length === 0
+    ? !excludedSoignantIds.has(NO_SOIGNANT_KEY)
+    : soignants.some((soignant) => !excludedSoignantIds.has(soignant.id))
 }
 
 export default function PlanningExportModal({
   initialDate,
   initialExcludedPathwayIds,
+  initialExcludedSoignantIds,
   onClose,
 }: PlanningExportModalProps) {
   const [weekStart, setWeekStart] = useState<Dayjs>(() =>
@@ -64,25 +120,48 @@ export default function PlanningExportModal({
       .startOf('day'),
   )
   const [weekCount, setWeekCount] = useState(DEFAULT_WEEK_COUNT)
+  const [mode, setMode] = useState<PeriodMode>('weeks')
+  // Semestre / année : premier mois exporté, et année affichée dans la grille.
+  const [firstMonth, setFirstMonth] = useState<Dayjs>(() =>
+    weekStart.add(6, 'day').startOf('month'),
+  )
+  const [gridYear, setGridYear] = useState(() => firstMonth.year())
   const [month, setMonth] = useState<Dayjs>(() => weekStart.startOf('month'))
   const [page, setPage] = useState(0)
+  const [customFocus, setCustomFocus] = useState<PeriodBound | null>(null)
 
-  // On raisonne en parcours *exclus* plutôt que sélectionnés : les modèles
+  // On raisonne en exclusions plutôt qu'en sélections : parcours et soignants
   // arrivent de façon asynchrone.
   const [excludedPathwayIds, setExcludedPathwayIds] = useState<Set<string>>(
     () => new Set(initialExcludedPathwayIds),
   )
+  const [excludedSoignantIds, setExcludedSoignantIds] = useState<Set<string>>(
+    () => new Set(initialExcludedSoignantIds),
+  )
 
   const { pathwayTemplates } = usePathwayTemplateQueries()
+  const { soignants } = useSoignantQueries()
   const { planningCycle } = usePlanningCycleQueries()
   const { forbiddenWeeks } = useForbiddenWeekQueries()
 
+  const period: ExportPeriod = useMemo(
+    () =>
+      mode === 'weeks'
+        ? { weekStart, weekCount }
+        : periodOfMonths(firstMonth, MONTHS_OF[mode]),
+    [mode, weekStart, weekCount, firstMonth],
+  )
+  const lastWeekStart = period.weekStart.add(period.weekCount - 1, 'week')
+  const lastWeekEnd = lastWeekStart.add(4, 'day')
+
   const range = useMemo(
     () => ({
-      from: weekStart.format('YYYY-MM-DD'),
-      to: weekStart.add(weekCount * 7, 'day').format('YYYY-MM-DD'),
+      from: period.weekStart.format('YYYY-MM-DD'),
+      to: period.weekStart
+        .add(period.weekCount * 7, 'day')
+        .format('YYYY-MM-DD'),
     }),
-    [weekStart, weekCount],
+    [period],
   )
   const { slots, isFetching } = useSlotsInRangeQuery(range)
 
@@ -91,31 +170,37 @@ export default function PlanningExportModal({
     setPage(0)
   }, [])
 
-  const handleTogglePathway = useCallback((id: string) => {
-    setExcludedPathwayIds((prev) => {
-      const next = new Set(prev)
-      if (!next.delete(id)) {
-        next.add(id)
-      }
-      return next
-    })
-  }, [])
+  // Repasser en semaines garde le début de la plage affichée.
+  const switchToWeeks = (count: number) => {
+    setMode('weeks')
+    setWeekStart(period.weekStart)
+    setMonth(period.weekStart.startOf('month'))
+    setWeekCount(count)
+    setPage(0)
+  }
 
-  const handleSelectAllPathways = useCallback(() => {
-    setExcludedPathwayIds(new Set())
-  }, [])
+  const switchToMonths = (next: Exclude<PeriodMode, 'weeks'>) => {
+    if (mode === 'weeks') {
+      // Le dimanche de la semaine de départ désigne son mois sans ambiguïté.
+      const first = period.weekStart.add(6, 'day').startOf('month')
+      setFirstMonth(first)
+      setGridYear(first.year())
+    }
+    setMode(next)
+    setPage(0)
+  }
 
-  const handleClearPathways = useCallback(() => {
-    setExcludedPathwayIds(
-      new Set([
-        NO_PATHWAY_KEY,
-        ...(pathwayTemplates ?? []).map((template) => template.id),
-      ]),
-    )
-  }, [pathwayTemplates])
+  const applyCustom = (custom: ExportPeriod) => {
+    setMode('weeks')
+    setWeekStart(custom.weekStart)
+    setWeekCount(custom.weekCount)
+    setMonth(custom.weekStart.startOf('month'))
+    setPage(0)
+    setCustomFocus(null)
+  }
 
   // Même ordre et mêmes groupes que le filtre « Parcours » du planning.
-  const pathwayItems = useMemo(() => {
+  const pathwayItems = useMemo<FilterItem[]>(() => {
     const templates = pathwayTemplates ?? []
     const inGroup = (individual: boolean, group: string) =>
       templates
@@ -127,21 +212,34 @@ export default function PlanningExportModal({
       ...inGroup(false, 'Multiples'),
     ]
   }, [pathwayTemplates])
-  const includedPathways = pathwayItems.filter(
-    (item) => !excludedPathwayIds.has(item.id),
+
+  const soignantItems = useMemo<FilterItem[]>(
+    () => [
+      ...[...(soignants ?? [])]
+        .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+        .map(({ id, name, color }) => ({
+          id,
+          name,
+          color: color ?? NO_SOIGNANT_COLOR,
+        })),
+      { id: NO_SOIGNANT_KEY, name: 'Sans soignant', color: NO_SOIGNANT_COLOR },
+    ],
+    [soignants],
   )
-  const allIncluded = includedPathways.length === pathwayItems.length
-  const noneIncluded = includedPathways.length === 0
+
+  const countIncluded = (items: FilterItem[], excluded: Set<string>) =>
+    items.filter((item) => !excluded.has(item.id))
+  const includedPathways = countIncluded(pathwayItems, excludedPathwayIds)
+  const includedSoignants = countIncluded(soignantItems, excludedSoignantIds)
+  const noneIncluded =
+    includedPathways.length === 0 || includedSoignants.length === 0
 
   const selectedSlots = useMemo(
     () =>
-      (slots ?? []).filter(
-        (slot) =>
-          // Le PDF montre le planning : les créneaux supprimés n'y sont plus.
-          !slot.archivedAt &&
-          !excludedPathwayIds.has(slot.pathway?.template?.id ?? NO_PATHWAY_KEY),
+      (slots ?? []).filter((slot) =>
+        isSlotExported(slot, excludedPathwayIds, excludedSoignantIds),
       ),
-    [slots, excludedPathwayIds],
+    [slots, excludedPathwayIds, excludedSoignantIds],
   )
 
   const forbiddenWeekStarts = useMemo(
@@ -153,26 +251,35 @@ export default function PlanningExportModal({
     () =>
       buildPlanningWeeks(
         selectedSlots,
-        weekStart,
-        weekCount,
+        period.weekStart,
+        period.weekCount,
         forbiddenWeekStarts,
         planningCycle,
       ),
-    [selectedSlots, weekStart, weekCount, forbiddenWeekStarts, planningCycle],
+    [selectedSlots, period, forbiddenWeekStarts, planningCycle],
   )
 
-  const pdfDocument = useMemo(() => <PlanningWeeksPDF weeks={weeks} />, [weeks])
+  // Rappelé en tête de chaque page : un planning filtré ne doit pas passer pour complet.
+  const filterNote = soignantNote(includedSoignants, soignantItems.length)
 
-  const shownPage = Math.min(page, weekCount - 1)
+  const pdfDocument = useMemo(
+    () => <PlanningWeeksPDF weeks={weeks} filterNote={filterNote} />,
+    [weeks, filterNote],
+  )
+
+  const shownPage = Math.min(page, period.weekCount - 1)
   const previewDocument = useMemo(
-    () => <PlanningWeeksPDF weeks={weeks.slice(shownPage, shownPage + 1)} />,
-    [weeks, shownPage],
+    () => (
+      <PlanningWeeksPDF
+        weeks={weeks.slice(shownPage, shownPage + 1)}
+        filterNote={filterNote}
+      />
+    ),
+    [weeks, shownPage, filterNote],
   )
 
-  const fileName = `planning-${weekStart.format('YYYY-MM-DD')}-${weekCount}-semaines.pdf`
+  const fileName = `planning-${period.weekStart.format('YYYY-MM-DD')}-${period.weekCount}-semaines.pdf`
 
-  const lastWeekStart = weekStart.add(weekCount - 1, 'week')
-  const lastWeekEnd = weekStart.add(weekCount * 7 - 3, 'day')
   const slotCount = weeks.reduce(
     (total, week) => total + week.days.flat().length,
     0,
@@ -184,17 +291,39 @@ export default function PlanningExportModal({
   )
 
   const quickCounts = [
-    { count: 1, label: '1 sem.' },
-    { count: 2, label: '2 sem.' },
-    { count: 4, label: '1 mois' },
+    { key: '1', count: 1, label: '1 sem.' },
+    { key: '4', count: 4, label: '1 mois' },
     ...(planningCycle
       ? [
           {
+            key: 'cycle',
             count: Math.min(planningCycle.weekCount, MAX_WEEK_COUNT),
             label: '1 cycle',
           },
         ]
       : []),
+  ]
+  const activePreset =
+    mode === 'weeks'
+      ? (quickCounts.find(({ count }) => count === weekCount)?.key ?? 'custom')
+      : mode
+  const presets: { key: string; label: string; onPick: () => void }[] = [
+    ...quickCounts.map(({ key, count, label }) => ({
+      key,
+      label,
+      onPick: () => switchToWeeks(count),
+    })),
+    {
+      key: 'semester',
+      label: 'Semestre',
+      onPick: () => switchToMonths('semester'),
+    },
+    { key: 'year', label: 'Année', onPick: () => switchToMonths('year') },
+    {
+      key: 'custom',
+      label: 'Personnalisé',
+      onPick: () => setCustomFocus('from'),
+    },
   ]
 
   const firstMonday = month.isoWeekday(1)
@@ -204,7 +333,18 @@ export default function PlanningExportModal({
     firstMonday.add(i, 'week'),
   )
 
-  const pagesLabel = weekCount > 1 ? ` (${weekCount} pages)` : ''
+  const pagesLabel = period.weekCount > 1 ? ` (${period.weekCount} pages)` : ''
+  const filterSummary = [
+    includedPathways.length < pathwayItems.length
+      ? `${includedPathways.length} parcours sur ${pathwayItems.length}`
+      : '',
+    filterNote ?? '',
+  ].filter(Boolean)
+
+  const boundBox = (bound: PeriodBound) =>
+    (customFocus ?? 'from') === bound
+      ? 'border-primary bg-blue-50 text-primary-dark'
+      : 'border-transparent bg-muted text-foreground'
 
   return (
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
@@ -255,154 +395,256 @@ export default function PlanningExportModal({
 
           <div className="grid flex-1 min-h-0 grid-cols-[480px_minmax(0,1fr)]">
             <aside className="flex min-w-0 flex-col gap-4 overflow-y-auto border-r border-border px-5 py-[18px]">
-              <div className="grid grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] items-center gap-2">
-                <div className="flex flex-col gap-1 rounded-lg border-[1.5px] border-primary bg-blue-50 px-3 py-2.5 text-primary-dark">
-                  <span className="text-xs">Du</span>
-                  <span className="text-sm font-semibold">
-                    S{weekLabelOf(weekStart, planningCycle)} ·{' '}
-                    {weekStart.format('dddd D MMM')}
-                  </span>
-                </div>
-                <ArrowRight
-                  size={18}
-                  className="justify-self-center text-[#94a3b8]"
-                />
-                <div className="flex flex-col gap-1 rounded-lg bg-muted px-3 py-2.5">
-                  <span className="text-xs text-text-light">Au</span>
-                  <span className="text-sm font-semibold text-foreground">
-                    S{weekLabelOf(lastWeekStart, planningCycle)} ·{' '}
-                    {lastWeekEnd.format('dddd D MMM')}
-                  </span>
-                </div>
-              </div>
+              <PopoverRoot
+                open={customFocus !== null}
+                onOpenChange={(open) => !open && setCustomFocus(null)}
+              >
+                <PopoverAnchor asChild>
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] items-center gap-2">
+                      <button
+                        type="button"
+                        title="Choisir la première semaine"
+                        onClick={() => setCustomFocus('from')}
+                        className={cn(
+                          'flex cursor-pointer flex-col items-start gap-1 rounded-lg border-[1.5px] px-3 py-2.5 text-left',
+                          boundBox('from'),
+                        )}
+                      >
+                        <span className="text-xs">Du</span>
+                        <span className="text-sm font-semibold">
+                          S{weekLabelOf(period.weekStart, planningCycle)} ·{' '}
+                          {period.weekStart.format('dddd D MMM YYYY')}
+                        </span>
+                      </button>
+                      <ArrowRight
+                        size={18}
+                        className="justify-self-center text-[#94a3b8]"
+                      />
+                      <button
+                        type="button"
+                        title="Choisir la dernière semaine"
+                        onClick={() => setCustomFocus('to')}
+                        className={cn(
+                          'flex cursor-pointer flex-col items-start gap-1 rounded-lg border-[1.5px] px-3 py-2.5 text-left',
+                          boundBox('to'),
+                        )}
+                      >
+                        <span className="text-xs">Au</span>
+                        <span className="text-sm font-semibold">
+                          S{weekLabelOf(lastWeekStart, planningCycle)} ·{' '}
+                          {lastWeekEnd.format('dddd D MMM YYYY')}
+                        </span>
+                      </button>
+                    </div>
 
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-text-dark">
-                  Durée
-                </span>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <div className="flex h-8 items-center rounded-full border border-border">
-                    <button
-                      type="button"
-                      aria-label="Retirer une semaine"
-                      disabled={weekCount <= MIN_WEEK_COUNT}
-                      onClick={() =>
-                        setWeekCount((n) => Math.max(MIN_WEEK_COUNT, n - 1))
-                      }
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="min-w-16 text-center text-[13px] font-semibold tabular-nums text-foreground">
-                      {weekCount} sem.
-                    </span>
-                    <button
-                      type="button"
-                      aria-label="Ajouter une semaine"
-                      disabled={weekCount >= MAX_WEEK_COUNT}
-                      onClick={() =>
-                        setWeekCount((n) => Math.min(MAX_WEEK_COUNT, n + 1))
-                      }
-                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
-                    >
-                      <Plus size={14} />
-                    </button>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex h-8 items-center justify-between">
+                        <span className="text-sm font-medium text-text-dark">
+                          Période
+                        </span>
+                        {mode === 'weeks' && (
+                          <div className="flex h-8 items-center rounded-full border border-border">
+                            <button
+                              type="button"
+                              aria-label="Retirer une semaine"
+                              disabled={weekCount <= MIN_WEEK_COUNT}
+                              onClick={() =>
+                                setWeekCount((n) =>
+                                  Math.max(MIN_WEEK_COUNT, n - 1),
+                                )
+                              }
+                              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="min-w-16 text-center text-[13px] font-semibold tabular-nums text-foreground">
+                              {weekCount} sem.
+                            </span>
+                            <button
+                              type="button"
+                              aria-label="Ajouter une semaine"
+                              disabled={weekCount >= MAX_WEEK_COUNT}
+                              onClick={() =>
+                                setWeekCount((n) =>
+                                  Math.min(MAX_WEEK_COUNT, n + 1),
+                                )
+                              }
+                              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-dark hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-0.5 rounded-lg bg-muted p-[3px]">
+                        {presets.map(({ key, label, onPick }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            aria-pressed={activePreset === key}
+                            onClick={onPick}
+                            className={cn(
+                              'h-[30px] flex-auto cursor-pointer whitespace-nowrap rounded-md px-1 text-[13px]',
+                              activePreset === key
+                                ? 'bg-white font-semibold text-foreground shadow-sm'
+                                : 'font-medium text-text-light hover:text-text-dark',
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  {quickCounts.map(({ count, label }) => (
-                    <button
-                      key={label}
-                      type="button"
-                      aria-pressed={count === weekCount}
-                      onClick={() => setWeekCount(count)}
-                      className={cn(
-                        'h-[30px] cursor-pointer whitespace-nowrap rounded-full border px-[9px] text-[13px] font-medium',
-                        count === weekCount
-                          ? 'border-primary bg-blue-50 text-primary-dark'
-                          : 'border-border text-text-dark hover:bg-muted',
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1 rounded-[10px] border border-border px-3 pt-2.5 pb-3">
-                <div className="flex items-center justify-between px-0.5 pb-1.5">
-                  <span className="text-[15px] font-semibold text-foreground capitalize">
-                    {month.format('MMMM YYYY')}
-                  </span>
-                  <span className="flex gap-1">
-                    <Button
-                      variant="icon"
-                      size="icon-md"
-                      className="h-7 w-7 hover:bg-muted"
-                      aria-label="Mois précédent"
-                      onClick={() => setMonth(month.subtract(1, 'month'))}
-                    >
-                      <ChevronLeft size={16} />
-                    </Button>
-                    <Button
-                      variant="icon"
-                      size="icon-md"
-                      className="h-7 w-7 hover:bg-muted"
-                      aria-label="Mois suivant"
-                      onClick={() => setMonth(month.add(1, 'month'))}
-                    >
-                      <ChevronRight size={16} />
-                    </Button>
-                  </span>
-                </div>
-                <div
-                  className={cn(
-                    'grid pb-1 text-xs text-[#94a3b8]',
-                    CALENDAR_COLUMNS,
-                  )}
+                </PopoverAnchor>
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  sideOffset={8}
+                  className="rounded-lg bg-white p-0 shadow-[0_8px_24px_rgba(4,24,43,.2)]"
                 >
-                  <span />
-                  {WEEKDAYS.map(([key, label]) => (
-                    <span key={key} className="text-center">
-                      {label}
-                    </span>
-                  ))}
-                  <span className="pr-2 text-right">PDF</span>
-                </div>
-                {mondays.map((monday) => {
-                  const index = monday.diff(weekStart, 'week')
-                  return (
-                    <ExportWeekRow
-                      key={monday.format('YYYY-MM-DD')}
-                      monday={monday}
-                      month={month}
-                      label={weekLabelOf(monday, planningCycle)}
-                      pageIndex={index >= 0 && index < weekCount ? index : null}
-                      isLast={index === weekCount - 1}
-                      isShown={index === shownPage}
-                      isClosed={closedWeekKeys.has(monday.format('YYYY-MM-DD'))}
-                      onPick={() => handlePickWeek(monday)}
+                  {customFocus && (
+                    <ExportCustomPeriod
+                      initialFrom={period.weekStart}
+                      initialTo={lastWeekEnd}
+                      initialFocus={customFocus}
+                      onApply={applyCustom}
+                      onCancel={() => setCustomFocus(null)}
                     />
-                  )
-                })}
-              </div>
+                  )}
+                </PopoverContent>
+              </PopoverRoot>
+
+              {mode === 'weeks' ? (
+                <div className="flex flex-col gap-1 rounded-[10px] border border-border px-3 pt-2.5 pb-3">
+                  <div className="flex items-center justify-between px-0.5 pb-1.5">
+                    <span className="text-[15px] font-semibold text-foreground capitalize">
+                      {month.format('MMMM YYYY')}
+                    </span>
+                    <span className="flex gap-1">
+                      <Button
+                        variant="icon"
+                        size="icon-md"
+                        className="h-7 w-7 hover:bg-muted"
+                        aria-label="Mois précédent"
+                        onClick={() => setMonth(month.subtract(1, 'month'))}
+                      >
+                        <ChevronLeft size={16} />
+                      </Button>
+                      <Button
+                        variant="icon"
+                        size="icon-md"
+                        className="h-7 w-7 hover:bg-muted"
+                        aria-label="Mois suivant"
+                        onClick={() => setMonth(month.add(1, 'month'))}
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </span>
+                  </div>
+                  <div
+                    className={cn(
+                      'grid pb-1 text-xs text-[#94a3b8]',
+                      CALENDAR_COLUMNS,
+                    )}
+                  >
+                    <span />
+                    {WEEKDAYS.map(([key, label]) => (
+                      <span key={key} className="text-center">
+                        {label}
+                      </span>
+                    ))}
+                    <span className="pr-2 text-right">PDF</span>
+                  </div>
+                  {mondays.map((monday) => {
+                    const index = monday.diff(weekStart, 'week')
+                    return (
+                      <ExportWeekRow
+                        key={monday.format('YYYY-MM-DD')}
+                        monday={monday}
+                        month={month}
+                        label={weekLabelOf(monday, planningCycle)}
+                        pageIndex={
+                          index >= 0 && index < weekCount ? index : null
+                        }
+                        isLast={index === weekCount - 1}
+                        isShown={index === shownPage}
+                        isClosed={closedWeekKeys.has(
+                          monday.format('YYYY-MM-DD'),
+                        )}
+                        onPick={() => handlePickWeek(monday)}
+                      />
+                    )
+                  })}
+                </div>
+              ) : (
+                <MonthGrid
+                  year={gridYear}
+                  firstMonth={firstMonth}
+                  months={MONTHS_OF[mode]}
+                  period={period}
+                  onYearChange={setGridYear}
+                  onPick={(first) => {
+                    setFirstMonth(first)
+                    setPage(0)
+                  }}
+                />
+              )}
 
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-text-dark">
-                  Parcours à inclure
+                  Filtres
                 </span>
-                <PathwayPicker
+                <FilterPicker
+                  icon={RouteIcon}
+                  label="Parcours"
+                  allLabel="Tous les parcours"
+                  noneLabel="Aucun parcours"
+                  searchPlaceholder="Rechercher un parcours"
                   items={pathwayItems}
                   excludedIds={excludedPathwayIds}
-                  onToggle={handleTogglePathway}
-                  onSelectAll={handleSelectAllPathways}
-                  onClear={handleClearPathways}
+                  onToggle={(id) =>
+                    setExcludedPathwayIds((prev) => toggleIn(prev, id))
+                  }
+                  onSelectAll={() => setExcludedPathwayIds(new Set())}
+                  onClear={() =>
+                    setExcludedPathwayIds(
+                      new Set(pathwayItems.map((item) => item.id)),
+                    )
+                  }
                 />
+                <FilterPicker
+                  icon={Users}
+                  label="Soignants"
+                  allLabel="Tous les soignants"
+                  noneLabel="Aucun soignant"
+                  searchPlaceholder="Rechercher un soignant"
+                  items={soignantItems}
+                  excludedIds={excludedSoignantIds}
+                  onToggle={(id) =>
+                    setExcludedSoignantIds((prev) => toggleIn(prev, id))
+                  }
+                  onSelectAll={() => setExcludedSoignantIds(new Set())}
+                  onClear={() =>
+                    setExcludedSoignantIds(
+                      new Set(soignantItems.map((item) => item.id)),
+                    )
+                  }
+                />
+                <span className="text-xs leading-normal text-text-light">
+                  Un créneau est exporté s’il appartient à un parcours coché{' '}
+                  <b className="text-text-dark">et</b> a au moins un soignant
+                  coché.
+                </span>
               </div>
 
-              <p className="m-0 text-[13px] leading-normal text-text-dark">
-                {noneIncluded
-                  ? 'Choisissez au moins un parcours.'
-                  : `Du ${weekStart.format('DD/MM')} au ${lastWeekEnd.format('DD/MM')} : ${weekCount} page${weekCount > 1 ? 's' : ''} paysage, ${slotCount} créneau${slotCount > 1 ? 'x' : ''}${allIncluded ? '' : `, ${includedPathways.length} parcours sur ${pathwayItems.length}`}.`}
-              </p>
+              <ExportSummary
+                period={period}
+                slotCount={slotCount}
+                notes={filterSummary}
+                empty={noneIncluded}
+              />
             </aside>
 
             <div className="flex min-w-0 flex-col bg-muted">
@@ -418,14 +660,14 @@ export default function PlanningExportModal({
                   <ChevronLeft size={16} />
                 </Button>
                 <span className="min-w-[120px] text-center text-sm font-semibold tabular-nums text-foreground">
-                  Page {shownPage + 1} sur {weekCount}
+                  Page {shownPage + 1} sur {period.weekCount}
                 </span>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 rounded-lg disabled:opacity-40"
                   aria-label="Page suivante"
-                  disabled={shownPage >= weekCount - 1}
+                  disabled={shownPage >= period.weekCount - 1}
                   onClick={() => setPage(shownPage + 1)}
                 >
                   <ChevronRight size={16} />
@@ -444,6 +686,152 @@ export default function PlanningExportModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  )
+}
+
+/** « Soignants : … » quand le filtre écarte au moins un soignant, sans les écarter tous. */
+function soignantNote(included: FilterItem[], total: number) {
+  if (included.length === 0 || included.length === total) {
+    return undefined
+  }
+  return `Soignants : ${included.map((item) => item.name).join(', ')}`
+}
+
+function ExportSummary({
+  period,
+  slotCount,
+  notes,
+  empty,
+}: {
+  period: ExportPeriod
+  slotCount: number
+  notes: string[]
+  empty: boolean
+}) {
+  if (empty) {
+    return (
+      <p className="m-0 text-[13px] leading-normal text-text-dark">
+        Choisissez au moins un parcours et un soignant.
+      </p>
+    )
+  }
+  const { weekStart, weekCount } = period
+  const lastDay = weekStart.add(weekCount - 1, 'week').add(4, 'day')
+  const pages = `${weekCount} page${weekCount > 1 ? 's' : ''} paysage`
+  const slotsLabel = `${slotCount} créneau${slotCount > 1 ? 'x' : ''}`
+  const filters = notes.map((note) => ` · ${note}`).join('')
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="m-0 text-[13px] leading-normal text-text-dark">
+        Du {weekStart.format('DD/MM/YYYY')} au {lastDay.format('DD/MM/YYYY')} :{' '}
+        {pages}, {slotsLabel}
+        {filters}.
+      </p>
+      {weekCount > SLOW_EXPORT_WEEKS && (
+        <p className="m-0 flex items-center gap-2 rounded-lg bg-a-saisir-fond px-2.5 py-2 text-xs leading-snug text-a-saisir-texte">
+          <Clock size={14} className="shrink-0" />
+          {weekCount} pages : la génération du PDF peut prendre quelques
+          secondes.
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** Semestre / année : on clique le premier mois, la plage se surligne. */
+function MonthGrid({
+  year,
+  firstMonth,
+  months,
+  period,
+  onYearChange,
+  onPick,
+}: {
+  year: number
+  firstMonth: Dayjs
+  months: number
+  period: ExportPeriod
+  onYearChange: (year: number) => void
+  onPick: (first: Dayjs) => void
+}) {
+  const startIndex = firstMonth.year() * 12 + firstMonth.month()
+  const lastWeekEnd = period.weekStart
+    .add(period.weekCount - 1, 'week')
+    .add(6, 'day')
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[10px] border border-border px-3 pt-2.5 pb-3">
+      <div className="flex items-center justify-between px-0.5">
+        <span className="text-[15px] font-semibold text-foreground">
+          {year}
+        </span>
+        <span className="flex gap-1">
+          <Button
+            variant="icon"
+            size="icon-md"
+            className="h-7 w-7 hover:bg-muted"
+            aria-label="Année précédente"
+            onClick={() => onYearChange(year - 1)}
+          >
+            <ChevronLeft size={16} />
+          </Button>
+          <Button
+            variant="icon"
+            size="icon-md"
+            className="h-7 w-7 hover:bg-muted"
+            aria-label="Année suivante"
+            onClick={() => onYearChange(year + 1)}
+          >
+            <ChevronRight size={16} />
+          </Button>
+        </span>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {Array.from({ length: 12 }, (_, m) => {
+          const first = dayjs.utc(`${year}-01-01`).add(m, 'month')
+          const index = year * 12 + m
+          const isStart = index === startIndex
+          const inRange = index >= startIndex && index < startIndex + months
+          const weekCount =
+            first
+              .endOf('month')
+              .isoWeekday(1)
+              .diff(first.isoWeekday(1), 'week') + 1
+          return (
+            <button
+              key={first.format('YYYY-MM')}
+              type="button"
+              aria-pressed={isStart}
+              onClick={() => onPick(first)}
+              className={cn(
+                'flex h-[52px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg hover:shadow-[inset_0_0_0_1.5px_#93c5fd]',
+                isStart
+                  ? 'bg-primary text-white'
+                  : inRange
+                    ? 'bg-[#dbeafe] text-primary-dark'
+                    : 'bg-surface-douce text-foreground',
+              )}
+            >
+              <span className="text-sm font-semibold capitalize">
+                {first.format('MMM').replace('.', '')}
+              </span>
+              <span
+                className={cn(
+                  'text-[11px]',
+                  isStart ? 'text-[#dbeafe]' : !inRange && 'text-text-light',
+                )}
+              >
+                {weekCount} sem.
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <span className="text-xs leading-normal text-text-light">
+        Cliquez le premier mois. {months} mois en semaines entières : du lundi{' '}
+        {period.weekStart.format('D MMM YYYY')} au dimanche{' '}
+        {lastWeekEnd.format('D MMM YYYY')}.
+      </span>
+    </div>
   )
 }
 
@@ -553,14 +941,24 @@ function ExportWeekRow({
   )
 }
 
-function PathwayPicker({
+function FilterPicker({
+  icon: Icon,
+  label,
+  allLabel,
+  noneLabel,
+  searchPlaceholder,
   items,
   excludedIds,
   onToggle,
   onSelectAll,
   onClear,
 }: {
-  items: { id: string; name: string; color: string; group?: string }[]
+  icon: LucideIcon
+  label: string
+  allLabel: string
+  noneLabel: string
+  searchPlaceholder: string
+  items: FilterItem[]
   excludedIds: Set<string>
   onToggle: (id: string) => void
   onSelectAll: () => void
@@ -569,6 +967,15 @@ function PathwayPicker({
   const [query, setQuery] = useState('')
   const included = items.filter((item) => !excludedIds.has(item.id))
   const allIncluded = included.length === items.length
+  // Deux noms se lisent mieux qu'un compte ; au-delà, on compte.
+  const summary =
+    included.length === 0
+      ? noneLabel
+      : allIncluded
+        ? allLabel
+        : included.length <= 2
+          ? included.map((item) => item.name).join(', ')
+          : `${included.length} sur ${items.length}`
   const shown = items.filter((item) =>
     item.name.toLowerCase().includes(query.trim().toLowerCase()),
   )
@@ -578,8 +985,16 @@ function PathwayPicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg border border-border bg-white px-3 text-left text-sm text-foreground data-[state=open]:border-primary"
+          aria-label={`${label} : ${summary}`}
+          className={cn(
+            'flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg border px-3 text-left text-sm text-foreground data-[state=open]:border-primary',
+            allIncluded
+              ? 'border-border bg-white'
+              : 'border-primary-light bg-blue-50',
+          )}
         >
+          <Icon size={16} className="shrink-0 text-text-light" />
+          <span className="w-[76px] shrink-0 text-text-light">{label}</span>
           <span className="flex pl-1">
             {included.slice(0, 4).map((item) => (
               <span
@@ -589,13 +1004,7 @@ function PathwayPicker({
               />
             ))}
           </span>
-          <span className="flex-1 truncate">
-            {included.length === 0
-              ? 'Aucun parcours'
-              : allIncluded
-                ? 'Tous les parcours'
-                : `${included.length} parcours sur ${items.length}`}
-          </span>
+          <span className="flex-1 truncate font-medium">{summary}</span>
           <ChevronsUpDown size={16} className="text-text-light" />
         </button>
       </PopoverTrigger>
@@ -610,7 +1019,7 @@ function PathwayPicker({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Rechercher un parcours"
+            placeholder={searchPlaceholder}
             className="h-8 min-w-0 flex-1 border-none bg-transparent text-sm outline-none"
           />
         </div>

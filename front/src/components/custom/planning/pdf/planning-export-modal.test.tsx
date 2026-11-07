@@ -1,3 +1,5 @@
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import dayjs from 'dayjs'
@@ -7,7 +9,11 @@ import utc from 'dayjs/plugin/utc'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import PlanningExportModal from './planning-export-modal.tsx'
+import type { Slot } from '../../../../types/slot.ts'
+import PlanningExportModal, {
+  isSlotExported,
+  NO_SOIGNANT_KEY,
+} from './planning-export-modal.tsx'
 
 dayjs.extend(utc)
 dayjs.extend(isoWeek)
@@ -35,6 +41,15 @@ vi.mock('../../../../queries/useForbiddenWeek.ts', () => ({
 vi.mock('../../../../queries/usePlanningCycle.ts', () => ({
   usePlanningCycleQueries: () => ({ planningCycle: cycle.current }),
 }))
+vi.mock('../../../../queries/useSoignant.ts', () => ({
+  useSoignantQueries: () => ({
+    soignants: [
+      { id: 'k1', name: 'Kiné1', color: '#0284c7' },
+      { id: 'apa', name: 'APA', color: '#0d9488' },
+      { id: 'psy', name: 'Psychologue', color: '#9333ea' },
+    ],
+  }),
+}))
 vi.mock('../../../../queries/usePathwayTemplate.ts', () => ({
   usePathwayTemplateQueries: () => ({
     pathwayTemplates: [
@@ -60,7 +75,11 @@ const row = (iso: number) =>
     .find((b) => b.firstElementChild?.textContent === `S${iso}`) as HTMLElement
 
 const renderModal = () =>
-  render(<PlanningExportModal initialDate="2026-11-04" onClose={vi.fn()} />)
+  render(
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+      <PlanningExportModal initialDate="2026-11-04" onClose={vi.fn()} />
+    </LocalizationProvider>,
+  )
 
 describe('PlanningExportModal', () => {
   it('surligne la plage avec ses numéros de page et la déplace au clic', async () => {
@@ -79,11 +98,12 @@ describe('PlanningExportModal', () => {
     expect(screen.getByText('Page 1 sur 4')).toBeInTheDocument()
   })
 
-  it('synchronise raccourcis et compteur, bornés de 1 à 12', async () => {
+  it('synchronise raccourcis et compteur ; hors raccourci, « Personnalisé »', async () => {
     const user = userEvent.setup()
     cycle.current = null
     renderModal()
     expect(screen.queryByText('1 cycle')).not.toBeInTheDocument()
+    expect(screen.queryByText('2 sem.')).not.toBeInTheDocument()
 
     await user.click(screen.getByText('1 sem.'))
     expect(
@@ -93,20 +113,85 @@ describe('PlanningExportModal', () => {
       screen.getByRole('button', { name: /^Télécharger$/ }),
     ).toBeInTheDocument()
 
-    await user.click(screen.getByText('2 sem.'))
-    expect(screen.getByText('2 sem.', { selector: 'span' })).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: 'Ajouter une semaine' }),
+    )
+    expect(screen.getByText('2 sem.')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Personnalisé' }),
+    ).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('propose « 1 cycle » plafonné à 12 semaines', async () => {
+  it('propose « 1 cycle », plafonné à 53 semaines', async () => {
     const user = userEvent.setup()
     cycle.current = { startOfWeek: '2026-09-21', weekCount: 16 }
     renderModal()
     await user.click(screen.getByText('1 cycle'))
-    expect(screen.getByText('12 sem.')).toBeInTheDocument()
+    expect(screen.getByText('16 sem.')).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Ajouter une semaine' }),
-    ).toBeDisabled()
+    ).toBeEnabled()
     cycle.current = null
+  })
+
+  it('exporte un semestre en semaines entières à partir du mois cliqué', async () => {
+    const user = userEvent.setup()
+    renderModal()
+    await user.click(screen.getByRole('button', { name: 'Semestre' }))
+    // Novembre 2026 → avril 2027 : du lundi 26 octobre au dimanche 2 mai.
+    expect(screen.getByText('Page 1 sur 27')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Ajouter une semaine' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/la génération du PDF/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Année suivante' }))
+    await user.click(screen.getByRole('button', { name: /^janv/i }))
+    expect(
+      screen.getByRole('button', { name: /^Télécharger \(27 pages\)$/ }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Année' }))
+    expect(screen.getByText('Page 1 sur 53')).toBeInTheDocument()
+
+    await user.click(screen.getByText('1 mois'))
+    expect(screen.getByText('4 sem.')).toBeInTheDocument()
+  })
+
+  it('ouvre « Personnalisé » sur la plage affichée et l’applique', async () => {
+    const user = userEvent.setup()
+    renderModal()
+    await user.click(screen.getByRole('button', { name: 'Personnalisé' }))
+    expect(screen.getByText('Période personnalisée')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /du lundi 02\/11\/2026 au vendredi 27\/11\/2026, 4 pages/,
+      ),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Valider' }))
+    expect(screen.queryByText('Période personnalisée')).not.toBeInTheDocument()
+    expect(screen.getByText('Page 1 sur 4')).toBeInTheDocument()
+  })
+
+  it('filtre aussi par soignant et le rappelle dans le résumé', async () => {
+    const user = userEvent.setup()
+    renderModal()
+    await user.click(screen.getByRole('button', { name: /Tous les soignants/ }))
+    expect(
+      screen
+        .getAllByRole('button')
+        .map((b) => b.textContent)
+        .filter((t) =>
+          ['APA', 'Kiné1', 'Psychologue', 'Sans soignant'].includes(t ?? ''),
+        ),
+    ).toEqual(['APA', 'Kiné1', 'Psychologue', 'Sans soignant'])
+
+    await user.click(screen.getByRole('button', { name: 'Psychologue' }))
+    await user.click(screen.getByRole('button', { name: 'Sans soignant' }))
+    await user.keyboard('{Escape}')
+    expect(screen.getByText('APA, Kiné1')).toBeInTheDocument()
+    expect(screen.getByText(/Soignants : APA, Kiné1/)).toBeInTheDocument()
   })
 
   it('désactive le téléchargement sans parcours', async () => {
@@ -133,7 +218,7 @@ describe('PlanningExportModal', () => {
 
     await user.click(screen.getByText('Tout désélectionner'))
     expect(
-      screen.getByText('Choisissez au moins un parcours.'),
+      screen.getByText('Choisissez au moins un parcours et un soignant.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Télécharger/ })).toBeDisabled()
     expect(screen.getByText('Aucun parcours')).toBeInTheDocument()
@@ -155,5 +240,36 @@ describe('PlanningExportModal', () => {
 
     await user.keyboard('{Escape}')
     expect(onClose).toHaveBeenCalledOnce()
+  })
+})
+
+describe('isSlotExported', () => {
+  const slot = (pathwayId: string | null, soignantIds: string[]) =>
+    ({
+      pathway: pathwayId ? { template: { id: pathwayId } } : undefined,
+      slotTemplate: { soignants: soignantIds.map((id) => ({ id })) },
+    }) as unknown as Slot
+
+  it('exige un parcours retenu ET au moins un soignant retenu', () => {
+    const noPathway = new Set(['ta'])
+    const noSoignant = new Set(['psy'])
+    expect(isSlotExported(slot('ic', ['k1']), noPathway, noSoignant)).toBe(true)
+    expect(isSlotExported(slot('ta', ['k1']), noPathway, noSoignant)).toBe(
+      false,
+    )
+    expect(isSlotExported(slot('ic', ['psy']), noPathway, noSoignant)).toBe(
+      false,
+    )
+    expect(
+      isSlotExported(slot('ic', ['psy', 'k1']), noPathway, noSoignant),
+    ).toBe(true)
+  })
+
+  it('range les créneaux sans soignant sous « Sans soignant »', () => {
+    const none = new Set<string>()
+    expect(isSlotExported(slot('ic', []), none, none)).toBe(true)
+    expect(
+      isSlotExported(slot('ic', []), none, new Set([NO_SOIGNANT_KEY])),
+    ).toBe(false)
   })
 })
