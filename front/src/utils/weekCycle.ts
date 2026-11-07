@@ -62,3 +62,12 @@ export function libelleSemaineDu(
   }
   return semaine === null ? 'Fermée' : `S${semaine}`
 }
+
+/** « 2 – 8 novembre », ou « 30 novembre – 6 décembre » quand la semaine change de mois. */
+export function plageSemaine(date: Dayjs): string {
+  const debut = date.isoWeekday(1)
+  const fin = debut.add(6, 'day')
+  return debut.isSame(fin, 'month')
+    ? `${debut.format('D')} – ${fin.format('D MMMM')}`
+    : `${debut.format('D MMMM')} – ${fin.format('D MMMM')}`
+}

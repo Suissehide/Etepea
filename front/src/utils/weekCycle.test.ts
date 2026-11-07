@@ -1,7 +1,9 @@
+import 'dayjs/locale/fr'
+
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
 
-import { cycleWeekNumber } from './weekCycle.ts'
+import { cycleWeekNumber, plageSemaine } from './weekCycle.ts'
 
 const cycle = {
   startOfWeek: '2026-01-05',
@@ -26,5 +28,19 @@ describe('cycleWeekNumber', () => {
     const plain = { startOfWeek: '2026-01-05', weekCount: 6 }
     expect(cycleWeekNumber(dayjs.utc('2025-12-29'), plain)).toBe(6)
     expect(cycleWeekNumber(dayjs.utc('2026-02-16'), plain)).toBe(1)
+  })
+})
+
+describe('plageSemaine', () => {
+  const plage = (date: string) => plageSemaine(dayjs.utc(date).locale('fr'))
+
+  it('va du lundi au dimanche, quel que soit le jour', () => {
+    expect(plage('2026-11-06')).toBe('2 – 8 novembre')
+    expect(plage('2026-11-02')).toBe('2 – 8 novembre')
+    expect(plage('2026-11-08')).toBe('2 – 8 novembre')
+  })
+
+  it('nomme les deux mois quand la semaine est a cheval', () => {
+    expect(plage('2026-12-02')).toBe('30 novembre – 6 décembre')
   })
 })
