@@ -152,6 +152,15 @@ describe('groupDaySlotRowsBySoignant', () => {
     ])
   })
 
+  it('« Sans soignant » reste affiché quand des soignants sont cochés', () => {
+    expect(
+      ids(groupDaySlotRowsBySoignant(rows, ['kine', 'diet'], [kine, diet])),
+    ).toEqual([
+      ['kine', ['kine', 'partage']],
+      [null, ['diet', 'personne']],
+    ])
+  })
+
   it('sans drapeau, chaque soignant garde son tableau', () => {
     const visible = { ...diet, hiddenInAgenda: false }
     expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, visible]))).toEqual([

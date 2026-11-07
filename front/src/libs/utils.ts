@@ -406,7 +406,7 @@ export const generateDurationOptions = (
 
 // Agenda : un tableau par soignant (un créneau partagé apparaît dans chacun), limité
 // aux soignants cochés s'il y en a. Un soignant masqué de l'Agenda (MDS-76) compte
-// comme absent : ses créneaux vont dans « Sans soignant ».
+// comme absent : ses créneaux vont dans « Sans soignant », affiché même avec une sélection.
 export const groupDaySlotRowsBySoignant = (
   rows: DaySlotRow[],
   selectedSoignantIDs: string[],
@@ -433,7 +433,7 @@ export const groupDaySlotRowsBySoignant = (
       ),
     }))
   const withoutSoignant = rows.filter((row) => visibles(row).length === 0)
-  if (selectedSoignantIDs.length === 0 && withoutSoignant.length > 0) {
+  if (withoutSoignant.length > 0) {
     result.push({ soignant: null, rows: withoutSoignant })
   }
   return result
