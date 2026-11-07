@@ -15,7 +15,6 @@ import {
 } from '../../../libs/slotAvailability.ts'
 import {
   generateDurationOptions,
-  thematicLabel,
   thematicLabelByID,
 } from '../../../libs/utils.ts'
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
@@ -133,7 +132,7 @@ function AddAppointmentForm({
       for (const t of thematics?.filter((t) =>
         t.soignants.some((ss) => ss.id === soignant.id),
       ) ?? []) {
-        map.set(t.id, { value: t.id, label: thematicLabel(t) })
+        map.set(t.id, { value: t.id, label: t.name })
       }
     }
     return [...map.values()].sort((a, b) =>
@@ -143,15 +142,11 @@ function AddAppointmentForm({
 
   const capacity = slot?.slotTemplate.capacity ?? 1
 
-  // Individuel : débuts calés sur des tranches de la durée de la sous-thématique (à défaut, de la thématique).
-  const subThematicID = useStore(form.store, (state) => state.values.thematicId)
+  // Individuel : débuts calés sur des tranches de la durée de la thématique du créneau (MDS-77).
   const startTime = useStore(form.store, (state) => state.values.startTime)
   const { tranche } = getTrancheChoice(
     slot,
-    [
-      thematics?.find((t) => t.id === subThematicID)?.duration,
-      thematics?.find((t) => t.id === thematicId)?.duration,
-    ],
+    [thematics?.find((t) => t.id === thematicId)?.duration],
     startTime,
   )
   // La tranche libre n'est qu'une proposition : dès qu'on touche à l'heure ou à la durée, on garde la saisie.

@@ -656,10 +656,6 @@ function AddPatientToSlotContent({
   const thematicID = useStore(form.store, (state) => state.values.thematicID)
   const startTime = useStore(form.store, (state) => state.values.startTime)
   const motif = useStore(form.store, (state) => state.values.motif)
-  const subThematicID = useStore(
-    form.store,
-    (state) => state.values.subThematicID,
-  )
 
   const patientOptions = useMemo(
     () =>
@@ -681,6 +677,14 @@ function AddPatientToSlotContent({
           value: thematic.id,
           label: thematicLabel(thematic),
         }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'fr')),
+    [thematics],
+  )
+  // Sous-thématique sans durée : la durée reste celle de la thématique (MDS-77).
+  const subThematicOptions = useMemo(
+    () =>
+      (thematics ?? [])
+        .map((thematic) => ({ value: thematic.id, label: thematic.name }))
         .sort((a, b) => a.label.localeCompare(b.label, 'fr')),
     [thematics],
   )
@@ -725,13 +729,10 @@ function AddPatientToSlotContent({
   const isJoining = !!joinedAppointment
   const areTimeFieldsDisabled = isJoining || !selected?.isIndividual
 
-  // Individuel : débuts calés sur des tranches de la durée de la sous-thématique (à défaut, de la thématique).
+  // Individuel : débuts calés sur des tranches de la durée de la thématique (MDS-77).
   const { tranches, tranche, noFreeTranche } = getTrancheChoice(
     selected?.slot,
-    [
-      thematics?.find((thematic) => thematic.id === subThematicID)?.duration,
-      selectedThematic?.duration,
-    ],
+    [selectedThematic?.duration],
     startTime,
   )
   const isBlocked = isCreationBlocked(selected, motif, noFreeTranche)
@@ -891,7 +892,7 @@ function AddPatientToSlotContent({
       {(field) => (
         <field.Select
           label="Sous-thématique"
-          options={thematicOptions}
+          options={subThematicOptions}
           searchable
           clearable={false}
         />
