@@ -37,7 +37,6 @@ import {
 } from '@/queries/useSlot.ts'
 import { useSoignantStore } from '@/store/useSoignantStore.ts'
 import type { Slot } from '@/types/slot.ts'
-import type { Soignant } from '@/types/soignant.ts'
 import { libelleSemaineDu, plageSemaine } from '@/utils/weekCycle.ts'
 
 export const Route = createFileRoute(
