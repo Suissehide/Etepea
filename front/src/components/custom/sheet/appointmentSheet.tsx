@@ -17,11 +17,7 @@ import {
   appointmentTypeLabel,
 } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import {
-  formatDuration,
-  thematicLabel,
-  thematicLabelByID,
-} from '../../../libs/utils.ts'
+import { formatDuration, thematicLabelByID } from '../../../libs/utils.ts'
 import {
   useAppointmentByIDQuery,
   useAppointmentMutations,
@@ -203,17 +199,15 @@ export default function AppointmentSheet({
       for (const t of thematics?.filter(
         (t) => !t.internal && t.soignants.some((ss) => ss.id === soignant.id),
       ) ?? []) {
-        map.set(t.id, { value: t.id, label: thematicLabel(t) })
+        map.set(t.id, { value: t.id, label: t.name })
       }
     }
     // La thématique actuelle reste proposée même si aucun soignant du créneau n'y est relié.
     const currentID = appointment?.thematicId
     if (currentID && !map.has(currentID)) {
-      const label = thematicLabelByID(
-        thematics,
-        currentID,
-        appointment?.thematic,
-      )
+      const label =
+        thematics?.find((t) => t.id === currentID)?.name ??
+        appointment?.thematic
       if (label) {
         map.set(currentID, { value: currentID, label })
       }
