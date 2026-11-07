@@ -1,8 +1,8 @@
-import { useId } from 'react'
+import { Lock } from 'lucide-react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { Switch } from '@/components/ui/switch.tsx'
+import { Button } from '@/components/ui/button.tsx'
 
 // MDS-70 : les créneaux verrouillés sont masqués hors du Planning, sauf demande explicite.
 export const useAfficherVerrouilles = create<{
@@ -19,16 +19,16 @@ export const useAfficherVerrouilles = create<{
 )
 
 export default function ToggleVerrouilles() {
-  const id = useId()
   const afficher = useAfficherVerrouilles((state) => state.afficher)
   const setAfficher = useAfficherVerrouilles((state) => state.setAfficher)
   return (
-    <label
-      htmlFor={id}
-      className="flex items-center gap-2 text-sm text-foreground cursor-pointer whitespace-nowrap"
+    <Button
+      variant={afficher ? 'default' : 'outline'}
+      aria-pressed={afficher}
+      onClick={() => setAfficher(!afficher)}
     >
-      <Switch id={id} checked={afficher} onCheckedChange={setAfficher} />
-      Créneaux verrouillés
-    </label>
+      <Lock className="w-4 h-4" />
+      Verrouillés
+    </Button>
   )
 }
