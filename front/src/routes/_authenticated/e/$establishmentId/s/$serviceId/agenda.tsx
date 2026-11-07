@@ -14,6 +14,9 @@ import AddPatientToAppointmentForm from '@/components/custom/popup/addPatientToA
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import AppointmentSheet from '@/components/custom/sheet/appointmentSheet.tsx'
+import ToggleVerrouilles, {
+  useAfficherVerrouilles,
+} from '@/components/custom/toggleVerrouilles.tsx'
 import WeekDayStrip from '@/components/custom/weekDayStrip.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { Etiquette } from '@/components/table/etiquette.tsx'
@@ -156,9 +159,14 @@ function Agenda() {
   const soignants = useSoignantStore((state) => state.soignants)
   const soignantIDs = useMemo(() => soignants.map((s) => s.id), [soignants])
 
+  const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
   const rows = useMemo(
-    () => buildDaySlotRows(slots, selectedDay),
-    [slots, selectedDay],
+    () =>
+      buildDaySlotRows(
+        afficherVerrouilles ? slots : slots?.filter((slot) => !slot.locked),
+        selectedDay,
+      ),
+    [slots, selectedDay, afficherVerrouilles],
   )
 
   // Un tableau par soignant (un créneau partagé apparaît dans chacun), limité
@@ -223,7 +231,10 @@ function Agenda() {
           onChoisirDate={setAnchorEl}
           className="px-0 pb-0 flex-wrap"
           filtres={
-            <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
+            <>
+              <ToggleVerrouilles />
+              <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
+            </>
           }
         />
         <CalendarDatePickerButton
