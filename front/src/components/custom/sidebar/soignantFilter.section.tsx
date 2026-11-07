@@ -10,15 +10,21 @@ interface SoignantFilterSectionProps {
   title: ReactNode
   /** Bouton d'ajout facultatif, aligné à droite du titre. */
   addAction?: ReactNode
+  /** Agenda : retire les soignants masqués de l'Agenda (MDS-76). */
+  sansMasquesAgenda?: boolean
 }
 
 function SoignantFilterSection({
   title,
   addAction,
+  sansMasquesAgenda = false,
 }: SoignantFilterSectionProps) {
   useSoignantQueries()
 
-  const soignants = useSoignantStore((state) => state.soignants)
+  const tous = useSoignantStore((state) => state.soignants)
+  const soignants = sansMasquesAgenda
+    ? tous.filter((s) => !s.hiddenInAgenda)
+    : tous
   const toggleSoignant = useSoignantStore((state) => state.toggleSoignant)
   const selectAllSoignants = useSoignantStore(
     (state) => state.selectAllSoignants,

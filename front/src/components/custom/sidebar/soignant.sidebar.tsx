@@ -11,6 +11,7 @@ function SidebarSoignant() {
   return (
     <SoignantFilterSection
       title={<p>Soignants</p>}
+      sansMasquesAgenda
       addAction={
         isAdmin && (
           <AddSoignantForm

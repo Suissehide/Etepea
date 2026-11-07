@@ -44,7 +44,8 @@ function SoignantSettings() {
   const canManage = useCan('referentials:write')
   const [showArchived, setShowArchived] = useState(false)
   const { soignants, isPending } = useSoignantQueries(showArchived)
-  const { restoreSoignant, deleteForeverSoignant } = useSoignantMutations()
+  const { restoreSoignant, deleteForeverSoignant, updateSoignant } =
+    useSoignantMutations()
   const [purgeTargetId, setPurgeTargetId] = useState<string | null>(null)
   const { thematics } = useThematicQueries()
   const { members } = useServiceMembersQuery()
@@ -71,6 +72,8 @@ function SoignantSettings() {
       getSoignantColumns({
         onRestore: (id) => restoreSoignant.mutate(id),
         onDeleteForever: (id) => setPurgeTargetId(id),
+        onToggleAgenda: (id, hiddenInAgenda) =>
+          updateSoignant.mutate({ id, hiddenInAgenda }),
         archived: showArchived,
         thematics: thematics ?? [],
         thematicOptions,
@@ -84,6 +87,7 @@ function SoignantSettings() {
       canManage,
       showArchived,
       restoreSoignant,
+      updateSoignant,
     ],
   )
 

@@ -15,7 +15,12 @@ export const soignantResponseSchema = z.object({
   ...soignantEntity,
 })
 
-export const soignantsResponseSchema = z.array(soignantResponseSchema)
+// Le drapeau n'est exposé que par les routes du référentiel, pas dans les créneaux.
+export const soignantDetailResponseSchema = soignantResponseSchema.extend({
+  hiddenInAgenda: z.boolean(),
+})
+
+export const soignantsResponseSchema = z.array(soignantDetailResponseSchema)
 
 export const listSoignantsQuerySchema = z.object({
   archived: z.stringbool().default(false),
@@ -33,7 +38,10 @@ export const deleteSoignantByIdParamsSchema = getSoignantByIdParamsSchema
 
 export const updateSoignantByIdSchema = {
   params: getSoignantByIdParamsSchema,
-  body: soignantSchema.partial().extend({ archived: z.boolean().optional() }),
+  body: soignantSchema.partial().extend({
+    archived: z.boolean().optional(),
+    hiddenInAgenda: z.boolean().optional(),
+  }),
 }
 
 export type ListSoignantsQuery = z.infer<typeof listSoignantsQuerySchema>

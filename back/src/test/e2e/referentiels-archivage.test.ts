@@ -146,6 +146,24 @@ describe('archivage des salles, soignants et modeles de diagnostic', () => {
     expect(noms(await get('/soignant'))).toContain('Diététicienne')
   })
 
+  it('masquer un soignant de l Agenda le garde dans la liste, drapeau leve (MDS-76)', async () => {
+    const soignant = await testDb.soignant.create({
+      data: { name: 'Kiné', serviceId, establishmentId },
+    })
+    const res = await testApp.app.inject({
+      method: 'PATCH',
+      url: url(`/soignant/${soignant.id}`),
+      cookies,
+      payload: { hiddenInAgenda: true } as never,
+    })
+    expect(res.json()).toMatchObject({ hiddenInAgenda: true })
+    const liste = (await get('/soignant')).json() as {
+      id: string
+      hiddenInAgenda: boolean
+    }[]
+    expect(liste.find((s) => s.id === soignant.id)?.hiddenInAgenda).toBe(true)
+  })
+
   it('archiver un modele de diagnostic laisse les diagnostics remplis le porter', async () => {
     const modele = await testDb.diagnosticEducatifTemplate.create({
       data: {

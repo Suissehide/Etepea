@@ -11,7 +11,7 @@ import {
   getSoignantByIdParamsSchema,
   type ListSoignantsQuery,
   listSoignantsQuerySchema,
-  soignantResponseSchema,
+  soignantDetailResponseSchema,
   soignantsResponseSchema,
   type UpdateSoignantBody,
   type UpdateSoignantParams,
@@ -47,7 +47,7 @@ const soignantReadRouter: FastifyPluginAsync = (fastify) => {
       schema: {
         params: getSoignantByIdParamsSchema,
         response: {
-          200: soignantResponseSchema,
+          200: soignantDetailResponseSchema,
           404: z.object({ message: z.string() }),
         },
       },
@@ -79,7 +79,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
       schema: {
         body: createSoignantSchema,
         response: {
-          201: soignantResponseSchema,
+          201: soignantDetailResponseSchema,
         },
       },
       config: { permission: 'referentials:write' },
@@ -98,7 +98,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
       schema: {
         ...updateSoignantByIdSchema,
         response: {
-          200: soignantResponseSchema,
+          200: soignantDetailResponseSchema,
           404: z.object({ message: z.string() }),
         },
       },

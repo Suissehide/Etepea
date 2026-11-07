@@ -403,3 +403,38 @@ export const generateDurationOptions = (
 
   return options
 }
+
+// Agenda : un tableau par soignant (un créneau partagé apparaît dans chacun), limité
+// aux soignants cochés s'il y en a. Un soignant masqué de l'Agenda (MDS-76) compte
+// comme absent : ses créneaux vont dans « Sans soignant ».
+export const groupDaySlotRowsBySoignant = (
+  rows: DaySlotRow[],
+  selectedSoignantIDs: string[],
+  soignants: Soignant[],
+) => {
+  const hiddenIDs = new Set(
+    soignants.filter((s) => s.hiddenInAgenda).map((s) => s.id),
+  )
+  const visibles = (row: DaySlotRow) =>
+    row.soignants.filter((s) => !hiddenIDs.has(s.id))
+  const bySoignant = new Map(rows.flatMap(visibles).map((s) => [s.id, s]))
+  const result: { soignant: Soignant | null; rows: DaySlotRow[] }[] = [
+    ...bySoignant.values(),
+  ]
+    .filter(
+      (s) =>
+        selectedSoignantIDs.length === 0 || selectedSoignantIDs.includes(s.id),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    .map((soignant) => ({
+      soignant,
+      rows: rows.filter((row) =>
+        row.soignants.some((s) => s.id === soignant.id),
+      ),
+    }))
+  const withoutSoignant = rows.filter((row) => visibles(row).length === 0)
+  if (selectedSoignantIDs.length === 0 && withoutSoignant.length > 0) {
+    result.push({ soignant: null, rows: withoutSoignant })
+  }
+  return result
+}

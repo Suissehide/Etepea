@@ -1,0 +1,1 @@
+ALTER TABLE "Soignant" ADD COLUMN "hiddenInAgenda" BOOLEAN NOT NULL DEFAULT false;

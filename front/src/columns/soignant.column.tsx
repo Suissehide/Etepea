@@ -9,6 +9,7 @@ import EditSoignantThematicsForm from '../components/custom/popup/editSoignantTh
 import { EtiquettesTronquees } from '../components/table/etiquette.tsx'
 import type { Features } from '../components/table/features.ts'
 import { Button } from '../components/ui/button.tsx'
+import { Switch } from '../components/ui/switch.tsx'
 import type { ServiceMember } from '../types/serviceMember.ts'
 import type { Soignant } from '../types/soignant.ts'
 import type { Thematic } from '../types/thematic.ts'
@@ -18,6 +19,7 @@ const columnHelper = createColumnHelper<Features, Soignant>()
 type SoignantColumnOptions = {
   onRestore: (id: string) => void
   onDeleteForever: (id: string) => void
+  onToggleAgenda: (id: string, hiddenInAgenda: boolean) => void
   // Les archives se consultent dans la meme table : seules les actions
   // changent, un archive ne se reedite pas.
   archived: boolean
@@ -34,6 +36,7 @@ type SoignantColumnOptions = {
 export const getSoignantColumns = ({
   onRestore,
   onDeleteForever,
+  onToggleAgenda,
   archived,
   thematics,
   thematicOptions,
@@ -68,6 +71,27 @@ export const getSoignantColumns = ({
           <span className="text-sm text-text-dark">{comptes.join(', ')}</span>
         ) : (
           <span className="text-sm text-text-light">—</span>
+        )
+      },
+    }),
+    columnHelper.display({
+      id: 'agenda',
+      header: 'Agenda',
+      size: 90,
+      cell: ({ row }) => {
+        const soignant = row.original
+        return (
+          <Switch
+            checked={!soignant.hiddenInAgenda}
+            disabled={!canManage || archived}
+            onCheckedChange={(checked) => onToggleAgenda(soignant.id, !checked)}
+            aria-label={`Afficher ${soignant.name} dans l'Agenda`}
+            title={
+              soignant.hiddenInAgenda
+                ? "Masqué de l'Agenda : ses créneaux y passent dans « Sans soignant »"
+                : "Affiché dans l'Agenda"
+            }
+          />
         )
       },
     }),

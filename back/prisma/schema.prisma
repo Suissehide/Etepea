@@ -340,7 +340,9 @@ model Soignant {
   // Archivage au lieu de suppression, comme Thematic. Ici un DELETE faisait pire
   // qu'un SetNull : `slotTemplateLinks` et `thematicLinks` sont en Cascade, donc
   // les lignes de liaison disparaissaient — le planning perdait qui anime quoi.
-  archivedAt DateTime?
+  archivedAt     DateTime?
+  // MDS-76 : retiré des tableaux de l'Agenda, ses créneaux passent dans « Sans soignant ».
+  hiddenInAgenda Boolean   @default(false)
 
   slotTemplateLinks  SlotTemplateSoignant[]
   thematicLinks      SoignantThematic[]
@@ -1010,7 +1012,7 @@ enum NotificationMailState {
 }
 
 model Notification {
-  id              String                 @id @default(cuid())
+  id              String                @id @default(cuid())
   establishmentId String
   serviceId       String
   userId          String
@@ -1018,8 +1020,8 @@ model Notification {
   payload         Json
   dedupeKey       String?
   readAt          DateTime?
-  mailState       NotificationMailState  @default(PENDING)
-  createdAt       DateTime               @default(now())
+  mailState       NotificationMailState @default(PENDING)
+  createdAt       DateTime              @default(now())
 
   @@unique([id, serviceId])
   @@unique([userId, dedupeKey])

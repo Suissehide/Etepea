@@ -24,7 +24,11 @@ import ReactTable from '@/components/table/reactTable.tsx'
 import { styleSoignant } from '@/libs/color.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import { getFreeIntervals } from '@/libs/slotAvailability.ts'
-import { buildDaySlotRows, type DaySlotRow } from '@/libs/utils.ts'
+import {
+  buildDaySlotRows,
+  type DaySlotRow,
+  groupDaySlotRowsBySoignant,
+} from '@/libs/utils.ts'
 import { useAppointmentMutations } from '@/queries/useAppointment.ts'
 import { usePlanningCycleQueries } from '@/queries/usePlanningCycle.ts'
 import {
@@ -174,29 +178,10 @@ function Agenda() {
     [slots, selectedDay, afficherVerrouilles],
   )
 
-  // Un tableau par soignant (un créneau partagé apparaît dans chacun), limité
-  // aux soignants cochés dans la barre latérale s'il y en a.
-  const groups = useMemo(() => {
-    const isShown = (id: string) =>
-      selectedSoignantIDs.length === 0 || selectedSoignantIDs.includes(id)
-    const bySoignant = new Map(
-      rows.flatMap((row) => row.soignants).map((s) => [s.id, s]),
-    )
-    const result = [...bySoignant.values()]
-      .filter((soignant) => isShown(soignant.id))
-      .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
-      .map((soignant) => ({
-        soignant: soignant as Soignant | null,
-        rows: rows.filter((row) =>
-          row.soignants.some((s) => s.id === soignant.id),
-        ),
-      }))
-    const withoutSoignant = rows.filter((row) => row.soignants.length === 0)
-    if (selectedSoignantIDs.length === 0 && withoutSoignant.length > 0) {
-      result.push({ soignant: null, rows: withoutSoignant })
-    }
-    return result
-  }, [rows, selectedSoignantIDs])
+  const groups = useMemo(
+    () => groupDaySlotRowsBySoignant(rows, selectedSoignantIDs, soignants),
+    [rows, selectedSoignantIDs, soignants],
+  )
 
   const addPatientTarget =
     rows

@@ -3,7 +3,7 @@ import utc from 'dayjs/plugin/utc'
 import { describe, expect, it } from 'vitest'
 
 import type { Slot } from '../types/slot.ts'
-import { buildDaySlotRows } from './utils.ts'
+import { buildDaySlotRows, groupDaySlotRowsBySoignant } from './utils.ts'
 
 dayjs.extend(utc)
 
@@ -121,5 +121,43 @@ describe('buildDaySlotRows, créneau individuel', () => {
     )
 
     expect(row.subRows).toBeUndefined()
+  })
+})
+
+describe('groupDaySlotRowsBySoignant', () => {
+  const kine = { id: 'kine', name: 'Kiné' }
+  const diet = { id: 'diet', name: 'Diététicienne', hiddenInAgenda: true }
+  const rows = buildDaySlotRows(
+    [
+      slot('kine', '2026-03-02T09:00:00.000Z', {
+        slotTemplate: { soignants: [kine] },
+      } as Partial<Slot>),
+      slot('diet', '2026-03-02T10:00:00.000Z', {
+        slotTemplate: { soignants: [diet] },
+      } as Partial<Slot>),
+      slot('partage', '2026-03-02T11:00:00.000Z', {
+        slotTemplate: { soignants: [kine, diet] },
+      } as Partial<Slot>),
+      slot('personne', '2026-03-02T12:00:00.000Z'),
+    ],
+    dayjs.utc('2026-03-02'),
+  )
+  const ids = (g: ReturnType<typeof groupDaySlotRowsBySoignant>) =>
+    g.map((x) => [x.soignant?.id ?? null, x.rows.map((r) => r.id)])
+
+  it('les créneaux d un soignant masqué de l Agenda passent dans « Sans soignant » (MDS-76)', () => {
+    expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, diet]))).toEqual([
+      ['kine', ['kine', 'partage']],
+      [null, ['diet', 'personne']],
+    ])
+  })
+
+  it('sans drapeau, chaque soignant garde son tableau', () => {
+    const visible = { ...diet, hiddenInAgenda: false }
+    expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, visible]))).toEqual([
+      ['diet', ['diet', 'partage']],
+      ['kine', ['kine', 'partage']],
+      [null, ['personne']],
+    ])
   })
 })
