@@ -12,6 +12,9 @@ import AddAppointmentForm from '@/components/custom/popup/addAppointmentForm.tsx
 import AddPatientForm from '@/components/custom/popup/addPatientForm.tsx'
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
 import AppointmentSheet from '@/components/custom/sheet/appointmentSheet.tsx'
+import ToggleVerrouilles, {
+  useAfficherVerrouilles,
+} from '@/components/custom/toggleVerrouilles.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { SLOT } from '@/constants/process.constant.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
@@ -160,11 +163,14 @@ function Dashboard() {
   const [type, setType] = useState('')
   const [slotSoignants, setSlotSoignants] = useState<Soignant[]>([])
   const calendarUnselectRef = useRef<(() => void) | null>(null)
+  const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
 
   useEffect(() => {
     if (slots) {
       // Un créneau supprimé ne reste affiché que s'il porte encore des inscriptions.
-      const visible = slots.filter(isSlotVisible)
+      const visible = slots.filter(
+        (slot) => isSlotVisible(slot) && (afficherVerrouilles || !slot.locked),
+      )
       const filtered = {
         soignant: () => filterSlotsBySoignants(visible, selectedIDs),
         pathway: () =>
@@ -191,6 +197,7 @@ function Dashboard() {
     selectedPathwayTemplateIDs,
     selectedLocationIDs,
     conflictLabels,
+    afficherVerrouilles,
   ])
 
   const handleSelectAppointment = (dateSelectArg: DateSelectInfo) => {
@@ -325,6 +332,7 @@ function Dashboard() {
               initialView={initialView}
               planningCycle={planningCycle}
               classeBarre="px-6"
+              filtresBarre={<ToggleVerrouilles />}
               onViewChange={(view) =>
                 localStorage.setItem(VIEW_STORAGE_KEY, view)
               }

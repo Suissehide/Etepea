@@ -14,6 +14,9 @@ import AddPatientToAppointmentForm from '@/components/custom/popup/addPatientToA
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import AppointmentSheet from '@/components/custom/sheet/appointmentSheet.tsx'
+import ToggleVerrouilles, {
+  useAfficherVerrouilles,
+} from '@/components/custom/toggleVerrouilles.tsx'
 import WeekDayStrip from '@/components/custom/weekDayStrip.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { Etiquette } from '@/components/table/etiquette.tsx'
@@ -31,7 +34,7 @@ import {
 import { useSoignantStore } from '@/store/useSoignantStore.ts'
 import type { Slot } from '@/types/slot.ts'
 import type { Soignant } from '@/types/soignant.ts'
-import { libelleSemaineDu } from '@/utils/weekCycle.ts'
+import { libelleSemaineDu, plageSemaine } from '@/utils/weekCycle.ts'
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/agenda',
@@ -114,18 +117,19 @@ function Agenda() {
   const { planningCycle } = usePlanningCycleQueries()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
-  // La barre des autres calendriers, pilotée jour par jour.
+  // La barre des autres calendriers. Les flèches avancent d'une semaine (même jour de la
+  // semaine) : la bande des jours, sous la barre, sert à changer de jour.
   const controleur: ControleurBarre = {
-    prev: () => handleDayChange(selectedDay.subtract(1, 'day')),
-    next: () => handleDayChange(selectedDay.add(1, 'day')),
+    prev: () => handleDayChange(selectedDay.subtract(1, 'week')),
+    next: () => handleDayChange(selectedDay.add(1, 'week')),
     today: () => handleDayChange(today),
     view: {
       type: 'timeGridDay',
-      title: `${libelleSemaineDu(selectedDay, planningCycle)} · ${selectedDay.format('DD MMMM')}`,
+      title: `${libelleSemaineDu(selectedDay, planningCycle)} · ${plageSemaine(selectedDay)}`,
     },
     getButtonState: () => ({
-      prev: { text: '', hint: 'Jour précédent', isDisabled: false },
-      next: { text: '', hint: 'Jour suivant', isDisabled: false },
+      prev: { text: '', hint: 'Semaine précédente', isDisabled: false },
+      next: { text: '', hint: 'Semaine suivante', isDisabled: false },
       today: {
         text: "Aujourd'hui",
         hint: "Aujourd'hui",
@@ -156,9 +160,14 @@ function Agenda() {
   const soignants = useSoignantStore((state) => state.soignants)
   const soignantIDs = useMemo(() => soignants.map((s) => s.id), [soignants])
 
+  const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
   const rows = useMemo(
-    () => buildDaySlotRows(slots, selectedDay),
-    [slots, selectedDay],
+    () =>
+      buildDaySlotRows(
+        afficherVerrouilles ? slots : slots?.filter((slot) => !slot.locked),
+        selectedDay,
+      ),
+    [slots, selectedDay, afficherVerrouilles],
   )
 
   // Un tableau par soignant (un créneau partagé apparaît dans chacun), limité
@@ -222,10 +231,11 @@ function Agenda() {
           controller={controleur}
           onChoisirDate={setAnchorEl}
           className="px-0 pb-0 flex-wrap"
-          filtres={
-            <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
-          }
+          filtres={<ToggleVerrouilles />}
         />
+        <div className="-mx-6 border-y border-border bg-surface-douce px-6 py-2.5">
+          <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
+        </div>
         <CalendarDatePickerButton
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
@@ -239,6 +249,10 @@ function Agenda() {
             setAnchorEl(null)
           }}
         />
+
+        <h2 className="text-base font-semibold text-text-dark first-letter:uppercase">
+          {selectedDay.format('dddd D MMMM')}
+        </h2>
 
         {isPending || groups.length === 0 ? (
           <ReactTable<DaySlotRow>

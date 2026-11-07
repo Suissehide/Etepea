@@ -15,7 +15,9 @@ export default function WeekDayStrip({ value, onChange }: WeekDayStripProps) {
   const today = dayjs.utc().startOf('day')
 
   return (
-    <div className="flex items-center gap-1">
+    // Sa propre ligne sous la barre de l'agenda, sur toute la largeur : les flèches changent de
+    // semaine, la bande change de jour.
+    <div className="grid grid-cols-7 gap-2">
       {days.map((day) => {
         const isSelected = day.isSame(value, 'day')
         const isCurrentDay = day.isSame(today, 'day')
@@ -27,17 +29,26 @@ export default function WeekDayStrip({ value, onChange }: WeekDayStripProps) {
             onClick={() => onChange(day)}
             aria-current={isSelected ? 'date' : undefined}
             className={cn(
-              'flex flex-col items-center min-w-[56px] rounded-lg px-3 py-1 cursor-pointer transition-colors',
+              'flex h-[60px] w-full flex-col items-center justify-center gap-0.5 rounded-[10px] cursor-pointer transition-colors',
               isSelected
                 ? 'bg-primary text-primary-foreground'
-                : 'text-text-light hover:bg-card',
+                : 'text-text-light hover:bg-muted',
             )}
           >
-            <span className="text-xs capitalize">{day.format('ddd')}</span>
-            <span className="text-sm font-medium">{day.format('D')}</span>
+            <span className="text-[13px] font-medium capitalize">
+              {day.format('ddd')}
+            </span>
             <span
               className={cn(
-                'mt-0.5 h-1 w-1 rounded-full',
+                'text-lg font-semibold leading-tight',
+                !isSelected && 'text-foreground',
+              )}
+            >
+              {day.format('D')}
+            </span>
+            <span
+              className={cn(
+                'h-[5px] w-[5px] rounded-full',
                 !isCurrentDay && 'bg-transparent',
                 isCurrentDay && !isSelected && 'bg-primary',
                 isCurrentDay && isSelected && 'bg-primary-foreground',
