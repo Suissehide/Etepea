@@ -234,6 +234,8 @@ export function VirtualizedBodyTable<TData extends RowData>({
                   colSpan={span}
                   className={cn(
                     'px-4 py-2 text-sm border-b border-border align-middle',
+                    // Agenda : une ligne à plusieurs patients garde ses cellules en haut.
+                    '[tr:has([data-multiligne])>&]:align-top',
                     // Largeur figee : ce qui depasse est coupe, pas etale sur la colonne suivante.
                     fixedLayout && 'overflow-hidden',
                     isChild && !isLastChild && 'border-b-[#eef2f6]',
