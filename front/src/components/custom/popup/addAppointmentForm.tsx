@@ -374,12 +374,17 @@ function SlotThematicTypeFields({
           ...thematicOptions,
         ]
       : thematicOptions
+  // La thématique du créneau garde sa durée, contrairement aux sous-thématiques (MDS-77).
+  const labelled = options.map((o) => ({
+    ...o,
+    label: thematicLabelByID(thematics, String(o.value)) ?? o.label,
+  }))
   return (
     <>
       <FormField>
         <Label>Thématique</Label>
         <Select
-          options={options}
+          options={labelled}
           placeholder="Aucune thématique"
           value={thematicId}
           onValueChange={onThematicChange}
