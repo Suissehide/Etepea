@@ -7,6 +7,7 @@ import {
   INTERNAL_HELP,
   NO_THEMATIC_ROLE,
   PDF_NOTICE_HELP,
+  THEMATIC_ROLE_HELP,
   THEMATIC_ROLE_OPTIONS,
   type ThematicRole,
 } from '../../../constants/thematic.constant.ts'
@@ -131,6 +132,11 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
                 <field.Select
                   options={THEMATIC_ROLE_OPTIONS}
                   label="Rôle dans les indicateurs"
+                  hint={THEMATIC_ROLE_HELP.map((t) => (
+                    <p key={t} className="py-0.5">
+                      {t}
+                    </p>
+                  ))}
                   clearable={false}
                 />
               )}

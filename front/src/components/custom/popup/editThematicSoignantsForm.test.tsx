@@ -96,6 +96,21 @@ afterEach(() => {
 })
 
 describe('EditThematicSoignantsForm — rôle dans les indicateurs', () => {
+  it("le survol de l'icône d'aide explique les rôles", async () => {
+    renderForm(buildFetchMock([routePatch]))
+    await ouvrir()
+
+    await userEvent.hover(
+      await screen.findByRole('button', {
+        name: 'Aide : Rôle dans les indicateurs',
+      }),
+    )
+
+    expect(
+      await screen.findByRole('tooltip', { name: /Réactualisation/ }),
+    ).toBeInTheDocument()
+  })
+
   it('choisir « Bilan de fin » envoie un PATCH avec uniquement ce champ modifié', async () => {
     const fetchMock = buildFetchMock([routePatch])
     renderForm(fetchMock)
