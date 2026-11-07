@@ -218,5 +218,3 @@ function ServicesAdmin() {
     </DashboardLayout>
   )
 }
-
-export default ServicesAdmin

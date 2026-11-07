@@ -108,7 +108,7 @@ function InviteServiceMemberForm() {
                     ? buildAccessLinkUrl(invited.accessLink.token)
                     : null
                 }
-                existingAccountMessage="Elle avait déjà un compte MediSync : elle accède au service avec son mot de passe habituel."
+                existingAccountMessage="Elle avait déjà un compte Etepea : elle accède au service avec son mot de passe habituel."
               />
             </PopupBody>
             <PopupFooter>
@@ -146,9 +146,9 @@ function InviteServiceMemberForm() {
                 </form.AppField>
 
                 <p className="text-xs text-text-light">
-                  Si cette adresse a déjà un compte MediSync, elle est
-                  simplement affectée à ce service. Sinon, un compte est créé et
-                  un lien de première connexion s'affiche ici.
+                  Si cette adresse a déjà un compte Etepea, elle est simplement
+                  affectée à ce service. Sinon, un compte est créé et un lien de
+                  première connexion s'affiche ici.
                 </p>
 
                 {/* Prénom et nom ne servent qu'au compte CRÉÉ : un compte existant garde

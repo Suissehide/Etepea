@@ -1,4 +1,4 @@
-name: medisync
+name: etepea
 
 networks:
   # Réseau externe partagé avec Traefik : réservé aux services exposés (back/front).
@@ -7,8 +7,8 @@ networks:
     external: true
   # Réseau privé back <-> postgres. internal: true => aucune connectivité vers
   # l'extérieur ni depuis les autres stacks docker.
-  medisync-internal:
-    name: medisync-internal
+  etepea-internal:
+    name: etepea-internal
     internal: true
 
 services:
@@ -71,7 +71,7 @@ services:
       - "traefik.http.services.${APP_IMAGE_NAME}-back.loadbalancer.server.port=${PORT}"
     networks:
       - proxy
-      - medisync-internal
+      - etepea-internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -85,6 +85,7 @@ services:
         # Le front n'utilise pas DATABASE_URL : arg retiré pour ne pas fuiter le
         # mot de passe DB dans les layers de l'image.
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
         NODE_VERSION: ${NODE_VERSION}
         NPM_VERSION: ${NPM_VERSION}
     image: "${CONTAINER_REGISTRY_PREFIX}${APP_IMAGE_NAME}-front:${VERSION:-latest}"
@@ -130,7 +131,7 @@ services:
       start_period: 30s
     # Uniquement sur le réseau privé : plus joignable depuis le réseau proxy partagé.
     networks:
-      - medisync-internal
+      - etepea-internal
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -165,7 +166,7 @@ services:
     volumes:
       - postgres-backups:/backups
     networks:
-      - medisync-internal
+      - etepea-internal
     logging:
       driver: "json-file"
       options:

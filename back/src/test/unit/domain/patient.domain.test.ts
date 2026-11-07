@@ -125,11 +125,12 @@ const buildDomain = (
       findByID: jest.fn(async () => patientWithAppointments()),
     },
     pathwayRepository: {
-      findByTemplateTagAndDate: jest.fn(async (tag: string) =>
-        tag === 'GROUPE' ? [groupPathway] : [],
-      ),
-      findByTemplateTagWithFutureSlots: jest.fn(async (tag: string) =>
-        tag === 'INDIV' ? [individualPathway] : [],
+      findByTemplateTagWithFutureSlots: jest.fn(
+        async (tag: string) =>
+          ({
+            GROUPE: [groupPathway],
+            INDIV: [individualPathway],
+          })[tag] ?? [],
       ),
     },
     pathwayTemplateRepository: {
@@ -699,5 +700,52 @@ describe('PatientDomain – parcours prérequis', () => {
     expect(created).toHaveLength(1)
     expect(result.failedEnrollments).toHaveLength(1)
     expect(result.failedEnrollments[0]?.reason).toMatch(/prérequis/)
+  })
+})
+
+// MDS-67 : Pathway.startDate est la date théorique du cycle, ses séances peuvent tomber bien après.
+describe('PatientDomain – date « au plus tôt » en mode cycle', () => {
+  const day = (month: number, date: number) =>
+    new Date(2026, month - 1, date, 10, 0, 0, 0)
+  const cycle = (id: string, start: Date, slotDays: Date[]) =>
+    buildPathway(
+      id,
+      start,
+      slotDays.map((d, i) =>
+        buildSlot(
+          `${id}-${i}`,
+          d,
+          new Date(d.getTime() + 3_600_000),
+          false,
+          {},
+        ),
+      ),
+    )
+
+  it('compare la date aux séances et écarte un cycle déjà commencé', async () => {
+    const { domain, created, container } = buildDomain()
+    container.pathwayRepository.findByTemplateTagWithFutureSlots.mockResolvedValue(
+      [
+        cycle('pw-dec', day(11, 2), [day(12, 3)]),
+        cycle('pw-started', day(11, 16), [day(11, 18), day(11, 30)]),
+        cycle('pw-jan', day(1, 4), [new Date(2027, 0, 28, 10)]),
+      ],
+    )
+
+    const [preview] = await domain.previewEnrollments([
+      { tag: 'GROUPE', timeOfDay: 'ALL_DAY', startDate: day(11, 23) },
+    ])
+    expect(preview?.startDate).toEqual(day(12, 3))
+
+    const result = await domain.enrollExistingPatientInPathways(
+      {
+        patientID: 'patient-1',
+        startDate: day(11, 23),
+        pathways: [{ tag: 'GROUPE', timeOfDay: 'ALL_DAY', duration: 30 }],
+      },
+      'user-1',
+    )
+    expect(result.failedEnrollments).toEqual([])
+    expect(created.map((a) => a.slotID)).toEqual(['pw-dec-0'])
   })
 })

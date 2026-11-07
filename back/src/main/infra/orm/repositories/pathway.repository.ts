@@ -349,35 +349,6 @@ class PathwayRepository implements PathwayRepositoryInterface {
     }
   }
 
-  async findByTemplateTagAndDate(
-    tag: string,
-    startDate: Date,
-  ): Promise<PathwayWithSlotsRepo[]> {
-    const startOfDay = new Date(startDate)
-    startOfDay.setHours(0, 0, 0, 0)
-    try {
-      const rows = await this.prisma.pathway.findMany({
-        where: {
-          ...this.scope,
-          startDate: { gte: startOfDay },
-          template: {
-            mainTag: tag,
-          },
-        },
-        orderBy: {
-          startDate: 'asc',
-        },
-        include: slotsWithTemplateInclude,
-      })
-      return rows.map(flattenSlots)
-    } catch (err) {
-      throw this.errorHandler.boomErrorFromPrismaError({
-        entityName: 'Pathway',
-        error: err,
-      })
-    }
-  }
-
   async findByTemplateTagWithFutureSlots(
     tag: string,
     date: Date,

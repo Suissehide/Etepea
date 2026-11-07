@@ -6,14 +6,14 @@ import { Client, types } from 'pg'
 // `timestamp` sans fuseau : on force la lecture en UTC, pas l'heure locale de la machine qui lance le test.
 types.setTypeParser(1114, (val) => new Date(`${val.replace(' ', 'T')}Z`))
 
-// Joue la VRAIE migration `taches_notifications` sur des bases Postgres jetables (jamais medisync/medisync_test) ; verifie Todo -> Task, tagues/auteur, et la disparition de Todo.
+// Joue la VRAIE migration `taches_notifications` sur des bases Postgres jetables (jamais etepea/etepea_test) ; verifie Todo -> Task, tagues/auteur, et la disparition de Todo.
 
 jest.setTimeout(180_000)
 
 const BACK_ROOT = join(__dirname, '../../../..')
 const MIGRATIONS_DIR = join(BACK_ROOT, 'prisma/migrations')
 const TARGET_MIGRATION = '20261019100000_taches_notifications'
-const PREFIX = 'medisync_migr_taches'
+const PREFIX = 'etepea_migr_taches'
 
 type PgConn = { host: string; port: number; user: string; password: string }
 

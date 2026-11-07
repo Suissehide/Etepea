@@ -186,25 +186,29 @@ export const enrollPatientInPathwaysSchema = z.object({
   patientData: patientSchema.strict(),
   startDate: z.coerce.date().optional(),
   pathways: z.array(pathwayEnrollmentSchema).min(1),
+  // Les rendez-vous des optionnels doivent finir avant la fin du parcours principal.
+  optionalsWithinPrincipal: z.boolean().optional(),
 })
 
 export const enrollExistingPatientInPathwaysSchema = z.object({
   patientID: cuid(),
   startDate: z.coerce.date().optional(),
   pathways: z.array(pathwayEnrollmentSchema).optional().default([]),
+  optionalsWithinPrincipal: z.boolean().optional(),
 })
 
 export const enrollmentPreviewSchema = z.object({
   patientID: cuid().optional(),
-  pathways: z.array(
-    pathwayEnrollmentSchema.extend({ startDate: z.coerce.date() }),
-  ),
+  pathways: z.array(pathwayEnrollmentSchema),
+  optionalsWithinPrincipal: z.boolean().optional(),
 })
 
 export const enrollmentPreviewResponseSchema = z.array(
   z.object({
     tag: z.string(),
     startDate: z.date().nullable(),
+    // Date « au plus tôt » retenue, saisie ou automatique.
+    from: z.date(),
     reason: z.string().optional(),
   }),
 )

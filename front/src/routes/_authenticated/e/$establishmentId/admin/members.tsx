@@ -166,5 +166,3 @@ function MemberSettings() {
     </DashboardLayout>
   )
 }
-
-export default MemberSettings

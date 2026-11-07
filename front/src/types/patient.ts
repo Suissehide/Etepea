@@ -111,22 +111,26 @@ export type PathwayEnrollment = {
   thematicID?: string
   motif?: string
   duration?: number
-  startDate: string
+  // Absente : date automatique (aujourd'hui, ou début du principal pour un optionnel).
+  startDate?: string
 }
 
 export type EnrollPatientParams = {
   patientData: CreatePatientParams
   pathways: PathwayEnrollment[]
+  optionalsWithinPrincipal?: boolean
 }
 
 export type EnrollExistingPatientParams = {
   patientID: string
   pathways: PathwayEnrollment[]
+  optionalsWithinPrincipal?: boolean
 }
 
 export type EnrollmentPreview = {
   tag: string
   startDate: string | null
+  from: string
   reason?: string
 }
 

@@ -180,6 +180,8 @@ model PathwayTemplate {
   firstAppointmentOnly Boolean  @default(false)
   // Parcours à terminer avant celui-ci (ids de PathwayTemplate du même service).
   prerequisiteIDs      String[] @default([])
+  // Parcours optionnel : part au plus tôt au début du premier parcours principal (MDS-68).
+  optional             Boolean  @default(false)
 
   pathways      Pathway[]
   slotTemplates SlotTemplate[]

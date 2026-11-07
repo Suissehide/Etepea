@@ -36,16 +36,22 @@ const template = (mainTag: string, extra = {}) => ({
 
 const TEMPLATES = [
   template('RI'),
-  template('STRESS'),
+  template('STRESS', { optional: true }),
   template('PSY', { motifRequired: true, firstAppointmentOnly: true }),
 ]
 
-const PREVIEWS: Record<string, { startDate: string | null; reason?: string }> =
-  {
-    RI: { startDate: '2026-12-07T09:00:00.000Z' },
-    STRESS: { startDate: null, reason: 'Aucune session disponible' },
-    PSY: { startDate: '2026-10-14T09:00:00.000Z' },
-  }
+const PREVIEWS: Record<
+  string,
+  { startDate: string | null; from: string; reason?: string }
+> = {
+  RI: { startDate: '2026-12-07T09:00:00.000Z', from: '2026-11-06' },
+  STRESS: {
+    startDate: null,
+    from: '2026-12-07T09:00:00.000Z',
+    reason: 'Aucune session disponible',
+  },
+  PSY: { startDate: '2026-10-14T09:00:00.000Z', from: '2026-11-06' },
+}
 
 const json = (body: unknown) => ({
   ok: true,
@@ -54,6 +60,8 @@ const json = (body: unknown) => ({
 })
 
 let enrolled: PathwayEnrollment[] | null = null
+let enrolledWithin: boolean | undefined
+let previewWithin: boolean | undefined
 
 const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   const url = input.toString()
@@ -66,6 +74,7 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     return { ...json([]), url }
   }
   if (path.endsWith('/patient/enroll/preview')) {
+    previewWithin = body.optionalsWithinPrincipal
     return {
       ...json(
         body.pathways.map((p: PathwayEnrollment) => ({
@@ -78,6 +87,7 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   }
   if (path.endsWith('/patient/p1/enroll')) {
     enrolled = body.pathways
+    enrolledWithin = body.optionalsWithinPrincipal
     return {
       ...json({ patient: {}, enrollments: [], failedEnrollments: [] }),
       url,
@@ -105,22 +115,26 @@ const renderForm = async () => {
   await screen.findByText('Bernadet Sabrina')
 }
 
-const addPathway = async (tag: string) => {
+const addPathway = async (tag: string, kind = 'principal') => {
   await userEvent.click(
-    screen.getByRole('button', { name: /Ajouter un parcours…/ }),
+    screen.getByRole('button', {
+      name: new RegExp(`Ajouter un parcours ${kind}…`),
+    }),
   )
   await userEvent.click(
     await screen.findByRole('button', { name: new RegExp(`^${tag}`) }),
   )
 }
 
-const rows = () =>
-  within(screen.getByRole('list'))
+const rows = (list = 0) =>
+  within(screen.getAllByRole('list')[list])
     .getAllByRole('listitem')
     .map((li) => li.textContent ?? '')
 
 beforeEach(() => {
   enrolled = null
+  enrolledWithin = undefined
+  previewWithin = undefined
   useAuthStore.setState({ context })
   useToastStore.setState({ toasts: [] })
   vi.stubGlobal('fetch', fetchMock)
@@ -138,14 +152,14 @@ describe('AddPatientToPathwayForm', () => {
     expect(rows()).toHaveLength(1)
     expect(rows()[0]).toContain('RI')
     await userEvent.click(
-      screen.getByRole('button', { name: /Ajouter un parcours…/ }),
+      screen.getByRole('button', { name: /Ajouter un parcours principal…/ }),
     )
     expect(
       screen.queryByRole('button', { name: /^RI/ }),
     ).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^STRESS/ })).toHaveTextContent(
-      'Collectif',
-    )
+    expect(
+      screen.queryByRole('button', { name: /^STRESS/ }),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^PSY/ })).toHaveTextContent(
       'Individuel',
     )
@@ -154,7 +168,7 @@ describe('AddPatientToPathwayForm', () => {
   it('affiche le départ ou le blocage de chaque parcours et n inscrit que les planifiables', async () => {
     await renderForm()
     await addPathway('RI')
-    await addPathway('STRESS')
+    await addPathway('STRESS', 'optionnel')
 
     expect(await screen.findByText('Départ le 07/12/2026')).toBeInTheDocument()
     expect(screen.getByText('Aucune date')).toBeInTheDocument()
@@ -200,5 +214,41 @@ describe('AddPatientToPathwayForm', () => {
 
     await userEvent.type(screen.getByLabelText(/Motif/), 'Anxiété')
     expect(submit).toBeEnabled()
+  })
+
+  it("range l'optionnel dans sa liste, le date au début du principal et laisse le back fixer sa date", async () => {
+    await renderForm()
+    await addPathway('STRESS', 'optionnel')
+    await addPathway('RI')
+
+    expect(rows(0)[0]).toContain('RI')
+    expect(rows(1)[0]).toContain('STRESS')
+    await screen.findByText('Départ le 07/12/2026')
+    // Le sélecteur de date MUI rend la date en sections, sans valeur d'input.
+    await waitFor(() => expect(rows(1)[0]).toMatch(/(07\/12|12\/07)\/2026/))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Inscrire à 1 parcours' }),
+    )
+    await waitFor(() => expect(enrolled?.[0]).toMatchObject({ tag: 'RI' }))
+    expect(enrolled?.[0].startDate).toBeUndefined()
+  })
+
+  it("l'interrupteur des optionnels part avec l'aperçu et l'inscription", async () => {
+    await renderForm()
+    await addPathway('RI')
+    await addPathway('STRESS', 'optionnel')
+    await screen.findByText('Départ le 07/12/2026')
+    expect(previewWithin).toBe(false)
+
+    await userEvent.click(
+      screen.getByRole('switch', {
+        name: 'Rendez-vous compris dans la durée du parcours principal',
+      }),
+    )
+    await waitFor(() => expect(previewWithin).toBe(true))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Inscrire à 1 parcours' }),
+    )
+    await waitFor(() => expect(enrolledWithin).toBe(true))
   })
 })

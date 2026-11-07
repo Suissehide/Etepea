@@ -13,6 +13,8 @@ WORKDIR /usr/src/app
 
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ARG VITE_ENVIRONMENT
+ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
 
 COPY ../package.json package-lock.json ./
 COPY ../deploy/conf/nginx.conf ./

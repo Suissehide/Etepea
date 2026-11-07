@@ -1,32 +1,32 @@
-import { DateCalendar } from '@mui/x-date-pickers'
 import { createFileRoute } from '@tanstack/react-router'
 import dayjs, { type Dayjs } from 'dayjs'
-import { CalendarDays } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { getDayAppointmentColumns } from '@/columns/dayAppointment.column.tsx'
-import { DATE_CALENDAR_SX } from '@/components/custom/Calendar/calendarDatePickerButton.tsx'
+import {
+  BarreCalendrier,
+  type ControleurBarre,
+} from '@/components/custom/Calendar/barreCalendrier.tsx'
+import CalendarDatePickerButton from '@/components/custom/Calendar/calendarDatePickerButton.tsx'
 import AddAppointmentForm from '@/components/custom/popup/addAppointmentForm.tsx'
 import AddPatientForm from '@/components/custom/popup/addPatientForm.tsx'
 import AddPatientToAppointmentForm from '@/components/custom/popup/addPatientToAppointmentForm.tsx'
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import AppointmentSheet from '@/components/custom/sheet/appointmentSheet.tsx'
+import ToggleVerrouilles, {
+  useAfficherVerrouilles,
+} from '@/components/custom/toggleVerrouilles.tsx'
 import WeekDayStrip from '@/components/custom/weekDayStrip.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { Etiquette } from '@/components/table/etiquette.tsx'
 import ReactTable from '@/components/table/reactTable.tsx'
-import { Button } from '@/components/ui/button.tsx'
-import {
-  PopoverContent,
-  PopoverRoot,
-  PopoverTrigger,
-} from '@/components/ui/popover.tsx'
 import { styleSoignant } from '@/libs/color.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import { getFreeIntervals } from '@/libs/slotAvailability.ts'
 import { buildDaySlotRows, type DaySlotRow } from '@/libs/utils.ts'
 import { useAppointmentMutations } from '@/queries/useAppointment.ts'
+import { usePlanningCycleQueries } from '@/queries/usePlanningCycle.ts'
 import {
   useSlotConflictsQuery,
   useSlotsInRangeQuery,
@@ -34,6 +34,7 @@ import {
 import { useSoignantStore } from '@/store/useSoignantStore.ts'
 import type { Slot } from '@/types/slot.ts'
 import type { Soignant } from '@/types/soignant.ts'
+import { libelleSemaineDu, plageSemaine } from '@/utils/weekCycle.ts'
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/agenda',
@@ -113,6 +114,29 @@ function Agenda() {
   }, [date, handleDayChange])
 
   const today = dayjs.utc().startOf('day')
+  const { planningCycle } = usePlanningCycleQueries()
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
+
+  // La barre des autres calendriers. Les flèches avancent d'une semaine (même jour de la
+  // semaine) : la bande des jours, sous la barre, sert à changer de jour.
+  const controleur: ControleurBarre = {
+    prev: () => handleDayChange(selectedDay.subtract(1, 'week')),
+    next: () => handleDayChange(selectedDay.add(1, 'week')),
+    today: () => handleDayChange(today),
+    view: {
+      type: 'timeGridDay',
+      title: `${libelleSemaineDu(selectedDay, planningCycle)} · ${plageSemaine(selectedDay)}`,
+    },
+    getButtonState: () => ({
+      prev: { text: '', hint: 'Semaine précédente', isDisabled: false },
+      next: { text: '', hint: 'Semaine suivante', isDisabled: false },
+      today: {
+        text: "Aujourd'hui",
+        hint: "Aujourd'hui",
+        isDisabled: selectedDay.isSame(today, 'day'),
+      },
+    }),
+  }
 
   // `to` exclusive : le lendemain, sinon la journée serait amputée.
   const dayRange = useMemo(
@@ -136,9 +160,14 @@ function Agenda() {
   const soignants = useSoignantStore((state) => state.soignants)
   const soignantIDs = useMemo(() => soignants.map((s) => s.id), [soignants])
 
+  const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
   const rows = useMemo(
-    () => buildDaySlotRows(slots, selectedDay),
-    [slots, selectedDay],
+    () =>
+      buildDaySlotRows(
+        afficherVerrouilles ? slots : slots?.filter((slot) => !slot.locked),
+        selectedDay,
+      ),
+    [slots, selectedDay, afficherVerrouilles],
   )
 
   // Un tableau par soignant (un créneau partagé apparaît dans chacun), limité
@@ -198,60 +227,32 @@ function Agenda() {
       ]}
     >
       <div className="flex-1 min-h-0 bg-background p-6 rounded-lg flex flex-col w-full gap-4">
-        <div className="min-h-9 flex justify-between items-center gap-3 flex-wrap">
-          <div className="self-start min-h-9 flex gap-2 items-center">
-            <div className="flex items-center justify-center bg-foreground p-2 rounded-full">
-              <CalendarDays className="h-4 w-4 text-white" />
-            </div>
-            <h1 className="text-text-dark text-xl font-semibold">
-              {selectedDay
-                .format('dddd D MMMM YYYY')
-                .replace(/^./, (c) => c.toUpperCase())}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleDayChange(today)}
-              className={
-                selectedDay.isSame(today, 'day')
-                  ? 'invisible pointer-events-none'
-                  : undefined
-              }
-            >
-              Aujourd&apos;hui
-            </Button>
-
-            <PopoverRoot>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Choisir une date"
-                >
-                  <CalendarDays className="w-4 h-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="p-0 w-auto">
-                <DateCalendar
-                  sx={DATE_CALENDAR_SX}
-                  value={selectedDay}
-                  onChange={(newDate) => {
-                    if (newDate) {
-                      handleDayChange(
-                        dayjs.utc(newDate.format('YYYY-MM-DD')).startOf('day'),
-                      )
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </PopoverRoot>
-
-            <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
-          </div>
+        <BarreCalendrier
+          controller={controleur}
+          onChoisirDate={setAnchorEl}
+          className="px-0 pb-0 flex-wrap"
+          filtres={<ToggleVerrouilles />}
+        />
+        <div className="-mx-6 border-y border-border bg-surface-douce px-6 py-2.5">
+          <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
         </div>
+        <CalendarDatePickerButton
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+          value={anchorEl ? selectedDay : undefined}
+          cycle={planningCycle}
+          semainesInterdites={planningCycle?.forbiddenWeekStarts ?? []}
+          onChange={(date) => {
+            if (date) {
+              handleDayChange(dayjs.utc(date.format('YYYY-MM-DD')))
+            }
+            setAnchorEl(null)
+          }}
+        />
+
+        <h2 className="text-base font-semibold text-text-dark first-letter:uppercase">
+          {selectedDay.format('dddd D MMMM')}
+        </h2>
 
         {isPending || groups.length === 0 ? (
           <ReactTable<DaySlotRow>

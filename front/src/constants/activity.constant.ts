@@ -69,6 +69,6 @@ export const ACTIVITY_DEFINITIONS = [
   {
     label: 'Délai adressage → entrée',
     definition:
-      "Non calculé : MediSync n'enregistre ni liste d'attente ni date d'adressage.",
+      "Non calculé : Etepea n'enregistre ni liste d'attente ni date d'adressage.",
   },
 ]

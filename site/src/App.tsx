@@ -45,8 +45,8 @@ function Nav({ t, lang }: { t: Copy; lang: Lang }) {
           href={`/${lang}/`}
           className="mr-auto flex items-center gap-2 font-semibold tracking-tight"
         >
-          <span className="inline-block size-3 rounded-full border-[3px] border-brand-light" />
-          Etepea
+          <LogoMark />
+          etepe<span className="text-brand-light">a</span>
         </a>
         <div className="hidden items-center md:flex">
           {t.nav.links.map(([label, href]) => (
@@ -74,6 +74,44 @@ function Nav({ t, lang }: { t: Copy; lang: Lang }) {
         </a>
       </nav>
     </header>
+  );
+}
+
+const FAINT = [
+  [0, 0],
+  [17, 0],
+  [0, 17],
+  [34, 17],
+  [17, 34],
+  [34, 34],
+];
+
+function LogoMark() {
+  return (
+    <svg viewBox="0 0 47 47" aria-hidden="true" className="size-4 shrink-0">
+      {FAINT.map(([x, y]) => (
+        <rect
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width="13"
+          height="13"
+          rx="3"
+          fill="currentColor"
+          opacity="0.22"
+        />
+      ))}
+      <rect x="0" y="34" width="13" height="13" rx="3" fill="currentColor" />
+      <rect x="17" y="17" width="13" height="13" rx="3" fill="currentColor" />
+      <rect
+        x="34"
+        y="0"
+        width="13"
+        height="13"
+        rx="3"
+        className="fill-brand-light"
+      />
+    </svg>
   );
 }
 
@@ -190,19 +228,32 @@ function Platform({ t }: { t: Copy }) {
           {t.inline.after}
         </h2>
         <p className="mt-6 text-lg text-ink/60">{t.bento.title}</p>
-        <div className="mt-16 grid grid-flow-dense auto-rows-[18rem] grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-16 grid grid-flow-dense auto-rows-[24rem] grid-cols-1 gap-4 md:grid-cols-3">
           <BentoCard
             className="md:col-span-2 md:row-span-2"
             src={IMAGES.planning}
+            focus="62% 40%"
             {...c.planning}
             large
           />
-          <BentoCard src={IMAGES.agenda} {...c.agenda} />
-          <BentoCard src={IMAGES.suivi} {...c.suivi} />
+          <BentoCard
+            src={IMAGES.agenda}
+            focus="70% 25%"
+            zoom={1.9}
+            {...c.agenda}
+          />
+          <BentoCard
+            src={IMAGES.suivi}
+            focus="35% 30%"
+            zoom={1.9}
+            {...c.suivi}
+          />
           <BentoCard
             className="md:col-span-3"
             src={IMAGES.diagnostic}
+            focus="60% 30%"
             {...c.diagnostic}
+            wide
           />
         </div>
       </div>
@@ -223,37 +274,54 @@ function BentoCard({
   title,
   text,
   src,
+  focus,
+  zoom = 1,
   className = "",
   large = false,
+  wide = false,
 }: {
   title: string;
   text: string;
   src: string;
+  focus: string;
+  zoom?: number;
   className?: string;
   large?: boolean;
+  wide?: boolean;
 }) {
   return (
     <article
-      className={`group relative overflow-hidden rounded-3xl bg-ink text-white ${className}`}
+      className={`group flex overflow-hidden rounded-3xl bg-ink text-white ${wide ? "flex-col md:flex-row" : "flex-col"} ${className}`}
     >
-      <img
-        src={src}
-        alt=""
-        loading="lazy"
-        className={`absolute inset-0 size-full object-cover ${photo} transition-transform duration-700 ease-out group-hover:scale-105`}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/10" />
-      <div className="relative flex h-full flex-col justify-end p-7 md:p-9">
+      <div
+        className={`shrink-0 p-7 md:p-9 ${wide ? "md:w-2/5 md:self-center" : ""}`}
+      >
         <h3
           className={`font-medium tracking-tight ${large ? "text-3xl md:text-4xl" : "text-2xl"}`}
         >
           {title}
         </h3>
         <p
-          className={`mt-3 text-white/70 ${large ? "max-w-lg text-lg" : "max-w-md"}`}
+          className={`mt-3 text-white/65 ${large ? "max-w-lg text-lg" : "max-w-md"}`}
         >
           {text}
         </p>
+      </div>
+      <div
+        className={`relative min-h-0 flex-1 overflow-hidden rounded-tl-2xl border-t border-l border-white/10 bg-paper shadow-2xl ${wide ? "ml-7 md:mt-9 md:ml-0" : "ml-7 md:ml-9"}`}
+      >
+        <div
+          className="absolute inset-0"
+          style={{ transform: `scale(${zoom})`, transformOrigin: focus }}
+        >
+          <img
+            src={src}
+            alt=""
+            loading="lazy"
+            style={{ objectPosition: focus }}
+            className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+        </div>
       </div>
     </article>
   );
@@ -495,7 +563,10 @@ function Footer({ t }: { t: Copy }) {
     <footer className="border-t border-white/10 px-4 py-12">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 text-sm text-white/60 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-base font-semibold text-white">Etepea</p>
+          <p className="flex items-center gap-2 text-base font-semibold text-white">
+            <LogoMark />
+            etepe<span className="text-brand-light">a</span>
+          </p>
           <p className="mt-1">{t.footer.tagline}</p>
         </div>
         <div className="flex flex-wrap gap-6">

@@ -7,6 +7,7 @@ import {
   intituleDestination,
   useOuvrirDestination,
 } from '@/components/custom/destinations.tsx'
+import { Logo } from '@/components/custom/logo'
 import { useLogout } from '@/queries/useAuth.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import type { Destination } from '@/utils/tenant-context.ts'
@@ -55,7 +56,7 @@ function ChooseContext() {
   return (
     <div className="min-h-screen w-full bg-background px-4 py-6 sm:px-8">
       <p className="text-2xl font-bold">
-        <span className="text-primary">Medi</span>Sync
+        <Logo />
       </p>
 
       <main className="mx-auto mt-10 grid max-w-5xl gap-10 md:mt-24 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16">

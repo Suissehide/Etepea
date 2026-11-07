@@ -515,8 +515,8 @@ Key cross-cutting concerns:
   (`locationID`, `thematicId`, `templateID`…) have no composite FK: domains verify the target via its repository.
 - **E2E tests** (`src/test/e2e/`): shared fixtures and app/db harness live in `src/test/e2e/setup/` (`buildTestApp`,
   `testDb`, `truncateAll`, membership/user factories). `setup/db.ts` refuses to run against any database whose name
-  isn't exactly `medisync_test`, so a misconfigured `.env.test` can't truncate the wrong database. Run against
-  `medisync_test` (`.env.test`, `.env.test.local` for a machine-specific override) via `npm run test:e2e`; the
+  isn't exactly `etepea_test`, so a misconfigured `.env.test` can't truncate the wrong database. Run against
+  `etepea_test` (`.env.test`, `.env.test.local` for a machine-specific override) via `npm run test:e2e`; the
   pre-commit hook runs unit tests only.
 - **Le budget d'un test e2e est de 30 s, pas les 5 s par defaut de Jest**, et il est pose par
   `jest.setTimeout` dans `src/test/e2e/setup/budget.ts` (charge par `setupFilesAfterEnv` du seul projet
@@ -557,7 +557,7 @@ Key cross-cutting concerns:
 - La grille ARS est `ARS_PRESET` (`utils/indicators/ars-preset.ts`). Deux tests distincts, à ne pas confondre : `measures.test.ts` compare `MEASURES` à l'oracle `ars-oracle.ts` (`src/test/unit/utils/indicators/ars-oracle.ts`, qui réimplémente l'ancienne grille) ; `ars-grid.test.ts` rejoue `ARS_PRESET` à travers le moteur (`computeIndicator`) contre des attentes écrites à la main, indicateur par indicateur.
 - Les réglages de l'Activité (motifs d'arrêt) sont sur `Service` : `stopReasonFieldKey`/`completedChoiceKey`, jamais codés en dur (`utils/activity-indicators.ts`).
 - L'export Excel d'un jeu s'appelle `indicateurs_{from}_{to}.xlsx` (en-tête `Content-Disposition` du back) avec une feuille nommée d'après le jeu (« Grille ARS ») ; le front renomme le fichier téléchargé avec un slug du nom du jeu, ne pas s'étonner que les deux noms diffèrent.
-- `setup/db.ts` accepte `medisync_test` **ou** `medisync_test_<suffixe>` (un worktree par suffixe), jamais un autre nom.
+- `setup/db.ts` accepte `etepea_test` **ou** `etepea_test_<suffixe>` (un worktree par suffixe), jamais un autre nom.
 
 ## Adding a new entity
 

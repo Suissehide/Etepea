@@ -12,7 +12,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import type React from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 
 import { PatientApi } from '../../api/patient.api.ts'
 import { PATIENT } from '../../constants/process.constant.ts'
@@ -30,6 +30,7 @@ import { FormField } from '../ui/formField.tsx'
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
 import { Select } from '../ui/select.tsx'
+import { Switch } from '../ui/switch.tsx'
 
 const DURATION_OPTIONS = SLOT_DURATIONS.map((d) => ({
   value: String(d),
@@ -59,7 +60,9 @@ export interface AddedPathway {
   thematicDuration: number | null
   motif: string
   motifRequired: boolean
-  startDate: string
+  optional: boolean
+  // null : date automatique, calculée par l'aperçu.
+  startDate: string | null
 }
 
 export function usePathwaySelector(patientID?: string) {
@@ -70,6 +73,7 @@ export function usePathwaySelector(patientID?: string) {
     null,
   )
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [withinPrincipal, setWithinPrincipal] = useState(false)
 
   const templateOf = useCallback(
     (tag: string) => (pathwayTemplates ?? []).find((t) => t.mainTag === tag),
@@ -90,6 +94,7 @@ export function usePathwaySelector(patientID?: string) {
         label: tag,
         color: template?.color,
         hint: template?.firstAppointmentOnly ? 'Individuel' : 'Collectif',
+        optional: template?.optional ?? false,
       }
     })
 
@@ -105,10 +110,16 @@ export function usePathwaySelector(patientID?: string) {
         thematicDuration: null,
         motif: '',
         motifRequired: template?.motifRequired ?? false,
-        startDate: dayjs.utc().startOf('day').toISOString(),
+        optional: template?.optional ?? false,
+        startDate: null,
       }
     })
-    setAddedPathways((prev) => [...prev, ...newPathways])
+    // Les principaux restent en tête, les optionnels partent de leur début.
+    setAddedPathways((prev) =>
+      [...prev, ...newPathways].sort(
+        (a, b) => Number(a.optional) - Number(b.optional),
+      ),
+    )
   }
 
   const enrollments: PathwayEnrollment[] = addedPathways.map((p) => ({
@@ -117,14 +128,20 @@ export function usePathwaySelector(patientID?: string) {
     thematicID: p.thematicID || undefined,
     motif: p.motif || undefined,
     duration: p.thematicDuration ?? undefined,
-    startDate: p.startDate,
+    startDate: p.startDate ?? undefined,
   }))
 
   // Sans le motif, qui n'influe pas sur le parcours retenu : le saisir ne relance pas l'aperçu.
   const previewInput = enrollments.map(({ motif, ...rest }) => rest)
   const { data } = useQuery({
-    queryKey: [PATIENT.ENROLL_PREVIEW, patientID, previewInput],
-    queryFn: () => PatientApi.previewEnrollments(previewInput, patientID),
+    queryKey: [
+      PATIENT.ENROLL_PREVIEW,
+      patientID,
+      previewInput,
+      withinPrincipal,
+    ],
+    queryFn: () =>
+      PatientApi.previewEnrollments(previewInput, patientID, withinPrincipal),
     enabled: previewInput.length > 0,
     placeholderData: keepPreviousData,
   })
@@ -154,7 +171,11 @@ export function usePathwaySelector(patientID?: string) {
   const movePathway = (index: number, delta: number) => {
     setAddedPathways((prev) => {
       const target = index + delta
-      if (target < 0 || target >= prev.length) {
+      if (
+        target < 0 ||
+        target >= prev.length ||
+        prev[target].optional !== prev[index].optional
+      ) {
         return prev
       }
       const next = [...prev]
@@ -168,7 +189,11 @@ export function usePathwaySelector(patientID?: string) {
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
-    if (draggedIndex === null || draggedIndex === index) {
+    if (
+      draggedIndex === null ||
+      draggedIndex === index ||
+      addedPathways[draggedIndex].optional !== addedPathways[index].optional
+    ) {
       return
     }
     movePathway(draggedIndex, index - draggedIndex)
@@ -181,6 +206,7 @@ export function usePathwaySelector(patientID?: string) {
     setAddedPathways([])
     setExpandedPathwayId(null)
     setDraggedIndex(null)
+    setWithinPrincipal(false)
   }, [])
 
   return {
@@ -196,6 +222,8 @@ export function usePathwaySelector(patientID?: string) {
     addedPathways,
     expandedPathwayId,
     draggedIndex,
+    withinPrincipal,
+    setWithinPrincipal,
     handleAddTags,
     toggleExpand,
     updatePathway,
@@ -358,7 +386,9 @@ function PathwayItem({
             open={datePickerOpen}
             onOpen={() => setDatePickerOpen(true)}
             onClose={() => setDatePickerOpen(false)}
-            value={dayjs.utc(pathway.startDate)}
+            value={dayjs.utc(
+              pathway.startDate ?? preview?.from ?? dayjs.utc().startOf('day'),
+            )}
             onChange={(date) => {
               if (date?.isValid()) {
                 onUpdate({ startDate: date.toISOString() })
@@ -497,6 +527,8 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
     previews,
     expandedPathwayId,
     draggedIndex,
+    withinPrincipal,
+    setWithinPrincipal,
     handleAddTags,
     toggleExpand,
     updatePathway,
@@ -506,58 +538,95 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
     handleDragOver,
     handleDragEnd,
   } = state
+  const withinPrincipalId = useId()
+
+  const hasOptional =
+    tagOptions.some((o) => o.optional) || addedPathways.some((p) => p.optional)
 
   const thematicOptions = (thematics ?? []).map((t) => ({
     value: t.id,
     label: thematicLabel(t),
   }))
 
-  return (
-    <div className="w-full flex flex-col gap-4">
-      <Select
-        searchable
-        clearable={false}
-        className="h-[42px]"
-        icon={<Plus className="w-4 h-4 text-primary shrink-0" />}
-        placeholder="Ajouter un parcours…"
-        emptyMessage="Tous les parcours sont ajoutés"
-        value=""
-        options={tagOptions}
-        onValueChange={(tag) => tag && handleAddTags([tag])}
-      />
-
-      <span className="text-sm font-semibold text-foreground">
-        Parcours à inscrire, par priorité
-      </span>
-
-      {addedPathways.length === 0 ? (
-        <div className="p-8 border border-dashed border-slate-300 rounded-lg text-center text-sm text-text-light">
-          Aucun parcours ajouté
-        </div>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {addedPathways.map((pathway, index) => (
-            <PathwayItem
-              key={pathway.id}
-              pathway={pathway}
-              index={index}
-              count={addedPathways.length}
-              preview={previews?.[index]}
-              isExpanded={expandedPathwayId === pathway.id}
-              isDragged={draggedIndex === index}
-              thematicOptions={thematicOptions}
-              thematics={thematics}
-              onToggleExpand={() => toggleExpand(pathway.id)}
-              onRemove={() => handleRemovePathway(pathway.id)}
-              onMove={(delta) => movePathway(index, delta)}
-              onUpdate={(updates) => updatePathway(pathway.id, updates)}
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
+  const renderGroup = (optional: boolean) => {
+    const options = tagOptions.filter((o) => o.optional === optional)
+    const group = addedPathways.flatMap((pathway, index) =>
+      pathway.optional === optional ? [{ pathway, index }] : [],
+    )
+    return (
+      <section className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-foreground">
+          {optional ? 'Parcours optionnels' : 'Parcours principaux'}
+          <span className="font-normal text-text-light">
+            {optional
+              ? ' · partent au début du parcours principal'
+              : ', par priorité'}
+          </span>
+        </span>
+        {optional && (
+          <label
+            htmlFor={withinPrincipalId}
+            className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+          >
+            <Switch
+              id={withinPrincipalId}
+              checked={withinPrincipal}
+              onCheckedChange={setWithinPrincipal}
             />
-          ))}
-        </ul>
-      )}
+            Rendez-vous compris dans la durée du parcours principal
+          </label>
+        )}
+        <Select
+          searchable
+          clearable={false}
+          className="h-[42px]"
+          icon={<Plus className="w-4 h-4 text-primary shrink-0" />}
+          placeholder={
+            optional
+              ? 'Ajouter un parcours optionnel…'
+              : 'Ajouter un parcours principal…'
+          }
+          emptyMessage="Tous les parcours sont ajoutés"
+          value=""
+          options={options}
+          onValueChange={(tag) => tag && handleAddTags([tag])}
+        />
+        {group.length === 0 ? (
+          <div className="p-6 border border-dashed border-slate-300 rounded-lg text-center text-sm text-text-light">
+            Aucun parcours ajouté
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {group.map(({ pathway, index }, position) => (
+              <PathwayItem
+                key={pathway.id}
+                pathway={pathway}
+                index={position}
+                count={group.length}
+                preview={previews?.[index]}
+                isExpanded={expandedPathwayId === pathway.id}
+                isDragged={draggedIndex === index}
+                thematicOptions={thematicOptions}
+                thematics={thematics}
+                onToggleExpand={() => toggleExpand(pathway.id)}
+                onRemove={() => handleRemovePathway(pathway.id)}
+                onMove={(delta) => movePathway(index, delta)}
+                onUpdate={(updates) => updatePathway(pathway.id, updates)}
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+    )
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-5">
+      {renderGroup(false)}
+      {hasOptional && renderGroup(true)}
     </div>
   )
 }

@@ -6,7 +6,7 @@ import {
   notificationSubject,
 } from '../../../main/infra/mail/notification-templates'
 
-const FRONT_URL = 'https://medisync.test'
+const FRONT_URL = 'https://etepea.test'
 const START = new Date('2026-10-22T09:00:00.000Z') // jeu. 22/10 à 09:00
 const AFTER = new Date('2026-10-23T10:00:00.000Z') // ven. 23/10 à 10:00
 
@@ -80,16 +80,16 @@ describe('notification-templates', () => {
   })
 
   it.each([
-    ['REMINDER', 'MediSync : rappel de séance'],
-    ['PATIENT_ADDED', 'MediSync : patient ajouté'],
-    ['APPOINTMENT_MOVED', 'MediSync : séance modifiée'],
-    ['APPOINTMENT_CANCELLED', 'MediSync : séance annulée'],
-    ['ABSENT', 'MediSync : absence'],
-    ['SLOT_ALMOST_FULL', 'MediSync : créneau presque complet'],
-    ['DIAGNOSTIC_DUE', 'MediSync : diagnostic à réaliser'],
-    ['PATHWAY_END', 'MediSync : fin de parcours'],
-    ['TASK_DUE', 'MediSync : tâche à échéance'],
-    ['MENTION', 'MediSync : mention dans une tâche'],
+    ['REMINDER', 'Etepea : rappel de séance'],
+    ['PATIENT_ADDED', 'Etepea : patient ajouté'],
+    ['APPOINTMENT_MOVED', 'Etepea : séance modifiée'],
+    ['APPOINTMENT_CANCELLED', 'Etepea : séance annulée'],
+    ['ABSENT', 'Etepea : absence'],
+    ['SLOT_ALMOST_FULL', 'Etepea : créneau presque complet'],
+    ['DIAGNOSTIC_DUE', 'Etepea : diagnostic à réaliser'],
+    ['PATHWAY_END', 'Etepea : fin de parcours'],
+    ['TASK_DUE', 'Etepea : tâche à échéance'],
+    ['MENTION', 'Etepea : mention dans une tâche'],
   ])('sujet verbatim de %s', (type, expected) => {
     expect(notificationSubject(type as (typeof TYPES)[number])).toBe(expected)
   })
@@ -239,7 +239,7 @@ describe('notification-templates', () => {
       { type: 'REMINDER', payload: { startDate: START } },
       FRONT_URL,
     )
-    expect(mail.subject).toBe('MediSync : rappel de séance')
+    expect(mail.subject).toBe('Etepea : rappel de séance')
     expect(mail.text).toContain(FRONT_URL)
     expect(mail.text).toContain(
       'Vous recevez cet e-mail selon vos préférences de notification.',
@@ -260,7 +260,7 @@ describe('notification-templates', () => {
       START,
       FRONT_URL,
     )
-    expect(mail.subject).toBe('MediSync : vos notifications du jeu. 22/10')
+    expect(mail.subject).toBe('Etepea : vos notifications du jeu. 22/10')
     expect(mail.text).toContain(
       'Rappel : vous avez une séance le jeu. 22/10 à 09:00, Bureau 2.',
     )

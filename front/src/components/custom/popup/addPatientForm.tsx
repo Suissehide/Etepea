@@ -65,6 +65,7 @@ function AddPatientForm({ trigger }: AddPatientFormProps) {
           birthDate: value.birthDate,
         } satisfies CreatePatientParams,
         pathways: pathwayState.enrollments,
+        optionalsWithinPrincipal: pathwayState.withinPrincipal,
       })
 
       setOpen(false)

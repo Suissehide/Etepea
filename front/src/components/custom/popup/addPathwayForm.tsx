@@ -55,6 +55,7 @@ function AddPathwayForm({ trigger }: AddPathwayFormProps) {
       mainTag: '',
       motifRequired: false,
       firstAppointmentOnly: false,
+      optional: false,
     },
     onSubmit: ({ value }) => {
       createPathwayTemplate.mutate({
@@ -66,6 +67,7 @@ function AddPathwayForm({ trigger }: AddPathwayFormProps) {
         prerequisiteIDs,
         motifRequired: value.motifRequired,
         firstAppointmentOnly: value.firstAppointmentOnly,
+        optional: value.optional,
       })
       setOpen(false)
     },

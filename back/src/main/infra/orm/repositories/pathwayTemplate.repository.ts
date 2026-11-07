@@ -129,6 +129,7 @@ class PathwayTemplateRepository implements PathwayTemplateRepositoryInterface {
           motifRequired: source.motifRequired,
           firstAppointmentOnly: source.firstAppointmentOnly,
           prerequisiteIDs: source.prerequisiteIDs,
+          optional: source.optional,
           displayOrder,
           slotTemplates: {
             create: source.slotTemplates.map((st) => ({

@@ -2,6 +2,7 @@ import { Link, useMatchRoute, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, Globe, Menu, PanelLeft, Settings2 } from 'lucide-react'
 import { Fragment } from 'react'
 
+import { Logo } from '@/components/custom/logo'
 import { can } from '../hooks/useCan.ts'
 import { tenantKey } from '../hooks/useTenantSwitch.ts'
 import {
@@ -253,11 +254,7 @@ function Navbar({ toggleSidebar }: NavbarProps) {
 
   // Le logo ramene au tableau de bord : celui du service courant, sinon du dernier visite.
   const retour = courant?.scale === 'service' ? courant : serviceDeRetour(user)
-  const logo = (
-    <>
-      <span className="text-primary">Medi</span>Sync
-    </>
-  )
+  const logo = <Logo />
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 px-4 h-16 flex justify-between items-center bg-foreground text-text border-b border-border-sidebar">

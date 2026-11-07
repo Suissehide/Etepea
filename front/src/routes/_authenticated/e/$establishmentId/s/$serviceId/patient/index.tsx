@@ -320,5 +320,3 @@ function PatientList() {
     </DashboardLayout>
   )
 }
-
-export default PatientList

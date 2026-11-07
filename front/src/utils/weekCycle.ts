@@ -50,3 +50,24 @@ export function cycleWeekNumber(
 
   return position + 1
 }
+
+/** S7 dans le cycle, « Fermée » pour une semaine interdite, s45 sans cycle. */
+export function libelleSemaineDu(
+  date: Dayjs,
+  cycle?: PlanningCycle | null,
+): string {
+  const semaine = cycle ? cycleWeekNumber(date, cycle) : undefined
+  if (semaine === undefined) {
+    return `s${date.isoWeek()}`
+  }
+  return semaine === null ? 'Fermée' : `S${semaine}`
+}
+
+/** « 2 – 8 novembre », ou « 30 novembre – 6 décembre » quand la semaine change de mois. */
+export function plageSemaine(date: Dayjs): string {
+  const debut = date.isoWeekday(1)
+  const fin = debut.add(6, 'day')
+  return debut.isSame(fin, 'month')
+    ? `${debut.format('D')} – ${fin.format('D MMMM')}`
+    : `${debut.format('D MMMM')} – ${fin.format('D MMMM')}`
+}

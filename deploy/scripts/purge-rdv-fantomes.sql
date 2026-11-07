@@ -8,7 +8,7 @@
 -- laisse l'ancien Appointment orphelin. L'import fait ce menage lui-meme
 -- depuis le 2026-10-29 ; ce fichier est pour une base ou il a deja tourne sans.
 --
---   docker exec -i medisync-postgres psql -U postgres -d medisync \
+--   docker exec -i etepea-postgres psql -U postgres -d etepea \
 --     -f - < deploy/scripts/purge-rdv-fantomes.sql
 --
 -- Rien n'est applique si un garde-fou saute : la transaction est abandonnee.

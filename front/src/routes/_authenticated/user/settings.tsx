@@ -228,5 +228,3 @@ function UserSettings() {
     </DashboardLayout>
   )
 }
-
-export default UserSettings

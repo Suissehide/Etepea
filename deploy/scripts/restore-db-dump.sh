@@ -12,15 +12,15 @@
 # realite au format custom.
 #
 # Variables d'environnement :
-#   CONTAINER        conteneur Postgres cible          (defaut: medisync-postgres)
-#   DB_NAME          base a recreer                    (defaut: medisync)
+#   CONTAINER        conteneur Postgres cible          (defaut: etepea-postgres)
+#   DB_NAME          base a recreer                    (defaut: etepea)
 #   DB_USER          role Postgres                     (defaut: postgres)
 #   PG_CLIENT_IMAGE  image fournissant pg_restore/psql (defaut: postgres:16-alpine)
 #
 set -euo pipefail
 
-CONTAINER="${CONTAINER:-medisync-postgres}"
-DB_NAME="${DB_NAME:-medisync}"
+CONTAINER="${CONTAINER:-etepea-postgres}"
+DB_NAME="${DB_NAME:-etepea}"
 DB_USER="${DB_USER:-postgres}"
 PG_CLIENT_IMAGE="${PG_CLIENT_IMAGE:-postgres:16-alpine}"
 

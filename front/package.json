@@ -1,7 +1,7 @@
 {
-  "name": "medisync-frontend",
+  "name": "etepea-frontend",
   "version": "0.0.1",
-  "description": "MediSync Frontend",
+  "description": "Etepea Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",

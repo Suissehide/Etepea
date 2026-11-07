@@ -25,20 +25,29 @@ describe('parcours prérequis', () => {
       payload: payload as never,
     })
 
-  const createTemplate = async (mainTag: string, prerequisiteIDs: string[]) => {
+  const createTemplate = async (
+    mainTag: string,
+    prerequisiteIDs: string[],
+    optional = false,
+  ) => {
     const res = await inject('POST', '/pathway-template', {
       name: mainTag,
       color: '#123456',
       mainTag,
       slotTemplateIDs: [],
       prerequisiteIDs,
+      optional,
     })
     expect(res.statusCode).toBe(201)
     return res.json().id as string
   }
 
   // Une instance de parcours d'un seul créneau collectif.
-  const createPathway = async (templateID: string, start: string) => {
+  const createPathway = async (
+    templateID: string,
+    start: string,
+    closed: { locked?: boolean; archivedAt?: Date } = {},
+  ) => {
     const startDate = new Date(start)
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
     const slotTemplate = await testDb.slotTemplate.create({
@@ -65,6 +74,7 @@ describe('parcours prérequis', () => {
         slotTemplateID: slotTemplate.id,
         serviceId,
         establishmentId,
+        ...closed,
       },
     })
     return pathway.id
@@ -228,5 +238,211 @@ describe('parcours prérequis', () => {
       '2027-01-19T09:00:00.000Z',
       '2027-01-12T09:00:00.000Z',
     ])
+  })
+
+  it('ignore les créneaux verrouillés ou supprimés, à l aperçu comme à l inscription', async () => {
+    const t = await createTemplate('VERROU', [])
+    await createPathway(t, '2027-02-02T09:00:00.000Z', { locked: true })
+    await createPathway(t, '2027-02-09T09:00:00.000Z', {
+      archivedAt: new Date(),
+    })
+    const open = await createPathway(t, '2027-02-16T09:00:00.000Z')
+
+    const preview = await inject('POST', '/patient/enroll/preview', {
+      pathways: [
+        { tag: 'VERROU', timeOfDay: 'ALL_DAY', startDate: '2027-02-01' },
+      ],
+    })
+    expect(preview.json()[0].startDate).toBe('2027-02-16T09:00:00.000Z')
+
+    const created = await inject('POST', '/patient', {
+      firstName: 'Grace',
+      lastName: 'Hopper',
+    })
+    const patientId = created.json().id as string
+    const res = await inject('POST', `/patient/${patientId}/enroll`, {
+      patientID: patientId,
+      startDate: '2027-02-01T00:00:00.000Z',
+      pathways: [{ tag: 'VERROU', timeOfDay: 'ALL_DAY' }],
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().failedEnrollments).toEqual([])
+    const appointments = await testDb.appointment.findMany({
+      where: { appointmentPatients: { some: { patientId } } },
+      select: { slot: { select: { pathwayID: true } } },
+    })
+    expect(appointments.map((apt) => apt.slot.pathwayID)).toEqual([open])
+  })
+
+  describe('parcours optionnels (MDS-68)', () => {
+    let stressAfterRc: string
+    let rc: string
+
+    beforeAll(async () => {
+      rc = await createTemplate('OPT-RC', [])
+      const stress = await createTemplate('OPT-STRESS', [], true)
+      await createPathway(rc, '2027-03-23T09:00:00.000Z')
+      await createPathway(stress, '2027-03-09T09:00:00.000Z')
+      stressAfterRc = await createPathway(stress, '2027-03-30T09:00:00.000Z')
+    })
+
+    const stressPathwayOf = async (patientId: string) =>
+      (
+        await testDb.appointment.findMany({
+          where: {
+            appointmentPatients: { some: { patientId } },
+            slot: { pathway: { templateID: { not: rc } } },
+          },
+          select: { slot: { select: { pathwayID: true } } },
+        })
+      ).map((apt) => apt.slot.pathwayID)
+
+    const newPatient = async (firstName: string) =>
+      (
+        await inject('POST', '/patient', { firstName, lastName: 'Optionnel' })
+      ).json().id as string
+
+    it("fait partir l'optionnel au début du principal demandé, sans date saisie", async () => {
+      const res = await inject('POST', '/patient/enroll/preview', {
+        pathways: [
+          { tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' },
+          { tag: 'OPT-RC', timeOfDay: 'ALL_DAY' },
+        ],
+      })
+      expect(res.statusCode).toBe(200)
+      const [stress, principal] = res.json()
+      expect(principal.startDate).toBe('2027-03-23T09:00:00.000Z')
+      expect(stress.from).toBe('2027-03-23T09:00:00.000Z')
+      expect(stress.startDate).toBe('2027-03-30T09:00:00.000Z')
+    })
+
+    it('garde la date saisie à la main', async () => {
+      const res = await inject('POST', '/patient/enroll/preview', {
+        pathways: [
+          { tag: 'OPT-RC', timeOfDay: 'ALL_DAY' },
+          { tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY', startDate: '2027-03-01' },
+        ],
+      })
+      expect(res.json()[1].startDate).toBe('2027-03-09T09:00:00.000Z')
+    })
+
+    it("inscrit l'optionnel après le début du principal de la même demande", async () => {
+      const patientId = await newPatient('Mêmedemande')
+      const res = await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [
+          { tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' },
+          { tag: 'OPT-RC', timeOfDay: 'ALL_DAY' },
+        ],
+      })
+      expect(res.json().failedEnrollments).toEqual([])
+      expect(await stressPathwayOf(patientId)).toEqual([stressAfterRc])
+    })
+
+    it("part du principal déjà inscrit quand la demande n'en contient pas", async () => {
+      const patientId = await newPatient('Dejainscrit')
+      await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [{ tag: 'OPT-RC', timeOfDay: 'ALL_DAY' }],
+      })
+      const preview = await inject('POST', '/patient/enroll/preview', {
+        patientID: patientId,
+        pathways: [{ tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' }],
+      })
+      expect(preview.json()[0].startDate).toBe('2027-03-30T09:00:00.000Z')
+      await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [{ tag: 'OPT-STRESS', timeOfDay: 'ALL_DAY' }],
+      })
+      expect(await stressPathwayOf(patientId)).toEqual([stressAfterRc])
+    })
+  })
+
+  describe('optionnels compris dans la durée du principal', () => {
+    beforeAll(async () => {
+      const rc = await createTemplate('BORNE-RC', [])
+      const stress = await createTemplate('BORNE-STRESS', [], true)
+      const pathwayID = await createPathway(rc, '2027-04-06T09:00:00.000Z')
+      // Le principal finit le 20/04 à 10 h ; seul optionnel disponible : le 27/04.
+      const startDate = new Date('2027-04-20T09:00:00.000Z')
+      const endDate = new Date('2027-04-20T10:00:00.000Z')
+      const slotTemplate = await testDb.slotTemplate.create({
+        data: {
+          startTime: startDate,
+          endTime: endDate,
+          offsetDays: 14,
+          isIndividual: false,
+          capacity: 10,
+          color: '#fff',
+          templateID: rc,
+          serviceId,
+          establishmentId,
+        },
+      })
+      await testDb.slot.create({
+        data: {
+          startDate,
+          endDate,
+          pathwayID,
+          slotTemplateID: slotTemplate.id,
+          serviceId,
+          establishmentId,
+        },
+      })
+      await createPathway(stress, '2027-04-27T09:00:00.000Z')
+    })
+
+    const pathways = [
+      { tag: 'BORNE-RC', timeOfDay: 'ALL_DAY' },
+      { tag: 'BORNE-STRESS', timeOfDay: 'ALL_DAY' },
+    ]
+
+    it("sans l'option, l'optionnel peut finir après le principal", async () => {
+      const res = await inject('POST', '/patient/enroll/preview', { pathways })
+      expect(res.json()[1].startDate).toBe('2027-04-27T09:00:00.000Z')
+    })
+
+    it("avec l'option, l'aperçu et l'inscription refusent un optionnel qui déborde", async () => {
+      const preview = await inject('POST', '/patient/enroll/preview', {
+        pathways,
+        optionalsWithinPrincipal: true,
+      })
+      expect(preview.statusCode).toBe(200)
+      expect(preview.json()[1].startDate).toBeNull()
+      expect(preview.json()[1].reason).toContain('fin du parcours principal')
+
+      const created = await inject('POST', '/patient', {
+        firstName: 'Borne',
+        lastName: 'Demande',
+      })
+      const patientId = created.json().id as string
+      const res = await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways,
+        optionalsWithinPrincipal: true,
+      })
+      expect(res.json().failedEnrollments).toHaveLength(1)
+      expect(res.json().failedEnrollments[0].slotTemplate.id).toBe(
+        'BORNE-STRESS',
+      )
+    })
+
+    it('borne aussi par le principal déjà inscrit', async () => {
+      const created = await inject('POST', '/patient', {
+        firstName: 'Borne',
+        lastName: 'Inscrit',
+      })
+      const patientId = created.json().id as string
+      await inject('POST', `/patient/${patientId}/enroll`, {
+        patientID: patientId,
+        pathways: [pathways[0]],
+      })
+      const preview = await inject('POST', '/patient/enroll/preview', {
+        patientID: patientId,
+        pathways: [pathways[1]],
+        optionalsWithinPrincipal: true,
+      })
+      expect(preview.json()[0].startDate).toBeNull()
+    })
   })
 })
