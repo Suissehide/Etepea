@@ -24,11 +24,13 @@ export default function ToggleVerrouilles() {
   return (
     <Button
       variant={afficher ? 'default' : 'outline'}
+      size="sm"
+      className="h-[30px]"
       aria-pressed={afficher}
       onClick={() => setAfficher(!afficher)}
     >
-      <Lock className="w-4 h-4" />
-      Verrouillés
+      <Lock className="size-3.5" />
+      Afficher verrouillés
     </Button>
   )
 }
