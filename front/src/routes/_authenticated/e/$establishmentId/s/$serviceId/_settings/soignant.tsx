@@ -43,7 +43,8 @@ function SoignantSettings() {
   // ici, indépendamment du menu.
   const canManage = useCan('referentials:write')
   const [showArchived, setShowArchived] = useState(false)
-  const { soignants, isPending } = useSoignantQueries(showArchived)
+  const { allSoignants: soignants, isPending } =
+    useSoignantQueries(showArchived)
   const { restoreSoignant, deleteForeverSoignant, updateSoignant } =
     useSoignantMutations()
   const [purgeTargetId, setPurgeTargetId] = useState<string | null>(null)
@@ -72,8 +73,8 @@ function SoignantSettings() {
       getSoignantColumns({
         onRestore: (id) => restoreSoignant.mutate(id),
         onDeleteForever: (id) => setPurgeTargetId(id),
-        onToggleAgenda: (id, hiddenInAgenda) =>
-          updateSoignant.mutate({ id, hiddenInAgenda }),
+        onToggleActive: (id, inactive) =>
+          updateSoignant.mutate({ id, inactive }),
         archived: showArchived,
         thematics: thematics ?? [],
         thematicOptions,

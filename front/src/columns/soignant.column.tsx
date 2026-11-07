@@ -19,7 +19,7 @@ const columnHelper = createColumnHelper<Features, Soignant>()
 type SoignantColumnOptions = {
   onRestore: (id: string) => void
   onDeleteForever: (id: string) => void
-  onToggleAgenda: (id: string, hiddenInAgenda: boolean) => void
+  onToggleActive: (id: string, inactive: boolean) => void
   // Les archives se consultent dans la meme table : seules les actions
   // changent, un archive ne se reedite pas.
   archived: boolean
@@ -36,7 +36,7 @@ type SoignantColumnOptions = {
 export const getSoignantColumns = ({
   onRestore,
   onDeleteForever,
-  onToggleAgenda,
+  onToggleActive,
   archived,
   thematics,
   thematicOptions,
@@ -75,21 +75,21 @@ export const getSoignantColumns = ({
       },
     }),
     columnHelper.display({
-      id: 'agenda',
-      header: 'Agenda',
-      size: 90,
+      id: 'actif',
+      header: 'Actif',
+      size: 80,
       cell: ({ row }) => {
         const soignant = row.original
         return (
           <Switch
-            checked={!soignant.hiddenInAgenda}
+            checked={!soignant.inactive}
             disabled={!canManage || archived}
-            onCheckedChange={(checked) => onToggleAgenda(soignant.id, !checked)}
-            aria-label={`Afficher ${soignant.name} dans l'Agenda`}
+            onCheckedChange={(checked) => onToggleActive(soignant.id, !checked)}
+            aria-label={`${soignant.name} actif`}
             title={
-              soignant.hiddenInAgenda
-                ? "Masqué de l'Agenda : ses créneaux y passent dans « Sans soignant »"
-                : "Affiché dans l'Agenda"
+              soignant.inactive
+                ? 'Inactif : absent de l’Agenda, du tableau de bord et des formulaires'
+                : 'Actif'
             }
           />
         )

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { SoignantApi } from '../api/soignant.api.ts'
 import { undoToastAction } from '../components/custom/undoToastAction.tsx'
@@ -27,7 +27,7 @@ export const useSoignantQueries = (archived = false) => {
     return await SoignantApi.getAll(undefined, archived)
   }
   const {
-    data: soignants,
+    data: allSoignants,
     isPending,
     isError,
     error,
@@ -36,6 +36,13 @@ export const useSoignantQueries = (archived = false) => {
     queryFn: getAllSoignants,
     retry: 0,
   })
+
+  // Les inactifs (MDS-76) ne sont proposés nulle part : seuls les écrans
+  // d'administration lisent `allSoignants`.
+  const soignants = useMemo(
+    () => (archived ? allSoignants : allSoignants?.filter((s) => !s.inactive)),
+    [allSoignants, archived],
+  )
 
   useEffect(() => {
     // Le store miroite la liste ACTIVE, celle que lisent le planning et les
@@ -51,7 +58,7 @@ export const useSoignantQueries = (archived = false) => {
     error,
   })
 
-  return { soignants, isPending, error }
+  return { soignants, allSoignants, isPending, error }
 }
 
 // * MUTATIONS

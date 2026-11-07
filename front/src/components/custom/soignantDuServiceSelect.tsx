@@ -36,10 +36,11 @@ export function SoignantDuServiceSelect({
   })
   const options = useMemo(
     () =>
-      [...(soignants ?? [])]
+      (soignants ?? [])
+        .filter((s) => !s.inactive || s.id === value)
         .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
         .map((s) => ({ value: s.id, label: s.name })),
-    [soignants],
+    [soignants, value],
   )
   const id = `soignant-${serviceId}`
   return (

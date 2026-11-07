@@ -38,7 +38,7 @@ export const Route = createFileRoute(
 
 function ServiceMembers() {
   const { members, isPending } = useServiceMembersQuery()
-  const { soignants } = useSoignantQueries()
+  const { allSoignants: soignants } = useSoignantQueries()
   const superAdmin = useAuthStore((state) => state.user?.isSuperAdmin === true)
   const soiMeme = useAuthStore((state) => state.user?.id)
   const { removeMember } = useServiceMemberMutations()
