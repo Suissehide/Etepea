@@ -126,7 +126,7 @@ describe('buildDaySlotRows, créneau individuel', () => {
 
 describe('groupDaySlotRowsBySoignant', () => {
   const kine = { id: 'kine', name: 'Kiné' }
-  const diet = { id: 'diet', name: 'Diététicienne', hiddenInAgenda: true }
+  const diet = { id: 'diet', name: 'Diététicienne', inactive: true }
   const rows = buildDaySlotRows(
     [
       slot('kine', '2026-03-02T09:00:00.000Z', {
@@ -145,7 +145,7 @@ describe('groupDaySlotRowsBySoignant', () => {
   const ids = (g: ReturnType<typeof groupDaySlotRowsBySoignant>) =>
     g.map((x) => [x.soignant?.id ?? null, x.rows.map((r) => r.id)])
 
-  it('les créneaux d un soignant masqué de l Agenda passent dans « Sans soignant » (MDS-76)', () => {
+  it('les créneaux d un soignant inactif passent dans « Sans soignant » (MDS-76)', () => {
     expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, diet]))).toEqual([
       ['kine', ['kine', 'partage']],
       [null, ['diet', 'personne']],
@@ -162,7 +162,7 @@ describe('groupDaySlotRowsBySoignant', () => {
   })
 
   it('sans drapeau, chaque soignant garde son tableau', () => {
-    const visible = { ...diet, hiddenInAgenda: false }
+    const visible = { ...diet, inactive: false }
     expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, visible]))).toEqual([
       ['diet', ['diet', 'partage']],
       ['kine', ['kine', 'partage']],

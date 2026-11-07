@@ -146,7 +146,7 @@ describe('archivage des salles, soignants et modeles de diagnostic', () => {
     expect(noms(await get('/soignant'))).toContain('Diététicienne')
   })
 
-  it('masquer un soignant de l Agenda le garde dans la liste, drapeau leve (MDS-76)', async () => {
+  it('desactiver un soignant le garde dans la liste, drapeau leve (MDS-76)', async () => {
     const soignant = await testDb.soignant.create({
       data: { name: 'Kiné', serviceId, establishmentId },
     })
@@ -154,14 +154,14 @@ describe('archivage des salles, soignants et modeles de diagnostic', () => {
       method: 'PATCH',
       url: url(`/soignant/${soignant.id}`),
       cookies,
-      payload: { hiddenInAgenda: true } as never,
+      payload: { inactive: true } as never,
     })
-    expect(res.json()).toMatchObject({ hiddenInAgenda: true })
+    expect(res.json()).toMatchObject({ inactive: true })
     const liste = (await get('/soignant')).json() as {
       id: string
-      hiddenInAgenda: boolean
+      inactive: boolean
     }[]
-    expect(liste.find((s) => s.id === soignant.id)?.hiddenInAgenda).toBe(true)
+    expect(liste.find((s) => s.id === soignant.id)?.inactive).toBe(true)
   })
 
   it('archiver un modele de diagnostic laisse les diagnostics remplis le porter', async () => {

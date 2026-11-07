@@ -35,6 +35,7 @@ import {
   useSlotConflictsQuery,
   useSlotsInRangeQuery,
 } from '@/queries/useSlot.ts'
+import { useSoignantQueries } from '@/queries/useSoignant.ts'
 import { useSoignantStore } from '@/store/useSoignantStore.ts'
 import type { Slot } from '@/types/slot.ts'
 import { libelleSemaineDu, plageSemaine } from '@/utils/weekCycle.ts'
@@ -161,6 +162,7 @@ function Agenda() {
     (state) => state.selectedSoignantIDs,
   )
   const soignants = useSoignantStore((state) => state.soignants)
+  const { allSoignants } = useSoignantQueries()
   const soignantIDs = useMemo(() => soignants.map((s) => s.id), [soignants])
 
   const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
@@ -178,8 +180,9 @@ function Agenda() {
   )
 
   const groups = useMemo(
-    () => groupDaySlotRowsBySoignant(rows, selectedSoignantIDs, soignants),
-    [rows, selectedSoignantIDs, soignants],
+    () =>
+      groupDaySlotRowsBySoignant(rows, selectedSoignantIDs, allSoignants ?? []),
+    [rows, selectedSoignantIDs, allSoignants],
   )
 
   const addPatientTarget =

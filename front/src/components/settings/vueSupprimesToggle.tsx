@@ -31,9 +31,7 @@ export function VueSupprimesToggle({
         valeur && onShowDeletedChange(valeur === 'supprimes')
       }
     >
-      <ToggleGroupItem value="actifs">
-        {feminin ? 'Actives' : 'Actifs'}
-      </ToggleGroupItem>
+      <ToggleGroupItem value="actifs">Existant{e}s</ToggleGroupItem>
       <ToggleGroupItem value="supprimes">
         Supprimé{e}s{children}
       </ToggleGroupItem>
