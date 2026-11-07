@@ -203,6 +203,7 @@ const buildDomain = (
     enrollmentIssueRepository: { create: jest.fn(async () => undefined) },
     patientServiceFileDomain: { ensureExists: jest.fn(async () => undefined) },
     thematicRepository: {
+      findAll: jest.fn(() => Promise.resolve([])),
       findByID: jest.fn((id: string) =>
         knownThematicIDs.includes(id)
           ? Promise.resolve({ id, duration: 30 })

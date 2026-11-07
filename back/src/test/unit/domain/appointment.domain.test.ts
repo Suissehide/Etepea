@@ -34,7 +34,8 @@ const buildDomain = (known: { thematics: string[] }) => {
         }),
     },
     slotDomain: {
-      findByID: (id: string) => Promise.resolve({ id, locked: false }),
+      findByID: (id: string) =>
+        Promise.resolve({ id, locked: false, slotTemplate: {} }),
     },
     thematicRepository: {
       findByID: (id: string) =>

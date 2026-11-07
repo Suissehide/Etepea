@@ -22,7 +22,10 @@ export type PathwayWithTemplateRepo = PathwayEntityRepo & {
 // `location` toujours presente ici : `slotInclude` inclut `slotTemplateInclude` au complet pour ce DTO.
 export type SlotDTORepo = SlotEntityRepo & {
   pathway: PathwayWithTemplateRepo | null
-  slotTemplate: SlotTemplateWithSoignantsRepo & { location?: Location | null }
+  slotTemplate: SlotTemplateWithSoignantsRepo & {
+    location?: Location | null
+    internal?: boolean
+  }
   appointments: AppointmentWithPatientsRepo[]
 }
 // Le repository pose serviceId/establishmentId (tenant) lui-même : l'appelant

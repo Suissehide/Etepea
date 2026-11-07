@@ -362,6 +362,8 @@ model Thematic {
   pdfNotice       String?
   // Rôle dans les indicateurs ARS et Activité ; null = aucun.
   role            ThematicRole?
+  // MDS-71 : créneaux internes (staff, admin), visibles seulement dans le Planning.
+  internal        Boolean       @default(false)
   // Archivage au lieu de suppression : une thematique retiree de la liste sort
   // des listes de choix mais garde ses liens, la ou un DELETE vidait le
   // `thematicId` de tous les rendez-vous deja crees (onDelete: SetNull).

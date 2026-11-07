@@ -47,6 +47,7 @@ describe('parcours prérequis', () => {
     templateID: string,
     start: string,
     closed: { locked?: boolean; archivedAt?: Date } = {},
+    thematicId?: string,
   ) => {
     const startDate = new Date(start)
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
@@ -59,6 +60,7 @@ describe('parcours prérequis', () => {
         capacity: 10,
         color: '#fff',
         templateID,
+        thematicId,
         serviceId,
         establishmentId,
       },
@@ -266,6 +268,58 @@ describe('parcours prérequis', () => {
       pathways: [{ tag: 'VERROU', timeOfDay: 'ALL_DAY' }],
     })
     expect(res.statusCode).toBe(200)
+    expect(res.json().failedEnrollments).toEqual([])
+    const appointments = await testDb.appointment.findMany({
+      where: { appointmentPatients: { some: { patientId } } },
+      select: { slot: { select: { pathwayID: true } } },
+    })
+    expect(appointments.map((apt) => apt.slot.pathwayID)).toEqual([open])
+  })
+
+  it('ignore les créneaux d une thématique interne et refuse d y poser un rendez-vous (MDS-71)', async () => {
+    const thematic = await inject('POST', '/thematic', {
+      name: 'Staff',
+      internal: true,
+    })
+    expect(thematic.statusCode).toBe(201)
+    expect(thematic.json().internal).toBe(true)
+    const t = await createTemplate('INTERNE', [])
+    const staff = await createPathway(
+      t,
+      '2027-03-02T09:00:00.000Z',
+      {},
+      thematic.json().id,
+    )
+    const open = await createPathway(t, '2027-03-09T09:00:00.000Z')
+
+    const preview = await inject('POST', '/patient/enroll/preview', {
+      pathways: [
+        { tag: 'INTERNE', timeOfDay: 'ALL_DAY', startDate: '2027-03-01' },
+      ],
+    })
+    expect(preview.json()[0].startDate).toBe('2027-03-09T09:00:00.000Z')
+
+    const created = await inject('POST', '/patient', {
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+    })
+    const patientId = created.json().id as string
+    const staffSlot = await testDb.slot.findFirstOrThrow({
+      where: { pathwayID: staff },
+    })
+    const refused = await inject('POST', '/appointment', {
+      slotID: staffSlot.id,
+      startDate: staffSlot.startDate.toISOString(),
+      endDate: staffSlot.endDate.toISOString(),
+      patientIDs: [patientId],
+    })
+    expect(refused.statusCode).toBe(409)
+
+    const res = await inject('POST', `/patient/${patientId}/enroll`, {
+      patientID: patientId,
+      startDate: '2027-03-01T00:00:00.000Z',
+      pathways: [{ tag: 'INTERNE', timeOfDay: 'ALL_DAY' }],
+    })
     expect(res.json().failedEnrollments).toEqual([])
     const appointments = await testDb.appointment.findMany({
       where: { appointmentPatients: { some: { patientId } } },

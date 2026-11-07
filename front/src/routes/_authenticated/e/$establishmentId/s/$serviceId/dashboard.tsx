@@ -169,7 +169,10 @@ function Dashboard() {
     if (slots) {
       // Un créneau supprimé ne reste affiché que s'il porte encore des inscriptions.
       const visible = slots.filter(
-        (slot) => isSlotVisible(slot) && (afficherVerrouilles || !slot.locked),
+        (slot) =>
+          isSlotVisible(slot) &&
+          !slot.slotTemplate?.internal &&
+          (afficherVerrouilles || !slot.locked),
       )
       const filtered = {
         soignant: () => filterSlotsBySoignants(visible, selectedIDs),

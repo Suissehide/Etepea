@@ -673,6 +673,7 @@ function AddPatientToSlotContent({
   const thematicOptions = useMemo(
     () =>
       (thematics ?? [])
+        .filter((thematic) => !thematic.internal)
         .map((thematic) => ({
           value: thematic.id,
           label: thematicLabel(thematic),

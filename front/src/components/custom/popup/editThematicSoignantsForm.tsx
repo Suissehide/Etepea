@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { SLOT_DURATION_OPTIONS } from '../../../constants/slot.constant.ts'
 import {
+  INTERNAL_HELP,
   NO_THEMATIC_ROLE,
   PDF_NOTICE_HELP,
   THEMATIC_ROLE_OPTIONS,
@@ -28,6 +29,7 @@ type ThematicFormValues = {
   duration: number
   pdfNotice: string
   role: string
+  internal: boolean
   soignantIDs: string[]
 }
 
@@ -56,6 +58,9 @@ function buildThematicPatch(
   }
   if (role !== (thematic.role ?? null)) {
     patch.role = role
+  }
+  if (value.internal !== (thematic.internal ?? false)) {
+    patch.internal = value.internal
   }
   if (
     value.soignantIDs.length !== currentSoignantIDs.length ||
@@ -87,6 +92,7 @@ function EditThematicSoignantsForm({
       duration: thematic.duration ?? 15,
       pdfNotice: thematic.pdfNotice ?? '',
       role: thematic.role ?? NO_THEMATIC_ROLE,
+      internal: thematic.internal ?? false,
       soignantIDs: thematic.soignants.map((s) => s.id),
     },
     onSubmit: ({ value }) => {
@@ -107,6 +113,7 @@ function EditThematicSoignantsForm({
         duration: thematic.duration ?? 15,
         pdfNotice: thematic.pdfNotice ?? '',
         role: thematic.role ?? NO_THEMATIC_ROLE,
+        internal: thematic.internal ?? false,
         soignantIDs: thematic.soignants.map((s) => s.id),
       })
     }
@@ -170,6 +177,15 @@ function EditThematicSoignantsForm({
                   options={THEMATIC_ROLE_OPTIONS}
                   label="Rôle dans les indicateurs"
                   clearable={false}
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="internal">
+              {(field) => (
+                <field.Checkbox
+                  label="Interne, sans patient"
+                  description={INTERNAL_HELP}
                 />
               )}
             </form.AppField>

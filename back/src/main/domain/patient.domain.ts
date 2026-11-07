@@ -563,6 +563,16 @@ class PatientDomain implements PatientDomainInterface {
     )
   }
 
+  private async internalThematicIDs(): Promise<Set<string>> {
+    const [active, archived] = await Promise.all([
+      this.thematicRepository.findAll(false),
+      this.thematicRepository.findAll(true),
+    ])
+    return new Set(
+      [...active, ...archived].filter((t) => t.internal).map((t) => t.id),
+    )
+  }
+
   // Choisit le parcours où inscrire le patient pour ce tag, ou dit pourquoi aucun ne convient.
   // `patientID` absent : patient pas encore créé, donc sans prérequis ni rendez-vous.
   private async findPathwayForTag(
@@ -616,12 +626,18 @@ class PatientDomain implements PatientDomainInterface {
       Math.min(
         ...pathway.slots.map((slot) => new Date(slot.startDate).getTime()),
       )
-    // Créneaux verrouillés ou supprimés ignorés (aperçu, choix et inscription), comme AppointmentDomain.create.
+    // Créneaux verrouillés, supprimés ou internes ignorés (aperçu, choix et inscription), comme AppointmentDomain.create.
     // La date « au plus tôt » se compare aux créneaux, pas à Pathway.startDate : un cycle déjà commencé est écarté.
+    const internalThematicIDs = await this.internalThematicIDs()
     const pathways = this.startingAfter(
       found.map((pathway) => ({
         ...pathway,
-        slots: pathway.slots.filter((slot) => !slot.locked && !slot.archivedAt),
+        slots: pathway.slots.filter(
+          (slot) =>
+            !slot.locked &&
+            !slot.archivedAt &&
+            !internalThematicIDs.has(slot.slotTemplate.thematicId ?? ''),
+        ),
       })),
       startOfDay,
       firstAppointmentOnly,

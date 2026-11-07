@@ -58,6 +58,10 @@ export const flattenSlotTemplate = <T extends SlotTemplateRow>({
 }: T) => ({
   ...rest,
   soignants: soignantLinks.map((link) => link.soignant),
+  // Absent quand la thématique n'est pas incluse : on ne sait pas, on ne dit rien.
+  ...(rest.thematic !== undefined && {
+    internal: rest.thematic?.internal ?? false,
+  }),
 })
 
 type SlotRow = Slot & { slotTemplate: SlotTemplateRow }

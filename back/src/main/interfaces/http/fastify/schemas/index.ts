@@ -78,6 +78,8 @@ export const slotTemplateSchema = z.object({
 
   thematic: thematicNameFromRelation,
   thematicId: cuid().nullish(),
+  // MDS-71 : thématique interne, créneau réservé au Planning.
+  internal: z.boolean().optional(),
   locationID: cuid().optional().nullable(),
   description: z.string().optional().nullable(),
   color: z.string(),

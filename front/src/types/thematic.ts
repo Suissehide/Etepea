@@ -7,6 +7,8 @@ export type Thematic = {
   /** Consigne affichee au patient dans le PDF du programme. */
   pdfNotice?: string | null
   role?: ThematicRole | null
+  /** MDS-71 : créneaux sans patient, visibles seulement dans le Planning. */
+  internal?: boolean
   soignants: { id: string; name: string }[]
 }
 
@@ -15,6 +17,8 @@ export type CreateThematicParams = {
   duration?: number | null
   pdfNotice?: string | null
   role?: ThematicRole | null
+  /** MDS-71 : créneaux sans patient, visibles seulement dans le Planning. */
+  internal?: boolean
   soignantIDs: string[]
 }
 
@@ -24,6 +28,8 @@ export type UpdateThematicParams = {
   duration?: number | null
   pdfNotice?: string | null
   role?: ThematicRole | null
+  /** MDS-71 : créneaux sans patient, visibles seulement dans le Planning. */
+  internal?: boolean
   soignantIDs?: string[]
   /** `true` archive, `false` restaure. */
   archived?: boolean
