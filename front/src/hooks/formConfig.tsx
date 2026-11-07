@@ -2,8 +2,8 @@ import { createFormHook } from '@tanstack/react-form'
 import { Github } from '@uiw/react-color'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Eye, EyeOff } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Eye, EyeOff, Info } from 'lucide-react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '../components/ui/button.tsx'
 import { DatePicker } from '../components/ui/datePicker.tsx'
@@ -16,6 +16,12 @@ import {
   type SelectOption,
 } from '../components/ui/select.tsx'
 import { TimePicker } from '../components/ui/timePicker.tsx'
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipRoot,
+  TooltipTrigger,
+} from '../components/ui/tooltip.tsx'
 import { cn } from '../libs/utils.ts'
 import {
   fieldContext,
@@ -43,6 +49,8 @@ interface SelectFieldProps extends FieldComponentProps {
   clearable?: boolean
   // Phrase d'aide sous le champ, reliée par `aria-describedby`.
   description?: string
+  // Aide au survol d'une icône à côté du libellé.
+  hint?: ReactNode
 }
 
 interface MultiSelectFieldProps extends FieldComponentProps {
@@ -141,6 +149,7 @@ function SelectField({
   searchable,
   clearable,
   description,
+  hint,
 }: SelectFieldProps) {
   const field = useFieldContext<string | number>()
   const value = field.state.value ?? ''
@@ -148,7 +157,27 @@ function SelectField({
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      {label && <Label htmlFor={field.name}>{label}</Label>}
+      {label && (
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor={field.name}>{label}</Label>
+          {hint && (
+            <TooltipProvider>
+              <TooltipRoot>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`Aide : ${label}`}
+                    className="text-text-light cursor-help"
+                  >
+                    <Info aria-hidden className="size-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm">{hint}</TooltipContent>
+              </TooltipRoot>
+            </TooltipProvider>
+          )}
+        </div>
+      )}
       <Select
         id={field.name}
         options={options}

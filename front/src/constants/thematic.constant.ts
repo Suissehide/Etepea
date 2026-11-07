@@ -26,5 +26,13 @@ export const PDF_NOTICE_HELP =
   "« Un seul rendez-vous parmi : %dates% » s'imprime « Un seul rendez-vous parmi : 12/05, 19/05 et 26/05 ». " +
   "Avec %dates%, la consigne n'apparaît qu'une fois dans le programme ; sans lui, elle est rappelée avant chaque semaine concernée."
 
+export const THEMATIC_ROLE_HELP = [
+  'Indique quelle étape clé du parcours cette thématique représente, quel que soit son nom.',
+  "Diagnostic éducatif : date l'entrée du patient dans les indicateurs ; ses soignants sont prévenus des diagnostics à planifier.",
+  "Réactualisation : nécessaire pour qu'un programme soit compté comme complet.",
+  "Bilan de fin : compté dans l'Activité ; ses soignants sont prévenus des fins de parcours sans bilan.",
+  'Aucun : une séance ordinaire.',
+]
+
 export const INTERNAL_HELP =
   'Créneaux sans patient (staff, temps administratif) : visibles dans le Planning seulement, jamais proposés à un patient.'
