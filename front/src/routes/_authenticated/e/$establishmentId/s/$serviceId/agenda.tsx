@@ -164,7 +164,11 @@ function Agenda() {
   const rows = useMemo(
     () =>
       buildDaySlotRows(
-        afficherVerrouilles ? slots : slots?.filter((slot) => !slot.locked),
+        slots?.filter(
+          (slot) =>
+            !slot.slotTemplate?.internal &&
+            (afficherVerrouilles || !slot.locked),
+        ),
         selectedDay,
       ),
     [slots, selectedDay, afficherVerrouilles],

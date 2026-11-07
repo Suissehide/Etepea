@@ -91,6 +91,7 @@ class ThematicRepository implements ThematicRepositoryInterface {
           name: thematicCreateParams.name,
           duration: thematicCreateParams.duration,
           pdfNotice: thematicCreateParams.pdfNotice,
+          internal: thematicCreateParams.internal,
           role: thematicCreateParams.role,
           ...this.scope,
           soignantLinks: {
@@ -121,6 +122,7 @@ class ThematicRepository implements ThematicRepositoryInterface {
           name: thematicUpdateParams.name,
           duration: thematicUpdateParams.duration,
           pdfNotice: thematicUpdateParams.pdfNotice,
+          internal: thematicUpdateParams.internal,
           role: thematicUpdateParams.role,
           ...(thematicUpdateParams.archived !== undefined && {
             archivedAt: thematicUpdateParams.archived ? new Date() : null,

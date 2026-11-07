@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { SLOT_DURATION_OPTIONS } from '../../../constants/slot.constant.ts'
 import {
+  INTERNAL_HELP,
   NO_THEMATIC_ROLE,
   PDF_NOTICE_HELP,
   THEMATIC_ROLE_OPTIONS,
@@ -46,6 +47,7 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
       duration: 15,
       pdfNotice: '',
       role: NO_THEMATIC_ROLE,
+      internal: false,
       soignantIDs: [] as string[],
     },
     onSubmit: ({ value }) => {
@@ -56,6 +58,7 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
         pdfNotice: value.pdfNotice.trim() || null,
         role:
           value.role === NO_THEMATIC_ROLE ? null : (value.role as ThematicRole),
+        internal: value.internal,
         soignantIDs: value.soignantIDs,
       })
       setOpen(false)
@@ -129,6 +132,15 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
                   options={THEMATIC_ROLE_OPTIONS}
                   label="Rôle dans les indicateurs"
                   clearable={false}
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="internal">
+              {(field) => (
+                <field.Checkbox
+                  label="Interne, sans patient"
+                  description={INTERNAL_HELP}
                 />
               )}
             </form.AppField>

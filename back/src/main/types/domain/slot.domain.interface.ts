@@ -18,6 +18,7 @@ export type SlotDTODomain = SlotEntityDomain & {
   pathway: PathwayEntityDomain | null
   slotTemplate: SlotTemplateWithSoignantsDomain & {
     location?: Location | null
+    internal?: boolean
   }
   appointments: AppointmentWithPatients[]
 }

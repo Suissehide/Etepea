@@ -25,3 +25,6 @@ export const PDF_NOTICE_HELP =
   'Écrivez %dates% là où les dates du patient doivent apparaître. ' +
   "« Un seul rendez-vous parmi : %dates% » s'imprime « Un seul rendez-vous parmi : 12/05, 19/05 et 26/05 ». " +
   "Avec %dates%, la consigne n'apparaît qu'une fois dans le programme ; sans lui, elle est rappelée avant chaque semaine concernée."
+
+export const INTERNAL_HELP =
+  'Créneaux sans patient (staff, temps administratif) : visibles dans le Planning seulement, jamais proposés à un patient.'

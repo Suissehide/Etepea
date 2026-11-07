@@ -11,6 +11,7 @@ export type ThematicCreateEntityDomain = {
   name: string
   duration?: number | null
   pdfNotice?: string | null
+  internal?: boolean
   role?: ThematicRole | null
   soignantIDs: string[]
 }
@@ -18,6 +19,7 @@ export type ThematicUpdateEntityDomain = {
   name?: string
   duration?: number | null
   pdfNotice?: string | null
+  internal?: boolean
   role?: ThematicRole | null
   soignantIDs?: string[]
   // `true` archive, `false` restaure.

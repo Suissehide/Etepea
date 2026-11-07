@@ -56,6 +56,11 @@ class AppointmentDomain implements AppointmentDomainInterface {
         "Ce créneau est verrouillé : impossible d'y ajouter un rendez-vous.",
       )
     }
+    if (slot.slotTemplate.internal) {
+      throw Boom.conflict(
+        "Ce créneau est interne : impossible d'y ajouter un rendez-vous.",
+      )
+    }
     // Un créneau archivé est supprimé côté utilisateur : il ne garde que ses
     // rendez-vous existants, il n'en reçoit plus de nouveaux.
     if (slot.archivedAt) {
@@ -99,6 +104,11 @@ class AppointmentDomain implements AppointmentDomainInterface {
       if (slot.locked) {
         throw Boom.conflict(
           'Ce créneau est verrouillé : impossible de déplacer un rendez-vous dessus.',
+        )
+      }
+      if (slot.slotTemplate.internal) {
+        throw Boom.conflict(
+          'Ce créneau est interne : impossible de déplacer un rendez-vous dessus.',
         )
       }
       if (slot.archivedAt) {

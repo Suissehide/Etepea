@@ -10,6 +10,8 @@ export type SlotTemplate = {
   offsetDays?: number
   thematic?: string
   thematicId?: string | null
+  /** Thématique interne (MDS-71) : créneau réservé au Planning. */
+  internal?: boolean
   locationID?: string | null
   isIndividual?: boolean
   /** Ambulatoire, hospitalisation ou téléphonique : vaut pour tous les rendez-vous du créneau. */

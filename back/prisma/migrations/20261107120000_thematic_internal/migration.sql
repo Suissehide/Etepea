@@ -1,0 +1,1 @@
+ALTER TABLE "Thematic" ADD COLUMN "internal" BOOLEAN NOT NULL DEFAULT false;

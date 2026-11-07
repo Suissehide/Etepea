@@ -200,8 +200,8 @@ export default function AppointmentSheet({
   const thematicOptions = useMemo(() => {
     const map = new Map<string, { value: string; label: string }>()
     for (const soignant of soignants) {
-      for (const t of thematics?.filter((t) =>
-        t.soignants.some((ss) => ss.id === soignant.id),
+      for (const t of thematics?.filter(
+        (t) => !t.internal && t.soignants.some((ss) => ss.id === soignant.id),
       ) ?? []) {
         map.set(t.id, { value: t.id, label: thematicLabel(t) })
       }

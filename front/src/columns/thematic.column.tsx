@@ -77,6 +77,12 @@ export const getThematicColumns = ({
       },
     }),
     columnHelper.display({
+      id: 'internal',
+      header: 'Interne',
+      size: 100,
+      cell: ({ row }) => (row.original.internal ? 'Oui' : '—'),
+    }),
+    columnHelper.display({
       id: 'soignants',
       header: 'Soignants',
       size: 300,

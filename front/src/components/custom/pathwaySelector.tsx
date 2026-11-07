@@ -543,10 +543,12 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
   const hasOptional =
     tagOptions.some((o) => o.optional) || addedPathways.some((p) => p.optional)
 
-  const thematicOptions = (thematics ?? []).map((t) => ({
-    value: t.id,
-    label: thematicLabel(t),
-  }))
+  const thematicOptions = (thematics ?? [])
+    .filter((t) => !t.internal)
+    .map((t) => ({
+      value: t.id,
+      label: thematicLabel(t),
+    }))
 
   const renderGroup = (optional: boolean) => {
     const options = tagOptions.filter((o) => o.optional === optional)

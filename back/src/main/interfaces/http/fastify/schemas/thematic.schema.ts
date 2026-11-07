@@ -12,6 +12,7 @@ const thematicEntity = {
   name: z.string().min(1),
   duration: z.number().optional().nullable(),
   pdfNotice: z.string().optional().nullable(),
+  internal: z.boolean().optional(),
   role: thematicRole.optional().nullable(),
 }
 
@@ -20,6 +21,7 @@ export const thematicResponseSchema = z.object({
   name: z.string(),
   duration: z.number().optional().nullable(),
   pdfNotice: z.string().optional().nullable(),
+  internal: z.boolean().optional(),
   role: thematicRole.optional().nullable(),
   soignants: z.array(z.object({ id: cuid(), name: z.string() })),
 })
@@ -43,6 +45,7 @@ export const updateThematicSchema = z.object({
   name: z.string().min(1).optional(),
   duration: z.number().optional().nullable(),
   pdfNotice: z.string().optional().nullable(),
+  internal: z.boolean().optional(),
   role: thematicRole.optional().nullable(),
   soignantIDs: z.array(cuid()).optional(),
   archived: z.boolean().optional(),
