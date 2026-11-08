@@ -20,6 +20,7 @@ import {
   getTrancheChoice,
   getUpcomingSlotSuggestions,
   type SlotSuggestion,
+  type SlotTranche,
 } from '../../../libs/slotAvailability.ts'
 import {
   cn,
@@ -113,15 +114,105 @@ const EmptySlotList = ({ children }: { children: React.ReactNode }) => (
   </div>
 )
 
+type SelectSuggestion = (suggestion: SlotSuggestion, start?: string) => void
+
+/** Libellé de capacité d'un créneau découpé en heures : « 3 libres sur 4 ». */
+export const getTrancheCapacityLabel = (tranches: SlotTranche[]) => {
+  const free = tranches.filter((tranche) => !tranche.taken).length
+  return `${free} ${free > 1 ? 'libres' : 'libre'} sur ${tranches.length}`
+}
+
+/**
+ * Créneau individuel dont la thématique a une durée (MDS-75) : au lieu de la
+ * plage entière, les heures de début possibles. Les heures déjà prises restent
+ * affichées, barrées, pour qu'on voie pourquoi elles manquent.
+ */
+const SlotTrancheRow = ({
+  suggestion,
+  tranches,
+  onSelect,
+}: {
+  suggestion: SlotSuggestion
+  tranches: SlotTranche[]
+  onSelect: SelectSuggestion
+}) => {
+  const { slot } = suggestion
+  const location = slot.slotTemplate?.location?.name
+  const minutes = dayjs
+    .utc(tranches[0].end)
+    .diff(dayjs.utc(tranches[0].start), 'minute')
+
+  return (
+    <div className="grid grid-cols-[104px_4px_minmax(0,1fr)_150px_16px] gap-x-3 gap-y-2.5 items-center w-full py-3 pl-4 pr-3.5 border-b border-muted bg-primary-foreground">
+      <span className="text-[15px] font-semibold text-foreground tabular-nums">
+        {formatSlotRange(slot.startDate, slot.endDate)}
+      </span>
+      <span
+        className="w-1 h-[34px] rounded-full"
+        style={{ backgroundColor: slot.slotTemplate?.color ?? '#2563eb' }}
+      />
+      <span className="flex flex-col gap-0.5 min-w-0">
+        <span className="text-sm font-medium text-foreground truncate">
+          {formatSoignants(slot)}
+          {location && (
+            <span className="font-normal text-text-light"> · {location}</span>
+          )}
+        </span>
+        <span className="text-xs text-text-light">
+          {`Créneau individuel · ${minutes} min par rendez-vous`}
+        </span>
+      </span>
+      <span className="justify-self-end text-xs font-semibold whitespace-nowrap text-[#15803d]">
+        {getTrancheCapacityLabel(tranches)}
+      </span>
+      <span />
+      <fieldset className="col-start-3 col-span-3 flex flex-wrap gap-1.5 m-0 p-0 border-0 min-w-0">
+        <legend className="sr-only">
+          {`Heures de début, ${formatSlotDate(slot.startDate)} ${formatSlotRange(slot.startDate, slot.endDate)}`}
+        </legend>
+        {tranches.map((tranche) => {
+          const time = dayjs.utc(tranche.start).format('HH:mm')
+          return (
+            <button
+              key={tranche.start}
+              type="button"
+              disabled={tranche.taken}
+              title={tranche.taken ? 'Déjà pris' : `Commencer à ${time}`}
+              onClick={() => onSelect(suggestion, tranche.start)}
+              className={cn(
+                'min-w-16 h-8 px-2.5 rounded-md border text-sm font-semibold tabular-nums transition-colors',
+                tranche.taken
+                  ? 'cursor-not-allowed border-border bg-[#f8fafc] text-[#94a3b8] line-through'
+                  : 'cursor-pointer border-primary-light bg-blue-50 text-primary-dark hover:bg-blue-100',
+              )}
+            >
+              {time}
+            </button>
+          )
+        })}
+      </fieldset>
+    </div>
+  )
+}
+
 /** Une ligne de la liste ; complète ou déjà réservée, elle reste visible mais grisée. */
 const SlotSuggestionRow = ({
   suggestion,
   onSelect,
 }: {
   suggestion: SlotSuggestion
-  onSelect: (suggestion: SlotSuggestion) => void
+  onSelect: SelectSuggestion
 }) => {
   const isSelectable = !suggestion.alreadyBooked && !suggestion.isFull
+  if (isSelectable && suggestion.tranches?.length) {
+    return (
+      <SlotTrancheRow
+        suggestion={suggestion}
+        tranches={suggestion.tranches}
+        onSelect={onSelect}
+      />
+    )
+  }
   const { slot } = suggestion
   const location = slot.slotTemplate?.location?.name
   const fill = suggestion.isIndividual
@@ -189,7 +280,7 @@ const SlotSuggestionRow = ({
 }
 
 /** Créneaux groupés par jour (en-tête collant), puis « Charger plus ». */
-const SlotList = ({
+export const SlotList = ({
   isReady,
   suggestions,
   until,
@@ -203,7 +294,7 @@ const SlotList = ({
   until: string
   hasMore: boolean
   isLoading: boolean
-  onSelect: (suggestion: SlotSuggestion) => void
+  onSelect: SelectSuggestion
   onLoadMore: () => void
 }) => {
   if (!isReady) {
@@ -760,7 +851,11 @@ function AddPatientToSlotContent({
     )
   }, [selected, individualFreeInterval, startTime])
 
-  const handleSelectSuggestion = (suggestion: SlotSuggestion) => {
+  // `start` : l'heure cliquée à l'étape 1 sur un créneau découpé (MDS-75).
+  const handleSelectSuggestion = (
+    suggestion: SlotSuggestion,
+    start?: string,
+  ) => {
     if (suggestion.alreadyBooked || suggestion.isFull) {
       return
     }
@@ -769,7 +864,10 @@ function AddPatientToSlotContent({
       suggestion,
       selectedThematic?.duration,
     )
-    form.setFieldValue('startTime', defaults.startTime)
+    form.setFieldValue(
+      'startTime',
+      start ? dayjs.utc(start) : defaults.startTime,
+    )
     form.setFieldValue('duration', defaults.duration)
     form.setFieldValue('motif', '')
     form.setFieldValue('subThematicID', thematicID)
@@ -964,7 +1062,7 @@ function AddPatientToSlotContent({
               <span className="font-normal text-text-light">({freeCount})</span>
             </span>
             <span className="text-xs text-text-light">
-              Cliquez sur un créneau pour continuer
+              Cliquez sur un créneau ou une heure pour continuer
             </span>
           </div>
 
@@ -1057,7 +1155,7 @@ function AddPatientToSlotContent({
       {step === 1 ? (
         <PopupFooter className="items-center justify-between mt-auto">
           <span className="text-[13px] text-text-light">
-            Les créneaux complets ou déjà réservés restent affichés, grisés.
+            Complets, déjà réservés ou heures prises : affichés, grisés.
           </span>
           <Button variant="outline" onClick={onClose}>
             <X className="w-4 h-4" />

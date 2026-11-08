@@ -11,6 +11,9 @@ export const UPCOMING_SLOT_LIMIT = 10
 
 export type FreeInterval = { start: string; end: string }
 
+/** Une tranche d'un créneau individuel, libre ou déjà prise par un rendez-vous. */
+export type SlotTranche = FreeInterval & { taken: boolean }
+
 export type SlotSuggestion = {
   slot: Slot
   /** Le patient sélectionné a déjà un rendez-vous sur ce créneau. */
@@ -22,6 +25,11 @@ export type SlotSuggestion = {
   isIndividual: boolean
   /** Premier intervalle libre — créneaux individuels uniquement. */
   freeInterval?: FreeInterval
+  /**
+   * Toutes les tranches du créneau, prises comprises — créneaux individuels
+   * dont la durée de thématique est connue (MDS-75). On les montre à l'étape 1.
+   */
+  tranches?: SlotTranche[]
   /** Rendez-vous collectif existant que le patient peut rejoindre. */
   joinableAppointmentID?: string
 }
@@ -111,18 +119,18 @@ const trancheLength = (slot: Slot, minutes: number) =>
     dayjs.utc(slot.endDate).diff(dayjs.utc(slot.startDate), 'minute'),
   )
 
-/** Tranches libres d'un créneau découpé depuis son début en pas de `minutes` : on n'y laisse aucun trou. */
-export const getFreeTranches = (
+/** Tranches d'un créneau découpé depuis son début en pas de `minutes`, chacune marquée prise si un rendez-vous la chevauche. */
+export const getSlotTranches = (
   slot: Slot,
   duration: number,
-): FreeInterval[] => {
+): SlotTranche[] => {
   const minutes = trancheLength(slot, duration)
   if (minutes <= 0) {
     return []
   }
   const booked = slot.appointments ?? []
   const slotEnd = dayjs.utc(slot.endDate)
-  const tranches: FreeInterval[] = []
+  const tranches: SlotTranche[] = []
   for (
     let start = dayjs.utc(slot.startDate);
     !start.add(minutes, 'minute').isAfter(slotEnd);
@@ -134,12 +142,16 @@ export const getFreeTranches = (
         start.isBefore(dayjs.utc(appointment.endDate)) &&
         end.isAfter(dayjs.utc(appointment.startDate)),
     )
-    if (!taken) {
-      tranches.push({ start: start.toISOString(), end: end.toISOString() })
-    }
+    tranches.push({ start: start.toISOString(), end: end.toISOString(), taken })
   }
   return tranches
 }
+
+/** Tranches libres d'un créneau découpé depuis son début en pas de `minutes` : on n'y laisse aucun trou. */
+export const getFreeTranches = (slot: Slot, duration: number): FreeInterval[] =>
+  getSlotTranches(slot, duration)
+    .filter((tranche) => !tranche.taken)
+    .map(({ start, end }) => ({ start, end }))
 
 /** Tranches libres d'un créneau individuel, à la première durée connue de `durations`, et celle retenue pour `time` : qui le contient, sinon la suivante, sinon la première. Sans durée : rien, l'horaire reste libre. */
 export const getTrancheChoice = (
@@ -259,6 +271,10 @@ export const getUpcomingSlotSuggestions = (
         freeInterval: isIndividual
           ? getBookableIntervals(slot, trancheMinutes)[0]
           : undefined,
+        tranches:
+          isIndividual && trancheMinutes
+            ? getSlotTranches(slot, trancheMinutes)
+            : undefined,
         joinableAppointmentID:
           !isIndividual && existingAppointment
             ? existingAppointment.id
