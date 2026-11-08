@@ -9,6 +9,7 @@ import {
   getFreeTranches,
   getPathwayProgress,
   getPathwayStartDates,
+  getSlotTranches,
   getUpcomingSlotSuggestions,
   groupSlotsByDay,
   isRangeFree,
@@ -336,6 +337,25 @@ describe('getUpcomingSlotSuggestions', () => {
 
     expect(suggestions.map((s) => s.slot.id)).toEqual(['vivant'])
   })
+
+  it('decoupe un creneau individuel en heures quand la thematique a une duree', () => {
+    const individuel = proposable('indiv', {
+      slotTemplate: { thematicId: 'them-1', capacity: 1, isIndividual: true },
+    } as Partial<Slot>)
+    const [avecDuree] = getUpcomingSlotSuggestions(
+      [individuel],
+      'them-1',
+      'p1',
+      undefined,
+      10,
+      30,
+    )
+    const [sansDuree] = getUpcomingSlotSuggestions([individuel], 'them-1', 'p1')
+
+    expect(avecDuree.tranches?.length).toBeGreaterThan(0)
+    expect(avecDuree.tranches?.every((t) => !t.taken)).toBe(true)
+    expect(sansDuree.tranches).toBeUndefined()
+  })
 })
 
 describe('getFreeTranches', () => {
@@ -374,6 +394,30 @@ describe('getFreeTranches', () => {
     expect(getFreeTranches(creneau([]), 240)).toEqual([
       { start: '2026-11-02T09:00:00.000Z', end: '2026-11-02T12:00:00.000Z' },
     ])
+  })
+})
+
+describe('getSlotTranches', () => {
+  // MDS-75 : consultation de 9h15 a 12h15, thematique de 45 min, 10h00 deja pris.
+  const consultation = {
+    id: 'slot-1',
+    startDate: '2026-11-06T09:15:00.000Z',
+    endDate: '2026-11-06T12:15:00.000Z',
+    appointments: [
+      {
+        id: 'apt-1',
+        startDate: '2026-11-06T10:00:00.000Z',
+        endDate: '2026-11-06T10:45:00.000Z',
+      },
+    ],
+  } as unknown as Slot
+
+  it('propose chaque debut, et marque ceux deja pris', () => {
+    expect(
+      getSlotTranches(consultation, 45).map(
+        (t) => `${t.start.slice(11, 16)}${t.taken ? ' pris' : ''}`,
+      ),
+    ).toEqual(['09:15', '10:00 pris', '10:45', '11:30'])
   })
 })
 
