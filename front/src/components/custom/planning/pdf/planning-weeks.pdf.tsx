@@ -47,7 +47,9 @@ const styles = StyleSheet.create({
   header: {
     flexShrink: 0,
     flexDirection: 'row',
-    alignItems: 'baseline',
+    // react-pdf (Yoga) ne gère pas `baseline` : les textes plus petits que le
+    // titre restaient collés en haut. On centre la ligne.
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 6,
   },

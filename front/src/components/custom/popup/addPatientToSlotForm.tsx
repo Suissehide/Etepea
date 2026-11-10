@@ -870,7 +870,9 @@ function AddPatientToSlotContent({
     )
     form.setFieldValue('duration', defaults.duration)
     form.setFieldValue('motif', '')
-    form.setFieldValue('subThematicID', thematicID)
+    // Sous-thématique facultative, vide comme dans « Nouveau rendez-vous » du
+    // Planning : sans choix, le rendez-vous garde la thématique du créneau.
+    form.setFieldValue('subThematicID', '')
 
     setSelected(suggestion)
     setStep(2)
@@ -993,7 +995,6 @@ function AddPatientToSlotContent({
           label="Sous-thématique"
           options={subThematicOptions}
           searchable
-          clearable={false}
         />
       )}
     </form.AppField>
