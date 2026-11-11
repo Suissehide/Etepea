@@ -209,25 +209,26 @@ function SlotAppointments({
         />
       )}
 
-      {isMultiple && hasAppointments && (
+      {isMultiple && hasAppointments && !effectifSeul && (
         <MultipleAppointments
           appointments={appointments ?? []}
           isRowLayout={isRowLayout}
           capacity={capacity}
-          effectifSeul={effectifSeul}
           styleFor={styleFor}
           onOpen={onOpen}
         />
       )}
 
-      {isMultiple &&
-        !hasAppointments &&
-        effectifSeul &&
-        (locked || !ajoutPossible) && (
-          <div className="relative z-10 flex flex-1 items-center justify-center pointer-events-none">
-            <Effectif count={0} capacity={capacity} />
-          </div>
-        )}
+      {isMultiple && effectifSeul && (
+        <PlacesLibres
+          inscrits={
+            appointments?.flatMap((a) => a.appointmentPatients ?? []).length ??
+            0
+          }
+          capacity={capacity}
+          isRowLayout={isRowLayout}
+        />
+      )}
 
       {/* Bouton + pour slots multiple vides */}
       {isMultiple && !locked && !hasAppointments && ajoutPossible && (
@@ -496,13 +497,9 @@ function MultipleAppointments({
   appointments,
   isRowLayout,
   capacity,
-  effectifSeul,
   styleFor,
   onOpen,
-}: AppointmentListProps & {
-  capacity?: number | null
-  effectifSeul: boolean
-}) {
+}: AppointmentListProps & { capacity?: number | null }) {
   return (
     <div
       className={clsx(
@@ -527,42 +524,34 @@ function MultipleAppointments({
               isRowLayout ? 'flex-row min-w-0' : 'flex-col mx-0.5',
             )}
           >
-            {effectifSeul ? (
-              <span className="m-auto">
-                <Effectif count={count} capacity={capacity} />
-              </span>
-            ) : (
-              <span className="absolute top-0 right-0 z-20 rounded-bl rounded-tr bg-black/40 px-1 text-[0.55rem] font-semibold leading-tight text-white pointer-events-none">
-                {capacity == null ? count : `${count}/${capacity}`}
-              </span>
-            )}
-            {!effectifSeul && (
-              <div
-                className={clsx(
-                  'flex flex-1 min-h-0 min-w-0 w-full',
-                  isRowLayout ? 'flex-row' : 'flex-col overflow-y-auto',
-                )}
-              >
-                {appointment.appointmentPatients?.map(
-                  (appointmentPatient: AppointmentPatient, idx: number) => (
-                    <div
-                      key={appointmentPatient.patient.id}
-                      className={clsx(
-                        'flex-1',
-                        idx > 0 &&
-                          isRowLayout &&
-                          'border-l border-white/30 pl-1 ml-1',
-                        idx > 0 &&
-                          !isRowLayout &&
-                          'border-t border-white/30 pt-0.5 mt-0.5',
-                      )}
-                    >
-                      <PatientName appointmentPatient={appointmentPatient} />
-                    </div>
-                  ),
-                )}
-              </div>
-            )}
+            <span className="absolute top-0 right-0 z-20 rounded-bl rounded-tr bg-black/40 px-1 text-[0.55rem] font-semibold leading-tight text-white pointer-events-none">
+              {capacity == null ? count : `${count}/${capacity}`}
+            </span>
+            <div
+              className={clsx(
+                'flex flex-1 min-h-0 min-w-0 w-full',
+                isRowLayout ? 'flex-row' : 'flex-col overflow-y-auto',
+              )}
+            >
+              {appointment.appointmentPatients?.map(
+                (appointmentPatient: AppointmentPatient, idx: number) => (
+                  <div
+                    key={appointmentPatient.patient.id}
+                    className={clsx(
+                      'flex-1',
+                      idx > 0 &&
+                        isRowLayout &&
+                        'border-l border-white/30 pl-1 ml-1',
+                      idx > 0 &&
+                        !isRowLayout &&
+                        'border-t border-white/30 pt-0.5 mt-0.5',
+                    )}
+                  >
+                    <PatientName appointmentPatient={appointmentPatient} />
+                  </div>
+                ),
+              )}
+            </div>
           </button>
         )
       })}
@@ -570,22 +559,35 @@ function MultipleAppointments({
   )
 }
 
-/** Inscrits/capacité, en rouge tant que le groupe n'est pas complet. */
-function Effectif({
-  count,
+/** Places restantes du créneau collectif, en rouge tant qu'il en reste. */
+function PlacesLibres({
+  inscrits,
   capacity,
+  isRowLayout,
 }: {
-  count: number
+  inscrits: number
   capacity?: number | null
+  isRowLayout: boolean
 }) {
+  const libres = capacity == null ? null : capacity - inscrits
   return (
     <span
       className={clsx(
-        'rounded px-1.5 text-xs font-semibold leading-5 text-white',
-        capacity != null && count < capacity ? 'bg-destructive' : 'bg-black/40',
+        'relative z-10 pointer-events-none whitespace-nowrap rounded px-1.5 text-[0.7rem] font-semibold leading-[18px]',
+        isRowLayout ? 'ml-auto self-center' : 'mt-auto self-start',
+        libres != null && libres > 0 && 'bg-destructive text-white',
       )}
     >
-      {capacity == null ? count : `${count}/${capacity}`}
+      {libres == null ? (
+        `${inscrits} inscrit${inscrits > 1 ? 's' : ''}`
+      ) : libres > 0 ? (
+        `${libres} libre${libres > 1 ? 's' : ''}`
+      ) : (
+        <>
+          <Check className="inline w-3 h-3 mr-0.5" />
+          Complet
+        </>
+      )}
     </span>
   )
 }
