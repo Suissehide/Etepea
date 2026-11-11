@@ -172,6 +172,10 @@ interface CalendarProps {
   onToggleSelect?: (eventId: string) => void
   /** Tags secondaires du parcours, affichés sur le créneau. */
   showSecondaryTags?: boolean
+  /** Créneaux collectifs : le seul effectif inscrits/capacité, sans les noms. */
+  effectifSeul?: boolean
+  /** Faux : pas de « + » sur les créneaux collectifs vides. */
+  ajoutPossible?: boolean
   unselectRef?: React.MutableRefObject<(() => void) | null>
   weekAnchorDate?: string
   /** Cycle de numérotation du service ; absent = numéros de semaine ISO. */
@@ -208,6 +212,8 @@ function Calendar({
   selectedSlotIds,
   onToggleSelect,
   showSecondaryTags = true,
+  effectifSeul = false,
+  ajoutPossible = true,
   unselectRef,
   weekAnchorDate,
   planningCycle,
@@ -420,6 +426,8 @@ function Calendar({
         selectedSlotIds={selectedSlotIds}
         onToggleSelect={onToggleSelect}
         showSecondaryTags={showSecondaryTags}
+        effectifSeul={effectifSeul}
+        ajoutPossible={ajoutPossible}
       />
     )
     // En vue liste, le contenu remplace toute la ligne : l'horaire n'y est plus que s'il est rendu ici.

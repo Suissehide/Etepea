@@ -178,6 +178,10 @@ function Dashboard() {
   const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
   const [exportOpen, setExportOpen] = useState(false)
   const canExportPdf = useCan('pdf:export')
+  // MDS-72 : sous Coordinateur, le Dashboard ne sert qu'à consulter.
+  const peutAjouter = useAuthStore(
+    (state) => state.context?.serviceRole === 'COORDINATEUR',
+  )
 
   // L'export part de ce que montre le tableau de bord : la sélection de soignants
   // ou de parcours devient le filtre de départ (pas d'équivalent pour les salles).
@@ -265,7 +269,11 @@ function Dashboard() {
       handleOpenEvent(`appointment_${event.extendedProps.appointments[0].id}`)
       return
     }
-    if (event.extendedProps?.locked || event.extendedProps?.archived) {
+    if (
+      !peutAjouter ||
+      event.extendedProps?.locked ||
+      event.extendedProps?.archived
+    ) {
       return
     }
 
@@ -382,6 +390,8 @@ function Dashboard() {
               editable={false}
               overlap={false}
               showSecondaryTags={false}
+              effectifSeul
+              ajoutPossible={peutAjouter}
               initialDate={savedDate}
               initialView={initialView}
               planningCycle={planningCycle}
@@ -391,7 +401,9 @@ function Dashboard() {
                 localStorage.setItem(VIEW_STORAGE_KEY, view)
               }
               onRangeChange={handleRangeChange}
-              handleSelectEvent={handleSelectAppointment}
+              handleSelectEvent={
+                peutAjouter ? handleSelectAppointment : undefined
+              }
               handleClickEvent={handleAddAppointment}
               handleOpenEvent={handleOpenEvent}
               selectAllow={(selectInfo, eventId) => {

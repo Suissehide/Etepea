@@ -36,6 +36,8 @@ type Props = {
   onToggleSelect?: (eventId: string) => void
   /** Tags secondaires du parcours, affichés sur le créneau. */
   showSecondaryTags?: boolean
+  effectifSeul?: boolean
+  ajoutPossible?: boolean
 }
 
 export const EventContent = ({
@@ -48,6 +50,8 @@ export const EventContent = ({
   selectedSlotIds,
   onToggleSelect,
   showSecondaryTags = true,
+  effectifSeul = false,
+  ajoutPossible = true,
 }: Props) => {
   const { event, view } = eventContent
   const {
@@ -160,6 +164,8 @@ export const EventContent = ({
         isRowLayout={isRowLayout}
         appointmentColor={appointmentColor}
         capacity={capacity}
+        effectifSeul={effectifSeul}
+        ajoutPossible={ajoutPossible}
         styleFor={calculateAppointmentStyle}
         onOpen={openAppointment}
       />
@@ -176,6 +182,8 @@ function SlotAppointments({
   isRowLayout,
   appointmentColor,
   capacity,
+  effectifSeul,
+  ajoutPossible,
   styleFor,
   onOpen,
 }: Omit<AppointmentListProps, 'appointments'> & {
@@ -185,6 +193,8 @@ function SlotAppointments({
   locked?: boolean
   appointmentColor: string
   capacity?: number | null
+  effectifSeul: boolean
+  ajoutPossible: boolean
 }) {
   const hasAppointments = Boolean(appointments && appointments.length > 0)
   return (
@@ -204,13 +214,23 @@ function SlotAppointments({
           appointments={appointments ?? []}
           isRowLayout={isRowLayout}
           capacity={capacity}
+          effectifSeul={effectifSeul}
           styleFor={styleFor}
           onOpen={onOpen}
         />
       )}
 
+      {isMultiple &&
+        !hasAppointments &&
+        effectifSeul &&
+        (locked || !ajoutPossible) && (
+          <div className="relative z-10 flex flex-1 items-center justify-center pointer-events-none">
+            <Effectif count={0} capacity={capacity} />
+          </div>
+        )}
+
       {/* Bouton + pour slots multiple vides */}
-      {isMultiple && !locked && !hasAppointments && (
+      {isMultiple && !locked && !hasAppointments && ajoutPossible && (
         <div className="z-100 cursor-pointer absolute inset-0 flex justify-center items-center">
           <Button variant="transparent" className="w-full h-full">
             <div className="p-1 rounded-full bg-neutral-50 text-primary group-hover:bg-neutral-300 transition-colors duration-200">
@@ -476,9 +496,13 @@ function MultipleAppointments({
   appointments,
   isRowLayout,
   capacity,
+  effectifSeul,
   styleFor,
   onOpen,
-}: AppointmentListProps & { capacity?: number | null }) {
+}: AppointmentListProps & {
+  capacity?: number | null
+  effectifSeul: boolean
+}) {
   return (
     <div
       className={clsx(
@@ -503,38 +527,66 @@ function MultipleAppointments({
               isRowLayout ? 'flex-row min-w-0' : 'flex-col mx-0.5',
             )}
           >
-            <span className="absolute top-0 right-0 z-20 rounded-bl rounded-tr bg-black/40 px-1 text-[0.55rem] font-semibold leading-tight text-white pointer-events-none">
-              {capacity == null ? count : `${count}/${capacity}`}
-            </span>
-            <div
-              className={clsx(
-                'flex flex-1 min-h-0 min-w-0 w-full',
-                isRowLayout ? 'flex-row' : 'flex-col overflow-y-auto',
-              )}
-            >
-              {appointment.appointmentPatients?.map(
-                (appointmentPatient: AppointmentPatient, idx: number) => (
-                  <div
-                    key={appointmentPatient.patient.id}
-                    className={clsx(
-                      'flex-1',
-                      idx > 0 &&
-                        isRowLayout &&
-                        'border-l border-white/30 pl-1 ml-1',
-                      idx > 0 &&
-                        !isRowLayout &&
-                        'border-t border-white/30 pt-0.5 mt-0.5',
-                    )}
-                  >
-                    <PatientName appointmentPatient={appointmentPatient} />
-                  </div>
-                ),
-              )}
-            </div>
+            {effectifSeul ? (
+              <span className="m-auto">
+                <Effectif count={count} capacity={capacity} />
+              </span>
+            ) : (
+              <span className="absolute top-0 right-0 z-20 rounded-bl rounded-tr bg-black/40 px-1 text-[0.55rem] font-semibold leading-tight text-white pointer-events-none">
+                {capacity == null ? count : `${count}/${capacity}`}
+              </span>
+            )}
+            {!effectifSeul && (
+              <div
+                className={clsx(
+                  'flex flex-1 min-h-0 min-w-0 w-full',
+                  isRowLayout ? 'flex-row' : 'flex-col overflow-y-auto',
+                )}
+              >
+                {appointment.appointmentPatients?.map(
+                  (appointmentPatient: AppointmentPatient, idx: number) => (
+                    <div
+                      key={appointmentPatient.patient.id}
+                      className={clsx(
+                        'flex-1',
+                        idx > 0 &&
+                          isRowLayout &&
+                          'border-l border-white/30 pl-1 ml-1',
+                        idx > 0 &&
+                          !isRowLayout &&
+                          'border-t border-white/30 pt-0.5 mt-0.5',
+                      )}
+                    >
+                      <PatientName appointmentPatient={appointmentPatient} />
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
           </button>
         )
       })}
     </div>
+  )
+}
+
+/** Inscrits/capacité, en rouge tant que le groupe n'est pas complet. */
+function Effectif({
+  count,
+  capacity,
+}: {
+  count: number
+  capacity?: number | null
+}) {
+  return (
+    <span
+      className={clsx(
+        'rounded px-1.5 text-xs font-semibold leading-5 text-white',
+        capacity != null && count < capacity ? 'bg-destructive' : 'bg-black/40',
+      )}
+    >
+      {capacity == null ? count : `${count}/${capacity}`}
+    </span>
   )
 }
 
