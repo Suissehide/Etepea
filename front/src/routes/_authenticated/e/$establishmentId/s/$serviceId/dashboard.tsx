@@ -32,7 +32,7 @@ import { useCan } from '@/hooks/useCan.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import {
   type FreeInterval,
-  getFreeTranches,
+  getSlotTranches,
   isSlotVisible,
 } from '@/libs/slotAvailability.ts'
 import { buildCalendarEventsFromSlots, containsKeyword } from '@/libs/utils.ts'
@@ -231,7 +231,7 @@ function Dashboard() {
         location: () => filterSlotsByLocations(visible, selectedLocationIDs),
       }[mode]()
 
-      // Individuel : pré-découpé en tranches libres de la durée de sa thématique.
+      // Individuel : pré-découpé en tranches de la durée de sa thématique.
       const durations = new Map(thematics?.map((t) => [t.id, t.duration]))
       const slotEvents = buildCalendarEventsFromSlots(
         filtered,
@@ -246,7 +246,7 @@ function Dashboard() {
               ...event,
               extendedProps: {
                 ...event.extendedProps,
-                tranches: getFreeTranches(filtered[i], duration),
+                tranches: getSlotTranches(filtered[i], duration),
               },
             }
           : event

@@ -12,8 +12,16 @@ import {
   Users,
 } from 'lucide-react'
 
-import { darkenHex } from '../../../libs/color.ts'
-import type { FreeInterval } from '../../../libs/slotAvailability.ts'
+import {
+  darkenHex,
+  hexToRGBA,
+  readableTint,
+  tintOnWhite,
+} from '../../../libs/color.ts'
+import type {
+  FreeInterval,
+  SlotTranche,
+} from '../../../libs/slotAvailability.ts'
 import { containsKeyword } from '../../../libs/utils.ts'
 import type { Appointment } from '../../../types/appointment.ts'
 import type { AppointmentPatient } from '../../../types/appointmentPatient.ts'
@@ -69,7 +77,6 @@ export const EventContent = ({
     conflicts = [],
     capacity,
     isIndividual: isIndividualTemplate,
-    secondaryTags = [],
   } = event.extendedProps
   const isTimeGridView = view.type.startsWith('timeGrid')
   const isRowLayout = !isTimeGridView
@@ -80,10 +87,9 @@ export const EventContent = ({
   const isSelectionMode = selectedSlotIds && selectedSlotIds.size > 0
 
   const slotColor = event.color || '#2563eb'
-  const appointmentColor = darkenHex(slotColor, 0.3)
-  const durationMinutes = event.end
-    ? dayjs(event.end).diff(dayjs(event.start), 'minute')
-    : 0
+  // Dashboard : l'individuel est clair, seuls ses rendez-vous sont pleins.
+  const clair = effectifSeul && isIndividual && isTimeGridView
+  const appointmentColor = couleurRendezVous(slotColor, clair)
   // Les trois lignes du libellé sont tronquées : le survol les rend en entier.
   const hoverTitle = [event.title, thematic, location]
     .filter(Boolean)
@@ -117,7 +123,7 @@ export const EventContent = ({
             isSelected,
         },
       )}
-      style={slotStyle(event)}
+      style={styleHero(event, clair)}
     >
       {onToggleSelect && isSelectable && !isEditable && (
         <SelectToggle
@@ -152,13 +158,16 @@ export const EventContent = ({
         onDelete={onDelete}
       />
 
-      <EventLabel
-        title={event.title}
-        thematic={thematic}
-        location={location}
-        secondaryTags={showSecondaryTags ? secondaryTags : []}
+      <Libelle
+        clair={clair}
+        event={event}
+        slotColor={slotColor}
+        tranches={tranches}
+        onPick={
+          ajoutPossible && !locked && !archived ? onPickTranche : undefined
+        }
+        showSecondaryTags={showSecondaryTags}
         isRowLayout={isRowLayout}
-        locationOnOwnLine={durationMinutes > 30}
       />
 
       <SlotAppointments
@@ -173,37 +182,10 @@ export const EventContent = ({
         ajoutPossible={ajoutPossible}
         styleFor={calculateAppointmentStyle}
         onOpen={openAppointment}
+        clair={clair}
+        textColor={event.contrastColor}
+        slotStart={event.start}
       />
-
-      {isTimeGridView &&
-        ajoutPossible &&
-        !locked &&
-        !archived &&
-        onPickTranche &&
-        tranches.map((tranche: FreeInterval) => (
-          <button
-            key={tranche.start}
-            type="button"
-            data-event-action
-            aria-label={`Ajouter un rendez-vous à ${dayjs(tranche.start).format('HH:mm')}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              onPickTranche(event.id, tranche)
-            }}
-            style={{
-              ...appointmentStyle(
-                { startDate: tranche.start, endDate: tranche.end },
-                event,
-                '',
-                true,
-              ),
-              backgroundColor: undefined,
-            }}
-            className="group/tranche z-10 flex cursor-pointer items-center justify-center rounded border border-dashed border-current/40 transition-colors hover:bg-white/30"
-          >
-            <Plus className="h-3 w-3 opacity-0 transition-opacity group-hover/tranche:opacity-100" />
-          </button>
-        ))}
     </div>
   )
 }
@@ -221,7 +203,13 @@ function SlotAppointments({
   ajoutPossible,
   styleFor,
   onOpen,
+  clair,
+  textColor,
+  slotStart,
 }: Omit<AppointmentListProps, 'appointments'> & {
+  clair: boolean
+  textColor?: string
+  slotStart: EventDisplayInfo['event']['start']
   appointments?: Appointment[]
   isIndividual: boolean
   isMultiple: boolean
@@ -241,6 +229,9 @@ function SlotAppointments({
           appointmentColor={appointmentColor}
           styleFor={styleFor}
           onOpen={onOpen}
+          heure={clair}
+          textColor={clair ? textColor : undefined}
+          slotStart={slotStart}
         />
       )}
 
@@ -277,6 +268,22 @@ function SlotAppointments({
       )}
     </>
   )
+}
+
+const couleurRendezVous = (slotColor: string, clair: boolean) =>
+  clair ? slotColor : darkenHex(slotColor, 0.3)
+
+function styleHero(event: EventDisplayInfo['event'], clair: boolean) {
+  if (!clair) {
+    return slotStyle(event)
+  }
+  const slotColor = event.color || '#2563eb'
+  return {
+    backgroundColor: tintOnWhite(slotColor, 0.15),
+    color: readableTint(slotColor, 0.15),
+    boxShadow: `inset 0 0 0 1px ${hexToRGBA(slotColor, 0.6)}`,
+    padding: 0,
+  }
 }
 
 function slotStyle(event: EventDisplayInfo['event']) {
@@ -486,7 +493,15 @@ function IndividualAppointments({
   appointmentColor,
   styleFor,
   onOpen,
-}: AppointmentListProps & { appointmentColor: string }) {
+  heure,
+  textColor,
+  slotStart,
+}: AppointmentListProps & {
+  appointmentColor: string
+  heure?: boolean
+  textColor?: string
+  slotStart?: EventDisplayInfo['event']['start']
+}) {
   return (
     <div
       className={clsx(
@@ -504,16 +519,25 @@ function IndividualAppointments({
           }}
           key={appointment.id}
           data-appointment-id={appointment.id}
-          style={
-            isRowLayout
+          style={{
+            ...(isRowLayout
               ? { backgroundColor: appointmentColor }
-              : styleFor(appointment)
-          }
+              : styleFor(appointment)),
+            color: textColor,
+          }}
           className={clsx(
             'fc-event-hero z-10 cursor-pointer flex justify-start p-0.5 text-white truncate px-1 border border-white/30 rounded hover:brightness-90 transition-all',
             isRowLayout ? 'flex-1 min-w-0' : 'overflow-hidden',
+            heure &&
+              sousEnTete(appointment.startDate, slotStart) &&
+              'pt-[18px]',
           )}
         >
+          {heure && (
+            <span className="mr-1 shrink-0 tabular-nums opacity-80">
+              {dayjs.utc(appointment.startDate).format('HH:mm')}
+            </span>
+          )}
           {appointment.appointmentPatients?.map(
             (appointmentPatient: AppointmentPatient) => (
               <PatientName
@@ -706,5 +730,206 @@ function PatientName({
         <TooltipContent>{appointmentPatient.transmissionNotes}</TooltipContent>
       </TooltipRoot>
     </TooltipProvider>
+  )
+}
+
+/** La plage commence avec le créneau : son haut passe sous l'en-tête. */
+const sousEnTete = (
+  start: string,
+  slotStart?: EventDisplayInfo['event']['start'],
+) => !!slotStart && dayjs.utc(start).valueOf() === dayjs(slotStart).valueOf()
+
+/** Thématique et salle sur une ligne, avec les tranches libres comme sur un collectif. */
+function EnTeteIndividuel({
+  thematic,
+  location,
+  slotColor,
+  tranches,
+}: {
+  thematic?: string
+  location?: string
+  slotColor: string
+  tranches: SlotTranche[]
+}) {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-[18px] items-center gap-1 px-1 text-[0.6rem]"
+      style={{
+        backgroundColor: tintOnWhite(slotColor, 0.4),
+        color: readableTint(slotColor, 0.4),
+      }}
+    >
+      <span className="min-w-0 truncate">
+        <span className="font-semibold">{thematic}</span>
+        {location && <span className="opacity-80"> {location}</span>}
+      </span>
+      {tranches.length > 0 && (
+        <PlacesLibres
+          inscrits={tranches.filter((t) => t.taken).length}
+          capacity={tranches.length}
+          isRowLayout
+        />
+      )}
+    </div>
+  )
+}
+
+/** Libellé habituel, ou en-tête et tranches de l'individuel clair du Dashboard. */
+function Libelle({
+  clair,
+  event,
+  slotColor,
+  tranches,
+  onPick,
+  showSecondaryTags,
+  isRowLayout,
+}: {
+  clair: boolean
+  event: EventDisplayInfo['event']
+  slotColor: string
+  tranches: SlotTranche[]
+  onPick?: (eventId: string, tranche: FreeInterval) => void
+  showSecondaryTags: boolean
+  isRowLayout: boolean
+}) {
+  const { thematic, location, secondaryTags = [] } = event.extendedProps
+  if (clair) {
+    return (
+      <IndividuelClair
+        event={event}
+        thematic={thematic}
+        location={location}
+        slotColor={slotColor}
+        tranches={tranches}
+        onPick={onPick}
+      />
+    )
+  }
+  const durationMinutes = event.end
+    ? dayjs(event.end).diff(dayjs(event.start), 'minute')
+    : 0
+  return (
+    <EventLabel
+      title={event.title}
+      thematic={thematic}
+      location={location}
+      secondaryTags={showSecondaryTags ? secondaryTags : []}
+      isRowLayout={isRowLayout}
+      locationOnOwnLine={durationMinutes > 30}
+    />
+  )
+}
+
+function IndividuelClair({
+  event,
+  thematic,
+  location,
+  slotColor,
+  tranches,
+  onPick,
+}: {
+  event: EventDisplayInfo['event']
+  thematic?: string
+  location?: string
+  slotColor: string
+  tranches: SlotTranche[]
+  onPick?: (eventId: string, tranche: FreeInterval) => void
+}) {
+  return (
+    <>
+      <EnTeteIndividuel
+        thematic={thematic}
+        location={location}
+        slotColor={slotColor}
+        tranches={tranches}
+      />
+      <Tranches
+        event={event}
+        tranches={tranches}
+        slotColor={slotColor}
+        onPick={onPick && ((tranche) => onPick(event.id, tranche))}
+      />
+    </>
+  )
+}
+
+/** Tranches libres avec leur heure, cliquables pour ajouter ; le reliquat trop court est hachuré. */
+function Tranches({
+  event,
+  tranches,
+  slotColor,
+  onPick,
+}: {
+  event: EventDisplayInfo['event']
+  tranches: SlotTranche[]
+  slotColor: string
+  onPick?: (tranche: FreeInterval) => void
+}) {
+  const separateur = hexToRGBA(slotColor, 0.5)
+  const position = (start: string, end: string) =>
+    appointmentStyle({ startDate: start, endDate: end }, event, '', true)
+  const finTranches = tranches.at(-1)?.end
+  const reliquat =
+    finTranches && event.end && dayjs.utc(finTranches).isBefore(event.end)
+  return (
+    <>
+      {tranches
+        .filter((tranche) => !tranche.taken)
+        .map((tranche) => {
+          const heure = dayjs.utc(tranche.start).format('HH:mm')
+          const enTete = sousEnTete(tranche.start, event.start)
+          const className = clsx(
+            'z-10 flex items-start justify-between px-1 text-[0.6rem] tabular-nums',
+            enTete ? 'pt-[18px]' : 'border-t border-dashed',
+            onPick &&
+              'group/tranche cursor-pointer transition-colors hover:bg-black/5',
+          )
+          const style = {
+            ...position(tranche.start, tranche.end),
+            backgroundColor: undefined,
+            borderColor: separateur,
+          }
+          return onPick ? (
+            <button
+              key={tranche.start}
+              type="button"
+              data-event-action
+              aria-label={`Ajouter un rendez-vous à ${heure}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onPick(tranche)
+              }}
+              style={style}
+              className={className}
+            >
+              <span>{heure}</span>
+              <span className="flex items-center gap-0.5 font-semibold opacity-0 transition-opacity group-hover/tranche:opacity-100">
+                <Plus className="h-3 w-3" />
+                Ajouter
+              </span>
+            </button>
+          ) : (
+            <div
+              key={tranche.start}
+              style={style}
+              className={clsx(className, 'pointer-events-none')}
+            >
+              {heure}
+            </div>
+          )
+        })}
+      {reliquat && (
+        <div
+          aria-hidden
+          className="pointer-events-none border-t border-dashed"
+          style={{
+            ...position(finTranches, dayjs(event.end).toISOString()),
+            backgroundColor: undefined,
+            borderColor: separateur,
+            backgroundImage: `repeating-linear-gradient(135deg, transparent 0 5px, ${separateur} 5px 6px)`,
+          }}
+        />
+      )}
+    </>
   )
 }

@@ -23,7 +23,10 @@ import {
   useState,
 } from 'react'
 
-import type { FreeInterval } from '../../../libs/slotAvailability.ts'
+import type {
+  FreeInterval,
+  SlotTranche,
+} from '../../../libs/slotAvailability.ts'
 import { cn } from '../../../libs/utils.ts'
 import { usePlanningStore } from '../../../store/usePlanningStore.ts'
 import type { Appointment } from '../../../types/appointment.ts'
@@ -138,8 +141,8 @@ export interface CalendarEvent {
     locked?: boolean
     archived?: boolean
     conflicts?: string[]
-    /** Tranches libres d'un créneau individuel, à la durée de sa thématique. */
-    tranches?: FreeInterval[]
+    /** Tranches d'un créneau individuel, à la durée de sa thématique. */
+    tranches?: SlotTranche[]
     slotWeeks?: string[]
     thematic?: string
     secondaryTags?: string[]
