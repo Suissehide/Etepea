@@ -1,11 +1,13 @@
 import { Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 
-import { hexToRGBA } from '../../../../../libs/color.ts'
+import { hexToRGBA, readableTint } from '../../../../../libs/color.ts'
 import {
+  buildTimeAxis,
+  findGaps,
   formatMinute,
   formatTimeRange,
-  innerHours,
   type PlacedSlot,
+  type TimeAxis,
 } from '../../../../../libs/pdfTimeGrid.ts'
 import type { Slot } from '../../../../../types/slot.ts'
 import {
@@ -19,13 +21,22 @@ const PAGE_PADDING = 28
 const WEEK_BLOCK_MARGIN_BOTTOM = 14
 const LABEL_COLUMN_WIDTH = 52
 // Une demi-heure garde ainsi la place de son horaire et de sa thématique.
-const HOUR_HEIGHT = 44
+const HOUR_HEIGHT = 46
+// MDS-80 : un trou de plus d'une heure, tous jours confondus, devient une
+// bande « pause » de cette hauteur au lieu d'heures vides.
+const GAP_MIN_MINUTES = 60
+const GAP_BAND_HEIGHT = 14
+// Horaire mis en avant (MDS-80) ; plus petit quand la place manque (créneau
+// court ou colonnes partagées).
+const SLOT_TIME_SIZE = 9
+const SLOT_TIME_SIZE_SMALL = 7
+const SLOT_TIME_FULL_MIN_HEIGHT = 30
+const SLOT_BACKGROUND_ALPHA = 0.14
 // Hauteurs de ligne (police × ~1,2) et marges d'un rendez-vous, pour n'y
 // écrire que ce qui tient : au-delà, react-pdf superpose les lignes.
-const SLOT_TIME_LINE = 7.2
 const SLOT_THEMATIC_LINE = 8.4
 const SLOT_LOCATION_LINE = 7.2
-const SLOT_CHROME = 5
+const SLOT_CHROME = 6
 const TIME_LABEL_SIZE = 7
 // Meme repli que l'export du planning, pour un creneau hors parcours.
 const DEFAULT_SLOT_COLOR = '#94a3b8'
@@ -144,41 +155,97 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderColor: '#e5e7eb',
   },
+  gapBand: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: GAP_BAND_HEIGHT,
+    backgroundColor: '#f1f5f9',
+    borderTopWidth: 0.5,
+    borderBottomWidth: 0.5,
+    borderStyle: 'dashed',
+    borderColor: '#cbd5e1',
+  },
+  gapMark: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    fontSize: 7,
+    color: '#94a3b8',
+    textAlign: 'center',
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 2,
+  },
+  legendTitle: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: '#475569',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendSwatch: {
+    width: 7,
+    height: 7,
+    borderWidth: 1,
+  },
+  legendText: {
+    fontSize: 7,
+    color: '#475569',
+  },
   slotFrame: {
     position: 'absolute',
     padding: 0.75,
   },
+  // MDS-80 : contenu centré dans les deux sens, barre de couleur à gauche.
   slotBlock: {
     flexGrow: 1,
-    padding: 2,
-    borderWidth: 0.75,
+    paddingVertical: 2,
+    paddingHorizontal: 3,
+    borderLeftWidth: 3,
     overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   slotTime: {
-    fontSize: 6,
     fontFamily: 'Helvetica-Bold',
-    color: '#475569',
+    textAlign: 'center',
   },
   slotThematic: {
     textOverflow: 'ellipsis',
     fontSize: 7,
     fontFamily: 'Helvetica-Bold',
     color: '#1f2937',
+    textAlign: 'center',
   },
   slotLocation: {
     fontSize: 6,
     color: '#64748b',
     marginTop: 1,
+    textAlign: 'center',
   },
 })
 
 const DAY_NAMES = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI']
 
 function WeekBlock({ weekData }: { weekData: WeekData }) {
-  const { startMinute, endMinute } = weekData
-  const bodyHeight = ((endMinute - startMinute) / 60) * HOUR_HEIGHT
-  const topOf = (minute: number) => ((minute - startMinute) / 60) * HOUR_HEIGHT
-  const hours = innerHours(startMinute, endMinute)
+  const axis = buildTimeAxis({
+    startMinute: weekData.startMinute,
+    endMinute: weekData.endMinute,
+    gaps: findGaps(weekData.days, GAP_MIN_MINUTES),
+    hourHeight: HOUR_HEIGHT,
+    bandHeight: GAP_BAND_HEIGHT,
+  })
+  const bodyHeight = axis.height
+  const topOf = axis.y
+  const hours = axis.hours
 
   return (
     // Sans `wrap={false}`, react-pdf coupe volontiers la page juste après la
@@ -218,6 +285,14 @@ function WeekBlock({ weekData }: { weekData: WeekData }) {
               {formatMinute(minute)}
             </Text>
           ))}
+          {axis.bands.map((band) => (
+            <Text
+              key={band.top}
+              style={[styles.gapMark, { top: band.top + 2 }]}
+            >
+              ···
+            </Text>
+          ))}
         </View>
         {weekData.days.map((day, dayIdx) => (
           <View key={DAY_NAMES[dayIdx]} style={styles.dayColumn}>
@@ -227,8 +302,14 @@ function WeekBlock({ weekData }: { weekData: WeekData }) {
                 style={[styles.hourLine, { top: topOf(minute) }]}
               />
             ))}
+            {axis.bands.map((band) => (
+              <View
+                key={band.top}
+                style={[styles.gapBand, { top: band.top }]}
+              />
+            ))}
             {day.map((placed) => (
-              <SlotFrame key={placed.slot.id} placed={placed} topOf={topOf} />
+              <SlotFrame key={placed.slot.id} placed={placed} axis={axis} />
             ))}
           </View>
         ))}
@@ -237,17 +318,16 @@ function WeekBlock({ weekData }: { weekData: WeekData }) {
   )
 }
 
-function SlotFrame({
-  placed,
-  topOf,
-}: {
-  placed: PlacedSlot
-  topOf: (minute: number) => number
-}) {
-  const height = ((placed.end - placed.start) / 60) * HOUR_HEIGHT
-  // Au-delà de deux colonnes, l'horaire passe sur deux lignes.
+function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
+  const top = axis.y(placed.start)
+  const height = axis.y(placed.end) - top
+  const timeSize =
+    placed.laneCount === 1 && height >= SLOT_TIME_FULL_MIN_HEIGHT
+      ? SLOT_TIME_SIZE
+      : SLOT_TIME_SIZE_SMALL
+  // Au-delà d'une colonne, l'horaire passe sur deux lignes.
   const free =
-    height - SLOT_CHROME - (placed.laneCount > 2 ? 2 : 1) * SLOT_TIME_LINE
+    height - SLOT_CHROME - (placed.laneCount > 1 ? 2 : 1) * timeSize * 1.2
   const location = placed.slot.slotTemplate?.location?.name
   const color = placed.slot.pathway?.template?.color ?? DEFAULT_SLOT_COLOR
   const showLocation =
@@ -264,7 +344,7 @@ function SlotFrame({
       style={[
         styles.slotFrame,
         {
-          top: topOf(placed.start),
+          top,
           height,
           left: `${(placed.lane / placed.laneCount) * 100}%`,
           width: `${100 / placed.laneCount}%`,
@@ -274,15 +354,70 @@ function SlotFrame({
       <View
         style={[
           styles.slotBlock,
-          { backgroundColor: hexToRGBA(color, 0.12), borderColor: color },
+          {
+            backgroundColor: hexToRGBA(color, SLOT_BACKGROUND_ALPHA),
+            borderLeftColor: color,
+          },
         ]}
       >
-        <Text style={styles.slotTime}>{formatTimeRange(placed)}</Text>
+        <Text
+          style={[
+            styles.slotTime,
+            {
+              fontSize: timeSize,
+              color: readableTint(color, SLOT_BACKGROUND_ALPHA),
+            },
+          ]}
+        >
+          {formatTimeRange(placed)}
+        </Text>
         <Text style={[styles.slotThematic, { maxLines: thematicLines }]}>
           {placed.slot.slotTemplate?.thematic ?? ''}
         </Text>
         {showLocation && <Text style={styles.slotLocation}>{location}</Text>}
       </View>
+    </View>
+  )
+}
+
+/** Les parcours présents dans le programme, puis « Hors parcours » s'il y en a. */
+export function legendItems(slots: Slot[]) {
+  const byId = new Map<string, { name: string; color: string }>()
+  let withoutPathway = false
+  for (const slot of slots) {
+    const template = slot.pathway?.template
+    if (template?.color) {
+      byId.set(template.name, { name: template.name, color: template.color })
+    } else {
+      withoutPathway = true
+    }
+  }
+  const items = [...byId.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, 'fr'),
+  )
+  return withoutPathway
+    ? [...items, { name: 'Hors parcours', color: DEFAULT_SLOT_COLOR }]
+    : items
+}
+
+function Legend({ items }: { items: { name: string; color: string }[] }) {
+  return (
+    <View style={styles.legend} wrap={false}>
+      <Text style={styles.legendTitle}>Couleur = parcours</Text>
+      {items.map((item) => (
+        <View key={item.name} style={styles.legendItem}>
+          <View
+            style={[
+              styles.legendSwatch,
+              {
+                backgroundColor: hexToRGBA(item.color, SLOT_BACKGROUND_ALPHA),
+                borderColor: item.color,
+              },
+            ]}
+          />
+          <Text style={styles.legendText}>{item.name}</Text>
+        </View>
+      ))}
     </View>
   )
 }
@@ -353,6 +488,7 @@ export default function CalendarPages({
           />
         )
       })}
+      <Legend items={legendItems(upcomingSlots)} />
     </Page>
   )
 }

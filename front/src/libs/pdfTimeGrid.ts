@@ -102,3 +102,79 @@ export const formatMinute = (minute: number) =>
 /** Espaces autour du tiret : react-pdf peut y couper la ligne si la colonne est étroite. */
 export const formatTimeRange = ({ start, end }: PlacedSlot) =>
   `${formatMinute(start)} – ${formatMinute(end)}`
+
+/** Plage creuse de la semaine, en minutes depuis minuit. */
+export type TimeGap = { start: number; end: number }
+
+/** Trous de plus de `minGap` minutes où aucun jour de la semaine n'a de créneau. */
+export function findGaps(days: PlacedSlot[][], minGap: number): TimeGap[] {
+  const busy = days
+    .flat()
+    .map(({ start, end }) => ({ start, end }))
+    .sort((a, b) => a.start - b.start)
+  const merged: TimeGap[] = []
+  for (const range of busy) {
+    const last = merged.at(-1)
+    if (last && range.start <= last.end) {
+      last.end = Math.max(last.end, range.end)
+    } else {
+      merged.push({ ...range })
+    }
+  }
+  return merged
+    .slice(1)
+    .map((range, i) => ({ start: merged[i].end, end: range.start }))
+    .filter((gap) => gap.end - gap.start > minGap)
+}
+
+export type TimeAxis = {
+  /** Position verticale d'une minute de l'axe. */
+  y: (minute: number) => number
+  height: number
+  /** Heures pleines affichées : celles tombées dans un trou sont sautées. */
+  hours: number[]
+  /** Bandes « pause » à la place des trous. */
+  bands: { top: number; height: number }[]
+}
+
+/**
+ * Axe proportionnel (`hourHeight` par heure) dont chaque trou est ramené à une
+ * bande de `bandHeight` : une matinée et une après-midi ne laissent plus des
+ * heures vides entre elles. Sans trou, l'axe est l'axe continu habituel.
+ */
+export function buildTimeAxis({
+  startMinute,
+  endMinute,
+  gaps,
+  hourHeight,
+  bandHeight,
+}: {
+  startMinute: number
+  endMinute: number
+  gaps: TimeGap[]
+  hourHeight: number
+  bandHeight: number
+}): TimeAxis {
+  const perMinute = hourHeight / 60
+  const y = (minute: number) => {
+    let top = (minute - startMinute) * perMinute
+    for (const gap of gaps) {
+      const length = gap.end - gap.start
+      if (minute >= gap.end) {
+        top -= length * perMinute - bandHeight
+      } else if (minute > gap.start) {
+        const inside = minute - gap.start
+        top -= inside * perMinute - (inside / length) * bandHeight
+      }
+    }
+    return top
+  }
+  const inGap = (minute: number) =>
+    gaps.some((gap) => minute > gap.start && minute < gap.end)
+  return {
+    y,
+    height: y(endMinute),
+    hours: innerHours(startMinute, endMinute).filter((h) => !inGap(h)),
+    bands: gaps.map((gap) => ({ top: y(gap.start), height: bandHeight })),
+  }
+}
