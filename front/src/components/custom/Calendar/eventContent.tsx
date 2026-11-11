@@ -199,9 +199,9 @@ export const EventContent = ({
               ),
               backgroundColor: undefined,
             }}
-            className="z-10 flex cursor-pointer items-center justify-center rounded border border-dashed border-current/40 opacity-60 transition-all hover:bg-white/30 hover:opacity-100"
+            className="group/tranche z-10 flex cursor-pointer items-center justify-center rounded border border-dashed border-current/40 transition-colors hover:bg-white/30"
           >
-            <Plus className="h-3 w-3" />
+            <Plus className="h-3 w-3 opacity-0 transition-opacity group-hover/tranche:opacity-100" />
           </button>
         ))}
     </div>
