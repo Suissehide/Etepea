@@ -144,11 +144,11 @@ export const REFERENCE_PRESET_CONTENT: PdfDesignContentInput = {
         {
           id: 'cover-circle',
           kind: 'ellipse',
-          // bottom: -180, left: -60, 380x380.
+          // bottom: -180, left: -60 ; 420 (380 a l'origine) pour loger un nom compose.
           x: -60,
-          y: PAGE_H + 180 - 380,
-          w: 380,
-          h: 380,
+          y: PAGE_H + 180 - 420,
+          w: 420,
+          h: 420,
           fill: { token: 'pathway.color', fallback: '#e6aff6' },
         },
         {
@@ -215,13 +215,13 @@ export const REFERENCE_PRESET_CONTENT: PdfDesignContentInput = {
           id: 'cover-patient',
           kind: 'text',
           x: MARGIN,
-          // bottom: 48 ; la boite tient deux lignes de 32 pt et le nom s'ancre en bas.
-          y: PAGE_H - 48 - 78,
+          // bottom: 48 ; la boite tient deux lignes de 28 pt et le nom s'ancre en bas.
+          y: PAGE_H - 48 - 68,
           // Largeur du rond a cette hauteur : un nom long passe a la ligne au lieu d'en sortir.
-          w: 240,
-          h: 78,
+          w: 270,
+          h: 68,
           runs: [{ id: 'r1', field: 'patient.name' }],
-          fontSize: 32,
+          fontSize: 28,
           bold: true,
           // Meme repli que le rond : noir dessus, blanc sur un parcours fonce.
           color: { token: 'pathway.contrast', fallback: '#e6aff6' },
