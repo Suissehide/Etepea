@@ -81,8 +81,8 @@ describe('preset de reference', () => {
       throw new Error('forme inattendue')
     }
     expect(rond.fill).toEqual({ token: 'pathway.color', fallback: '#e6aff6' })
-    expect(rond.w).toBe(380)
-    expect(rond.h).toBe(380)
+    expect(rond.w).toBe(420)
+    expect(rond.h).toBe(420)
   })
 
   it('garde le logo en haut a gauche, a son rapport mesure', () => {
@@ -104,11 +104,11 @@ describe('preset de reference', () => {
       { id: 'r1', field: 'patient.name', bold: false, italic: false },
     ])
     expect(nom.vAlign).toBe('bottom')
-    expect(nom.fontSize).toBe(32)
+    expect(nom.fontSize).toBe(28)
     // bottom: 48 aujourd'hui -> le bas de la boite tombe a 841.89 - 48.
     expect(nom.y + nom.h).toBeCloseTo(PAGE_H - 48, 2)
     // MDS-79 : la boite s'arrete au bord du rond, un nom long passe a la ligne.
-    expect(nom.w).toBe(240)
+    expect(nom.w).toBe(270)
     expect(nom.color).toEqual({
       token: 'pathway.contrast',
       fallback: '#e6aff6',
