@@ -608,9 +608,9 @@ function PlacesLibres({
   return (
     <span
       className={clsx(
-        'relative z-10 pointer-events-none whitespace-nowrap rounded px-1.5 text-[0.7rem] font-semibold leading-[18px]',
+        'relative z-10 pointer-events-none whitespace-nowrap rounded px-1.5 text-[0.7rem] font-semibold leading-[18px] text-white',
         isRowLayout ? 'ml-auto self-center' : 'mt-auto self-start',
-        libres != null && libres > 0 && 'bg-destructive text-white',
+        libres != null && libres > 0 ? 'bg-destructive' : 'bg-black/40',
       )}
     >
       {libres == null ? (
