@@ -220,6 +220,12 @@ function SlotAppointments({
   ajoutPossible: boolean
 }) {
   const hasAppointments = Boolean(appointments && appointments.length > 0)
+  const inscrits =
+    appointments?.flatMap((a) => a.appointmentPatients ?? []).length ?? 0
+  // Sans le détail des inscrits, le clic n'ajoute que sur un collectif vide.
+  const placesRestantes = effectifSeul
+    ? capacity == null || inscrits < capacity
+    : !hasAppointments
   return (
     <>
       {isIndividual && hasAppointments && (
@@ -247,24 +253,14 @@ function SlotAppointments({
 
       {isMultiple && effectifSeul && (
         <PlacesLibres
-          inscrits={
-            appointments?.flatMap((a) => a.appointmentPatients ?? []).length ??
-            0
-          }
+          inscrits={inscrits}
           capacity={capacity}
           isRowLayout={isRowLayout}
         />
       )}
 
-      {/* Bouton + pour slots multiple vides */}
-      {isMultiple && !locked && !hasAppointments && ajoutPossible && (
-        <div className="z-100 cursor-pointer absolute inset-0 flex justify-center items-center">
-          <Button variant="transparent" className="w-full h-full">
-            <div className="p-1 rounded-full bg-neutral-50 text-primary group-hover:bg-neutral-300 transition-colors duration-200">
-              <Plus className="w-4 h-4" />
-            </div>
-          </Button>
-        </div>
+      {isMultiple && !locked && ajoutPossible && placesRestantes && (
+        <AjoutAuSurvol />
       )}
     </>
   )
@@ -284,6 +280,18 @@ function styleHero(event: EventDisplayInfo['event'], clair: boolean) {
     boxShadow: `inset 0 0 0 1px ${hexToRGBA(slotColor, 0.6)}`,
     padding: 0,
   }
+}
+
+/** « + Ajouter » au survol, comme sur les tranches des individuels. */
+function AjoutAuSurvol() {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end rounded-sm p-1 transition-colors group-hover:bg-black/5">
+      <span className="flex items-center gap-0.5 rounded bg-white/75 px-1 text-[0.6rem] font-semibold leading-4 opacity-0 transition-opacity group-hover:opacity-100">
+        <Plus className="h-3 w-3" />
+        Ajouter
+      </span>
+    </div>
+  )
 }
 
 function slotStyle(event: EventDisplayInfo['event']) {
