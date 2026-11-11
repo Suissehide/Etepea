@@ -534,7 +534,7 @@ function IndividualAppointments({
           )}
         >
           {heure && (
-            <span className="mr-1 shrink-0 tabular-nums opacity-80">
+            <span className="mr-1 shrink-0 text-[0.6rem] font-semibold tabular-nums opacity-80">
               {dayjs.utc(appointment.startDate).format('HH:mm')}
             </span>
           )}
