@@ -87,3 +87,46 @@ export function styleSoignant(id: string, soignantIDs: string[]) {
     color: texte,
   }
 }
+
+const relativeLuminance = (hex: string) => {
+  const channel = (i: number) => {
+    const v = Number.parseInt(hex.slice(i, i + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5)
+}
+
+/** Rapport de contraste WCAG entre deux couleurs `#rrggbb`. */
+export function contrastRatio(a: string, b: string): number {
+  const [light, dark] = [relativeLuminance(a), relativeLuminance(b)].sort(
+    (x, y) => y - x,
+  )
+  return (light + 0.05) / (dark + 0.05)
+}
+
+/** `hex` posé à `alpha` sur du blanc, en couleur opaque. */
+export function tintOnWhite(hex: string, alpha: number): string {
+  const toHex = (i: number) => {
+    const v = Number.parseInt(hex.slice(i, i + 2), 16)
+    return Math.round(255 - (255 - v) * alpha)
+      .toString(16)
+      .padStart(2, '0')
+  }
+  return `#${toHex(1)}${toHex(3)}${toHex(5)}`
+}
+
+/**
+ * Texte écrit dans la couleur d'un élément, sur son fond teinté : la couleur
+ * assombrie quand elle reste lisible (4,5:1), sinon `fallback`. Un parcours
+ * jaune ou gris clair donnerait un horaire illisible.
+ */
+export function readableTint(
+  hex: string,
+  backgroundAlpha: number,
+  fallback = '#1f2937',
+): string {
+  const text = darkenHex(hex)
+  return contrastRatio(text, tintOnWhite(hex, backgroundAlpha)) >= 4.5
+    ? text
+    : fallback
+}
