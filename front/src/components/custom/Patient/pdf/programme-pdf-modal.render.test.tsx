@@ -30,6 +30,7 @@ vi.mock('@react-pdf/renderer', () => ({
   Image: () => null,
   Svg: () => null,
   Ellipse: () => null,
+  Line: () => null,
   StyleSheet: { create: (s: unknown) => s },
   Font: { register: () => undefined },
 }))

@@ -1,4 +1,4 @@
-import { Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Line, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
 
 import { hexToRGBA, readableTint } from '../../../../../libs/color.ts'
 import {
@@ -160,7 +160,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: GAP_BAND_HEIGHT,
-    backgroundColor: '#f1f5f9',
+    overflow: 'hidden',
+    backgroundColor: '#f8fafc',
     borderTopWidth: 0.5,
     borderBottomWidth: 0.5,
     borderStyle: 'dashed',
@@ -303,10 +304,9 @@ function WeekBlock({ weekData }: { weekData: WeekData }) {
               />
             ))}
             {axis.bands.map((band) => (
-              <View
-                key={band.top}
-                style={[styles.gapBand, { top: band.top }]}
-              />
+              <View key={band.top} style={[styles.gapBand, { top: band.top }]}>
+                <Hatch />
+              </View>
             ))}
             {day.map((placed) => (
               <SlotFrame key={placed.slot.id} placed={placed} axis={axis} />
@@ -315,6 +315,31 @@ function WeekBlock({ weekData }: { weekData: WeekData }) {
         ))}
       </View>
     </View>
+  )
+}
+
+const HATCH_STEP = 4
+const HATCH_WIDTH = 300
+
+function Hatch() {
+  const offsets = Array.from(
+    { length: (HATCH_WIDTH + GAP_BAND_HEIGHT) / HATCH_STEP },
+    (_, i) => i * HATCH_STEP,
+  )
+  return (
+    <Svg width={HATCH_WIDTH} height={GAP_BAND_HEIGHT}>
+      {offsets.map((x) => (
+        <Line
+          key={x}
+          x1={x}
+          y1={0}
+          x2={x - GAP_BAND_HEIGHT}
+          y2={GAP_BAND_HEIGHT}
+          stroke="#cbd5e1"
+          strokeWidth={0.5}
+        />
+      ))}
+    </Svg>
   )
 }
 
