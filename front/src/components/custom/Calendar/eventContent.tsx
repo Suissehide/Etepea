@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 import { darkenHex } from '../../../libs/color.ts'
+import type { FreeInterval } from '../../../libs/slotAvailability.ts'
 import { containsKeyword } from '../../../libs/utils.ts'
 import type { Appointment } from '../../../types/appointment.ts'
 import type { AppointmentPatient } from '../../../types/appointmentPatient.ts'
@@ -38,6 +39,7 @@ type Props = {
   showSecondaryTags?: boolean
   effectifSeul?: boolean
   ajoutPossible?: boolean
+  onPickTranche?: (eventId: string, range: FreeInterval) => void
 }
 
 export const EventContent = ({
@@ -52,6 +54,7 @@ export const EventContent = ({
   showSecondaryTags = true,
   effectifSeul = false,
   ajoutPossible = true,
+  onPickTranche,
 }: Props) => {
   const { event, view } = eventContent
   const {
@@ -61,6 +64,8 @@ export const EventContent = ({
     location,
     type,
     locked,
+    archived,
+    tranches = [],
     conflicts = [],
     capacity,
     isIndividual: isIndividualTemplate,
@@ -169,6 +174,36 @@ export const EventContent = ({
         styleFor={calculateAppointmentStyle}
         onOpen={openAppointment}
       />
+
+      {isTimeGridView &&
+        ajoutPossible &&
+        !locked &&
+        !archived &&
+        onPickTranche &&
+        tranches.map((tranche: FreeInterval) => (
+          <button
+            key={tranche.start}
+            type="button"
+            data-event-action
+            aria-label={`Ajouter un rendez-vous à ${dayjs(tranche.start).format('HH:mm')}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              onPickTranche(event.id, tranche)
+            }}
+            style={{
+              ...appointmentStyle(
+                { startDate: tranche.start, endDate: tranche.end },
+                event,
+                '',
+                true,
+              ),
+              backgroundColor: undefined,
+            }}
+            className="z-10 flex cursor-pointer items-center justify-center rounded border border-dashed border-current/40 opacity-60 transition-all hover:bg-white/30 hover:opacity-100"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        ))}
     </div>
   )
 }
@@ -314,7 +349,7 @@ function EditActions({
 }
 
 function appointmentStyle(
-  appointment: Appointment,
+  appointment: Pick<Appointment, 'startDate' | 'endDate'>,
   event: EventDisplayInfo['event'],
   appointmentColor: string,
   positioned: boolean,

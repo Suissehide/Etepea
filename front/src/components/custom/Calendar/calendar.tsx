@@ -23,6 +23,7 @@ import {
   useState,
 } from 'react'
 
+import type { FreeInterval } from '../../../libs/slotAvailability.ts'
 import { cn } from '../../../libs/utils.ts'
 import { usePlanningStore } from '../../../store/usePlanningStore.ts'
 import type { Appointment } from '../../../types/appointment.ts'
@@ -137,6 +138,8 @@ export interface CalendarEvent {
     locked?: boolean
     archived?: boolean
     conflicts?: string[]
+    /** Tranches libres d'un créneau individuel, à la durée de sa thématique. */
+    tranches?: FreeInterval[]
     slotWeeks?: string[]
     thematic?: string
     secondaryTags?: string[]
@@ -147,7 +150,8 @@ interface CalendarProps {
   events: CalendarEvent[]
   handleSelectEvent?: (arg: DateSelectInfo) => void
   handleEditEvent?: (arg: EventDropInfo | EventResizeDoneInfo) => void
-  handleClickEvent?: (eventID: string) => void
+  /** `range` : la tranche libre cliquée dans un créneau individuel. */
+  handleClickEvent?: (eventID: string, range?: FreeInterval) => void
   handleDropEvent?: (pathwayTemplateID: string, startDate: string) => void
   handleOpenEvent?: (eventId: string) => void
   /** `eventId` : le créneau sous la souris au début de la sélection ; sans créneau, aucune sélection. */
@@ -428,6 +432,7 @@ function Calendar({
         showSecondaryTags={showSecondaryTags}
         effectifSeul={effectifSeul}
         ajoutPossible={ajoutPossible}
+        onPickTranche={handleClickEvent}
       />
     )
     // En vue liste, le contenu remplace toute la ligne : l'horaire n'y est plus que s'il est rendu ici.
