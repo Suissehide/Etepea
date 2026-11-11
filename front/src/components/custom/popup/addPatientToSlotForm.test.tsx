@@ -10,7 +10,11 @@ import {
   type SlotSuggestion,
 } from '../../../libs/slotAvailability.ts'
 import type { Slot } from '../../../types/slot.ts'
-import { getTrancheCapacityLabel, SlotList } from './addPatientToSlotForm.tsx'
+import {
+  getDayCoverage,
+  getTrancheCapacityLabel,
+  SlotList,
+} from './addPatientToSlotForm.tsx'
 
 dayjs.extend(utc)
 dayjs.locale('fr')
@@ -84,5 +88,64 @@ describe('getTrancheCapacityLabel', () => {
         { start: 'b', end: 'c', taken: true },
       ]),
     ).toBe('1 libre sur 2')
+  })
+})
+
+describe('recherche par parcours (MDS-74)', () => {
+  const psy = { id: 'pw-psy', name: 'Psychologie', color: '#8b5cf6' }
+  const diet = { id: 'pw-diet', name: 'Diététique', color: '#ea580c' }
+  const proposition = (
+    id: string,
+    day: string,
+    pathwayId: string,
+    isFull = false,
+  ): SlotSuggestion => ({
+    slot: {
+      id,
+      startDate: `2026-11-${day}T09:00:00.000Z`,
+      endDate: `2026-11-${day}T10:00:00.000Z`,
+      pathway: { template: { id: pathwayId } },
+      slotTemplate: { soignants: [], capacity: 8 },
+      appointments: [],
+    } as unknown as Slot,
+    alreadyBooked: false,
+    isFull,
+    bookedCount: 0,
+    capacity: 8,
+    isIndividual: false,
+  })
+  const suggestions = [
+    proposition('a', '16', 'pw-psy'),
+    proposition('b', '16', 'pw-diet'),
+    proposition('c', '17', 'pw-diet'),
+    proposition('d', '19', 'pw-psy'),
+    proposition('e', '19', 'pw-diet', true),
+  ]
+
+  it('dit, jour par jour, quels parcours ont une place', () => {
+    expect(
+      getDayCoverage({ suggestions: suggestions.slice(0, 2) }, [psy, diet]),
+    ).toEqual([psy, diet])
+    expect(
+      getDayCoverage({ suggestions: suggestions.slice(3) }, [psy, diet]),
+    ).toEqual([psy])
+  })
+
+  it('ne garde que les jours où tous les parcours tiennent', () => {
+    render(
+      <SlotList
+        isReady
+        suggestions={suggestions}
+        until="4 décembre 2026"
+        hasMore={false}
+        isLoading={false}
+        onSelect={vi.fn()}
+        onLoadMore={vi.fn()}
+        coverage={[psy, diet]}
+        allOnly
+      />,
+    )
+    expect(screen.getByText('Tous les parcours ce jour')).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1)
   })
 })

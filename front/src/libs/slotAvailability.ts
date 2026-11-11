@@ -231,17 +231,33 @@ export const hasSlotAvailability = (
  * jour-là, jamais avant maintenant — un créneau déjà écoulé n'est proposé dans
  * aucun cas, y compris quand `from` vaut aujourd'hui.
  */
+/** Modèle de parcours d'un créneau, qu'il soit chargé ou seulement référencé. */
+export const slotPathwayTemplateID = (slot: Slot): string | undefined =>
+  slot.pathway?.template?.id ?? slot.pathway?.pathwayTemplateID
+
+/**
+ * `match` : une thématique (son identifiant), ou un prédicat — la recherche par
+ * parcours (MDS-74) garde les créneaux de plusieurs modèles de parcours.
+ * `trancheMinutes` : la durée de découpe, fixe ou propre à chaque créneau (sa
+ * thématique) quand les créneaux mêlent plusieurs thématiques.
+ */
 export const getUpcomingSlotSuggestions = (
   slots: Slot[] | undefined,
-  thematicID: string,
+  match: string | ((slot: Slot) => boolean),
   patientID: string,
   from?: string,
   limit: number = UPCOMING_SLOT_LIMIT,
-  trancheMinutes?: number | null,
+  trancheMinutes?: number | null | ((slot: Slot) => number | null | undefined),
 ): SlotSuggestion[] => {
-  if (!slots || !thematicID || !patientID) {
+  if (!slots || !match || !patientID) {
     return []
   }
+  const matches =
+    typeof match === 'string'
+      ? (slot: Slot) => slot.slotTemplate?.thematicId === match
+      : match
+  const trancheOf = (slot: Slot) =>
+    typeof trancheMinutes === 'function' ? trancheMinutes(slot) : trancheMinutes
 
   const now = dayjs.utc()
   const fromStartOfDay = from ? dayjs.utc(from).startOf('day') : now
@@ -250,7 +266,7 @@ export const getUpcomingSlotSuggestions = (
   return slots
     .filter(
       (slot) =>
-        slot.slotTemplate?.thematicId === thematicID &&
+        matches(slot) &&
         !slot.locked &&
         !slot.archivedAt &&
         dayjs.utc(slot.startDate).isAfter(lowerBound),
@@ -260,6 +276,7 @@ export const getUpcomingSlotSuggestions = (
     .map((slot) => {
       const isIndividual = !!slot.slotTemplate?.isIndividual
       const existingAppointment = slot.appointments?.[0]
+      const trancheMinutes = trancheOf(slot)
 
       return {
         slot,

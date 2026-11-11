@@ -10,17 +10,19 @@ import {
   X,
 } from 'lucide-react'
 import type React from 'react'
-import { useMemo, useState } from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 
 import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { useToast } from '../../../hooks/useToast.ts'
+import { hexToRGBA } from '../../../libs/color.ts'
 import {
   type FreeInterval,
   getTrancheChoice,
   getUpcomingSlotSuggestions,
   type SlotSuggestion,
   type SlotTranche,
+  slotPathwayTemplateID,
 } from '../../../libs/slotAvailability.ts'
 import {
   cn,
@@ -28,6 +30,7 @@ import {
   thematicLabel,
 } from '../../../libs/utils.ts'
 import { useAppointmentMutations } from '../../../queries/useAppointment.ts'
+import { usePathwayTemplateQueries } from '../../../queries/usePathwayTemplate.ts'
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
 import { useSlotsInRangeQuery } from '../../../queries/useSlot.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
@@ -47,8 +50,24 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../../ui/popup.tsx'
-import { Select, type SelectOption } from '../../ui/select.tsx'
+import { MultiSelect, Select, type SelectOption } from '../../ui/select.tsx'
+import { Switch } from '../../ui/switch.tsx'
 import { TimePicker } from '../../ui/timePicker.tsx'
+import { ToggleGroup, ToggleGroupItem } from '../../ui/toggle-group.tsx'
+import { SEGMENT, SEGMENTS } from '../Calendar/barreCalendrier.tsx'
+
+type SearchMode = 'theme' | 'pathway'
+const SEARCH_MODE_STORAGE_KEY = 'nouveau-rdv/mode'
+
+const readSearchMode = (): SearchMode => {
+  try {
+    return localStorage.getItem(SEARCH_MODE_STORAGE_KEY) === 'pathway'
+      ? 'pathway'
+      : 'theme'
+  } catch {
+    return 'theme'
+  }
+}
 
 /** Largeur de la fenêtre de créneaux demandée au serveur, et de chaque extension. */
 const RANGE_WEEKS = 4
@@ -116,6 +135,48 @@ const EmptySlotList = ({ children }: { children: React.ReactNode }) => (
 
 type SelectSuggestion = (suggestion: SlotSuggestion, start?: string) => void
 
+type PathwayInfo = { id: string; name: string; color: string }
+
+/**
+ * Recherche par parcours (MDS-74) : les modèles de parcours, par identifiant.
+ * Présent, il fait afficher sur chaque ligne le parcours et la thématique du
+ * créneau, et colore la barre à la couleur du parcours.
+ */
+const PathwayLookup = createContext<Map<string, PathwayInfo> | null>(null)
+
+const useRowPathway = (slot: Slot) => {
+  const lookup = useContext(PathwayLookup)
+  const id = slotPathwayTemplateID(slot)
+  return lookup && id ? lookup.get(id) : undefined
+}
+
+/** Parcours (pastille de sa couleur) et thématique, en tête de ligne. */
+const RowPathway = ({ slot }: { slot: Slot }) => {
+  const pathway = useRowPathway(slot)
+  if (!pathway) {
+    return null
+  }
+  return (
+    <span className="flex items-center gap-2 min-w-0">
+      <span
+        className="shrink-0 rounded px-1.5 py-px text-[11px] font-bold whitespace-nowrap"
+        style={{
+          color: pathway.color,
+          backgroundColor: hexToRGBA(pathway.color, 0.14),
+        }}
+      >
+        {pathway.name}
+      </span>
+      <span className="text-sm font-semibold text-foreground truncate">
+        {slot.slotTemplate?.thematic}
+      </span>
+    </span>
+  )
+}
+
+const useRowColor = (slot: Slot) =>
+  useRowPathway(slot)?.color ?? slot.slotTemplate?.color ?? '#2563eb'
+
 /** Libellé de capacité d'un créneau découpé en heures : « 3 libres sur 4 ». */
 export const getTrancheCapacityLabel = (tranches: SlotTranche[]) => {
   const free = tranches.filter((tranche) => !tranche.taken).length
@@ -138,6 +199,7 @@ const SlotTrancheRow = ({
 }) => {
   const { slot } = suggestion
   const location = slot.slotTemplate?.location?.name
+  const rowColor = useRowColor(slot)
   const minutes = dayjs
     .utc(tranches[0].end)
     .diff(dayjs.utc(tranches[0].start), 'minute')
@@ -149,9 +211,10 @@ const SlotTrancheRow = ({
       </span>
       <span
         className="w-1 h-[34px] rounded-full"
-        style={{ backgroundColor: slot.slotTemplate?.color ?? '#2563eb' }}
+        style={{ backgroundColor: rowColor }}
       />
       <span className="flex flex-col gap-0.5 min-w-0">
+        <RowPathway slot={slot} />
         <span className="text-sm font-medium text-foreground truncate">
           {formatSoignants(slot)}
           {location && (
@@ -204,6 +267,7 @@ const SlotSuggestionRow = ({
   onSelect: SelectSuggestion
 }) => {
   const isSelectable = !suggestion.alreadyBooked && !suggestion.isFull
+  const rowColor = useRowColor(suggestion.slot)
   if (isSelectable && suggestion.tranches?.length) {
     return (
       <SlotTrancheRow
@@ -236,9 +300,10 @@ const SlotSuggestionRow = ({
       </span>
       <span
         className="w-1 h-[34px] rounded-full"
-        style={{ backgroundColor: slot.slotTemplate?.color ?? '#2563eb' }}
+        style={{ backgroundColor: rowColor }}
       />
       <span className="flex flex-col gap-0.5 min-w-0">
+        <RowPathway slot={slot} />
         <span className="text-sm font-medium text-foreground truncate">
           {formatSoignants(slot)}
           {location && (
@@ -279,6 +344,45 @@ const SlotSuggestionRow = ({
   )
 }
 
+/** Parcours de `coverage` qui ont au moins un créneau réservable ce jour-là. */
+export const getDayCoverage = (
+  group: { suggestions: SlotSuggestion[] },
+  coverage: PathwayInfo[],
+) =>
+  coverage.filter((pathway) =>
+    group.suggestions.some(
+      (suggestion) =>
+        slotPathwayTemplateID(suggestion.slot) === pathway.id &&
+        !suggestion.isFull &&
+        !suggestion.alreadyBooked,
+    ),
+  )
+
+const DayCoverage = ({
+  fits,
+  total,
+}: {
+  fits: PathwayInfo[]
+  total: number
+}) => {
+  const all = fits.length === total
+  return (
+    <span
+      className={cn(
+        'flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold',
+        all ? 'bg-green-100 text-[#15803d]' : 'bg-muted text-text-light',
+      )}
+    >
+      {all && <Check className="w-3 h-3" />}
+      {all
+        ? 'Tous les parcours ce jour'
+        : fits.length === 0
+          ? 'Complet'
+          : `${fits.map((pathway) => pathway.name).join(' + ')} seulement`}
+    </span>
+  )
+}
+
 /** Créneaux groupés par jour (en-tête collant), puis « Charger plus ». */
 export const SlotList = ({
   isReady,
@@ -288,6 +392,9 @@ export const SlotList = ({
   isLoading,
   onSelect,
   onLoadMore,
+  coverage = [],
+  allOnly = false,
+  notReadyText = 'Sélectionnez un patient et une thématique pour voir les créneaux à venir.',
 }: {
   isReady: boolean
   suggestions: SlotSuggestion[]
@@ -296,14 +403,17 @@ export const SlotList = ({
   isLoading: boolean
   onSelect: SelectSuggestion
   onLoadMore: () => void
+  /** Parcours cherchés (MDS-74) : chaque jour dit lesquels y ont une place. */
+  coverage?: PathwayInfo[]
+  /** Ne garder que les jours où tous les parcours de `coverage` ont une place. */
+  allOnly?: boolean
+  notReadyText?: string
 }) => {
+  const days = groupSuggestionsByDay(suggestions)
+    .map((group) => ({ ...group, fits: getDayCoverage(group, coverage) }))
+    .filter((group) => !allOnly || group.fits.length === coverage.length)
   if (!isReady) {
-    return (
-      <EmptySlotList>
-        Sélectionnez un patient et une thématique pour voir les créneaux à
-        venir.
-      </EmptySlotList>
-    )
+    return <EmptySlotList>{notReadyText}</EmptySlotList>
   }
   if (suggestions.length === 0 && !hasMore) {
     return (
@@ -314,10 +424,13 @@ export const SlotList = ({
   }
   return (
     <div className="flex-1 min-h-0 overflow-auto border border-border rounded-[10px]">
-      {groupSuggestionsByDay(suggestions).map((group) => (
+      {days.map((group) => (
         <section key={group.day}>
-          <h3 className="sticky top-0 z-[1] px-4 py-2 m-0 bg-[#f8fafc] border-b border-border text-[13px] font-semibold text-text-dark">
+          <h3 className="sticky top-0 z-[1] flex items-center justify-between gap-2.5 px-4 py-2 m-0 bg-[#f8fafc] border-b border-border text-[13px] font-semibold text-text-dark">
             {formatSlotDate(group.suggestions[0].slot.startDate)}
+            {coverage.length > 1 && (
+              <DayCoverage fits={group.fits} total={coverage.length} />
+            )}
           </h3>
           {group.suggestions.map((suggestion) => (
             <SlotSuggestionRow
@@ -328,9 +441,11 @@ export const SlotList = ({
           ))}
         </section>
       ))}
-      {suggestions.length === 0 && (
+      {days.length === 0 && (
         <div className="px-4 py-8 text-sm text-center text-text-light">
-          Aucun créneau d'ici le {until}.
+          {suggestions.length === 0
+            ? `Aucun créneau d'ici le ${until}.`
+            : `Aucun jour où tous les parcours ont une place d'ici le ${until}.`}
         </div>
       )}
       {hasMore ? (
@@ -652,6 +767,207 @@ function TrancheTimeFields({
   )
 }
 
+/**
+ * Recherche des créneaux (MDS-74) : par une thématique, comme avant, ou par un
+ * ou plusieurs parcours. Le dernier mode choisi est retenu d'une ouverture à
+ * l'autre.
+ */
+function useSlotSearch({
+  slots,
+  thematicID,
+  patientID,
+  fromDate,
+  thematics,
+}: {
+  slots: Slot[] | undefined
+  thematicID: string
+  patientID: string
+  fromDate: Dayjs
+  thematics: { id: string; duration?: number | null }[] | undefined
+}) {
+  const [searchMode, setSearchMode] = useState<SearchMode>(readSearchMode)
+  const [pathwayIDs, setPathwayIDs] = useState<string[]>([])
+  const [allPathwaysOnly, setAllPathwaysOnly] = useState(false)
+  const { pathwayTemplates } = usePathwayTemplateQueries()
+
+  const pathwayLookup = useMemo(
+    () =>
+      new Map(
+        (pathwayTemplates ?? []).map(({ id, name, color }) => [
+          id,
+          { id, name, color },
+        ]),
+      ),
+    [pathwayTemplates],
+  )
+  const pathwayOptions = useMemo(
+    () =>
+      [...pathwayLookup.values()]
+        .map(({ id, name, color }) => ({ value: id, label: name, color }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'fr')),
+    [pathwayLookup],
+  )
+  const selectedPathways = pathwayIDs
+    .map((id) => pathwayLookup.get(id))
+    .filter((pathway): pathway is PathwayInfo => !!pathway)
+
+  const byPathway = searchMode === 'pathway'
+  // Clé de la recherche en cours, pour savoir si « Charger plus » a épuisé la fenêtre.
+  const searchKey = byPathway ? [...pathwayIDs].sort().join(',') : thematicID
+
+  const suggestions = useMemo(() => {
+    const durationOf = (id?: string | null) =>
+      thematics?.find((thematic) => thematic.id === id)?.duration
+    return byPathway
+      ? getUpcomingSlotSuggestions(
+          slots,
+          pathwayIDs.length
+            ? (slot) => pathwayIDs.includes(slotPathwayTemplateID(slot) ?? '')
+            : '',
+          patientID,
+          fromDate.toISOString(),
+          Number.POSITIVE_INFINITY,
+          // Plusieurs thématiques se côtoient : chaque créneau a la sienne.
+          (slot) => durationOf(slot.slotTemplate?.thematicId),
+        )
+      : getUpcomingSlotSuggestions(
+          slots,
+          thematicID,
+          patientID,
+          fromDate.toISOString(),
+          Number.POSITIVE_INFINITY,
+          durationOf(thematicID),
+        )
+  }, [slots, byPathway, pathwayIDs, thematicID, patientID, fromDate, thematics])
+  const handleSearchModeChange = (mode: SearchMode) => {
+    setSearchMode(mode)
+    setAllPathwaysOnly(false)
+    try {
+      localStorage.setItem(SEARCH_MODE_STORAGE_KEY, mode)
+    } catch {
+      // Stockage indisponible : le choix vaut pour cette ouverture seulement.
+    }
+  }
+
+  // Par parcours, la thématique est celle du créneau (MDS-74).
+  const thematicOf = (slot?: Slot) =>
+    byPathway ? (slot?.slotTemplate?.thematicId ?? '') : thematicID
+  const isReady =
+    !!patientID && (byPathway ? pathwayIDs.length > 0 : !!thematicID)
+
+  return {
+    thematicOf,
+    isReady,
+    searchMode,
+    byPathway,
+    pathwayIDs,
+    setPathwayIDs,
+    allPathwaysOnly,
+    setAllPathwaysOnly,
+    pathwayLookup,
+    pathwayOptions,
+    selectedPathways,
+    searchKey,
+    suggestions,
+    handleSearchModeChange,
+  }
+}
+
+type SlotSearch = ReturnType<typeof useSlotSearch>
+
+const SearchModeToggle = ({
+  value,
+  onChange,
+}: {
+  value: SearchMode
+  onChange: (mode: SearchMode) => void
+}) => (
+  <div className="flex items-center gap-3 mb-3">
+    <span className="text-sm font-medium text-text-dark">Chercher par</span>
+    <ToggleGroup
+      aria-label="Chercher par"
+      className={SEGMENTS}
+      value={value}
+      onValueChange={(next) => next && onChange(next as SearchMode)}
+    >
+      <ToggleGroupItem value="theme" className={cn(SEGMENT, 'h-[30px]')}>
+        Une thématique
+      </ToggleGroupItem>
+      <ToggleGroupItem value="pathway" className={cn(SEGMENT, 'h-[30px]')}>
+        Un ou plusieurs parcours
+      </ToggleGroupItem>
+    </ToggleGroup>
+  </div>
+)
+
+/** Le champ thématique (`children`), ou la liste à cocher des parcours, avec recherche. */
+const SearchCriterion = ({
+  search,
+  children,
+}: {
+  search: SlotSearch
+  children: React.ReactNode
+}) =>
+  search.byPathway ? (
+    <FormField>
+      <Label>Parcours</Label>
+      <MultiSelect
+        options={search.pathwayOptions}
+        value={search.pathwayIDs}
+        onChange={search.setPathwayIDs}
+        placeholder="Sélectionnez un ou plusieurs parcours"
+        emptyMessage="Aucun parcours"
+      />
+    </FormField>
+  ) : (
+    children
+  )
+
+/** Plusieurs parcours : la bascule « tous les parcours » ; sinon, l'aide habituelle. */
+const ListHint = ({ search }: { search: SlotSearch }) =>
+  search.byPathway && search.selectedPathways.length > 1 ? (
+    <span className="flex items-center gap-2 text-[13px] text-text-dark">
+      <Switch
+        id="tous-les-parcours"
+        checked={search.allPathwaysOnly}
+        onCheckedChange={search.setAllPathwaysOnly}
+      />
+      <label htmlFor="tous-les-parcours" className="cursor-pointer">
+        Jours où tous les parcours ont une place
+      </label>
+    </span>
+  ) : (
+    <span className="text-xs text-text-light">
+      Cliquez sur un créneau ou une heure pour continuer
+    </span>
+  )
+
+const SearchSlotList = ({
+  search,
+  ...props
+}: { search: SlotSearch } & Pick<
+  React.ComponentProps<typeof SlotList>,
+  'until' | 'hasMore' | 'isLoading' | 'onSelect' | 'onLoadMore'
+>) => {
+  const { byPathway, selectedPathways } = search
+  return (
+    <PathwayLookup.Provider value={byPathway ? search.pathwayLookup : null}>
+      <SlotList
+        {...props}
+        isReady={search.isReady}
+        suggestions={search.suggestions}
+        coverage={byPathway ? selectedPathways : []}
+        allOnly={search.allPathwaysOnly && selectedPathways.length > 1}
+        notReadyText={
+          byPathway
+            ? 'Sélectionnez un patient et un ou plusieurs parcours pour voir les créneaux à venir.'
+            : undefined
+        }
+      />
+    </PathwayLookup.Provider>
+  )
+}
+
 function AddPatientToSlotForm({
   trigger,
   patientID,
@@ -781,26 +1097,22 @@ function AddPatientToSlotContent({
     [thematics],
   )
 
-  const suggestions = useMemo(
-    () =>
-      getUpcomingSlotSuggestions(
-        slots,
-        thematicID,
-        patientID,
-        fromDate.toISOString(),
-        Number.POSITIVE_INFINITY,
-        thematics?.find((thematic) => thematic.id === thematicID)?.duration,
-      ),
-    [slots, thematicID, patientID, fromDate, thematics],
-  )
+  const search = useSlotSearch({
+    slots,
+    thematicID,
+    patientID,
+    fromDate,
+    thematics,
+  })
+  const { suggestions, searchKey } = search
   const hasMore = !isWindowExhausted(
     beforeLoad,
-    thematicID,
+    searchKey,
     isFetching,
     suggestions.length,
   )
   const handleLoadMore = () => {
-    setBeforeLoad({ thematicID, count: suggestions.length })
+    setBeforeLoad({ thematicID: searchKey, count: suggestions.length })
     setWeeks((current) => current + RANGE_WEEKS)
   }
   const freeCount = suggestions.filter(
@@ -808,8 +1120,10 @@ function AddPatientToSlotContent({
   ).length
 
   const selectedPatient = patients?.find((patient) => patient.id === patientID)
+  // Par parcours, la thématique est celle du créneau retenu (MDS-74).
+  const effectiveThematicID = search.thematicOf(selected?.slot)
   const selectedThematic = thematics?.find(
-    (thematic) => thematic.id === thematicID,
+    (thematic) => thematic.id === effectiveThematicID,
   )
 
   const joinedAppointment = selected?.joinableAppointmentID
@@ -860,9 +1174,11 @@ function AddPatientToSlotContent({
       return
     }
 
+    const suggestionThematicID = search.thematicOf(suggestion.slot)
     const defaults = getSuggestionDefaults(
       suggestion,
-      selectedThematic?.duration,
+      thematics?.find((thematic) => thematic.id === suggestionThematicID)
+        ?.duration,
     )
     form.setFieldValue(
       'startTime',
@@ -946,7 +1262,7 @@ function AddPatientToSlotContent({
         startDate: start.toISOString(),
         endDate: end.toISOString(),
         slotID: selected.slot.id,
-        thematicId: value.subThematicID || value.thematicID,
+        thematicId: value.subThematicID || effectiveThematicID,
         // Le motif ne concerne que les créneaux individuels ; ailleurs le
         // champ n'est pas affiché et rien ne doit être enregistré.
         motif: selected.isIndividual ? value.motif.trim() : null,
@@ -1015,6 +1331,10 @@ function AddPatientToSlotContent({
 
       {step === 1 && (
         <PopupBody className="flex flex-col pt-5 pb-0">
+          <SearchModeToggle
+            value={search.searchMode}
+            onChange={search.handleSearchModeChange}
+          />
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_150px] gap-3">
             <form.AppField name="patientID">
               {(field) => (
@@ -1027,16 +1347,18 @@ function AddPatientToSlotContent({
               )}
             </form.AppField>
 
-            <form.AppField name="thematicID">
-              {(field) => (
-                <field.Select
-                  label="Thématique"
-                  options={thematicOptions}
-                  searchable
-                  placeholder="Sélectionnez une thématique"
-                />
-              )}
-            </form.AppField>
+            <SearchCriterion search={search}>
+              <form.AppField name="thematicID">
+                {(field) => (
+                  <field.Select
+                    label="Thématique"
+                    options={thematicOptions}
+                    searchable
+                    placeholder="Sélectionnez une thématique"
+                  />
+                )}
+              </form.AppField>
+            </SearchCriterion>
 
             <FormField>
               <Label>À partir du</Label>
@@ -1062,14 +1384,11 @@ function AddPatientToSlotContent({
               Créneaux disponibles{' '}
               <span className="font-normal text-text-light">({freeCount})</span>
             </span>
-            <span className="text-xs text-text-light">
-              Cliquez sur un créneau ou une heure pour continuer
-            </span>
+            <ListHint search={search} />
           </div>
 
-          <SlotList
-            isReady={!!patientID && !!thematicID}
-            suggestions={suggestions}
+          <SearchSlotList
+            search={search}
             until={upcomingRange.until}
             hasMore={hasMore}
             isLoading={isFetching}

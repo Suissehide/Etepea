@@ -15,6 +15,7 @@ import {
   isRangeFree,
   jourRelatif,
   maxDurationUntil,
+  slotPathwayTemplateID,
   splitPatientSlots,
 } from './slotAvailability.ts'
 
@@ -355,6 +356,29 @@ describe('getUpcomingSlotSuggestions', () => {
     expect(avecDuree.tranches?.length).toBeGreaterThan(0)
     expect(avecDuree.tranches?.every((t) => !t.taken)).toBe(true)
     expect(sansDuree.tranches).toBeUndefined()
+  })
+
+  it('cherche par parcours avec un predicat, chaque creneau decoupe a sa duree', () => {
+    const psy = proposable('psy', {
+      pathway: { template: { id: 'pw-psy' } },
+      slotTemplate: { thematicId: 'them-psy', capacity: 1, isIndividual: true },
+    } as Partial<Slot>)
+    const tabac = proposable('tabac', {
+      pathway: { pathwayTemplateID: 'pw-tabac' },
+      slotTemplate: { thematicId: 'them-tabac', capacity: 8 },
+    } as Partial<Slot>)
+    const suggestions = getUpcomingSlotSuggestions(
+      [psy, tabac, proposable('autre')],
+      (slot) =>
+        ['pw-psy', 'pw-tabac'].includes(slotPathwayTemplateID(slot) ?? ''),
+      'p1',
+      undefined,
+      10,
+      (slot) => (slot.slotTemplate?.thematicId === 'them-psy' ? 20 : null),
+    )
+    expect(suggestions.map((s) => s.slot.id)).toEqual(['psy', 'tabac'])
+    expect(suggestions[0].tranches).toHaveLength(3)
+    expect(suggestions[1].tranches).toBeUndefined()
   })
 })
 
