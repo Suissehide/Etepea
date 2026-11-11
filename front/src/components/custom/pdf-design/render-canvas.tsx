@@ -13,7 +13,7 @@ import {
   type PdfFill,
   type PdfTextElement,
 } from '../../../types/pdfDesign.ts'
-import { LIBELLES_DONNEES, SAMPLE_FIELD_VALUES } from './fields.ts'
+import { contrasteDe, LIBELLES_DONNEES, SAMPLE_FIELD_VALUES } from './fields.ts'
 
 // Ce moteur est une APPROXIMATION du rendu PDF, et c'est assume : les metriques d'Helvetica
 // different entre react-pdf et le navigateur, donc une ligne peut se couper ailleurs.
@@ -30,8 +30,14 @@ const RENDUS = ['text', 'rect', 'ellipse', 'image']
 
 // Dans l'editeur, la couleur du parcours n'a pas de patient : on montre le repli, qui est
 // ce que verra un patient sans parcours.
-const remplissage = (fill: PdfFill): string =>
-  typeof fill === 'string' ? fill : fill.fallback
+const remplissage = (fill: PdfFill): string => {
+  if (typeof fill === 'string') {
+    return fill
+  }
+  return fill.token === 'pathway.contrast'
+    ? contrasteDe(fill.fallback)
+    : fill.fallback
+}
 
 export function elementStyle(
   element: PdfElement,

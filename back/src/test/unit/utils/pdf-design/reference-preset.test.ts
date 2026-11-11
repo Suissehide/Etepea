@@ -69,12 +69,10 @@ describe('preset de reference', () => {
     expect(titre.y).toBe(342)
   })
 
-  it('garde le filet sous le titre, centre et de 4 points', () => {
-    const filet = element(0, 'cover-underline')
-    expect(filet.kind).toBe('rect')
-    expect(filet.w).toBe(120)
-    expect(filet.h).toBe(4)
-    expect(filet.x).toBeCloseTo((PAGE_W - 120) / 2, 2)
+  it('ne souligne plus le titre de couverture (MDS-79)', () => {
+    expect(
+      canvas(0).elements.some((e) => e.id === 'cover-underline'),
+    ).toBe(false)
   })
 
   it('garde le rond colore par le parcours, avec le repli mauve', () => {
@@ -111,6 +109,10 @@ describe('preset de reference', () => {
     expect(nom.y + nom.h).toBeCloseTo(PAGE_H - 48, 2)
     // MDS-79 : la boite s'arrete au bord du rond, un nom long passe a la ligne.
     expect(nom.w).toBe(240)
+    expect(nom.color).toEqual({
+      token: 'pathway.contrast',
+      fallback: '#e6aff6',
+    })
   })
 
   it('porte le sous-titre du parcours et les dates du programme', () => {
@@ -179,7 +181,6 @@ describe('preset de reference', () => {
   // silence ». Les y/h ci-dessous sont RELEVES sur le rendu d'origine (tache 9) et ne se
   // deduisent d'aucun style ; sans eux, seul le titre etait tenu.
   it('garde la geometrie relevee du bloc centre de la couverture', () => {
-    expect(element(0, 'cover-underline').y).toBe(432)
     expect(texte(0, 'cover-program').y).toBe(445)
     // MDS-79 : le titre reste noir, la couleur du parcours passe au soulignement.
     expect(texte(0, 'cover-program').color).toBe('#000000')

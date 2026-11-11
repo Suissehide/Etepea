@@ -11,7 +11,8 @@ export type PdfFieldKey = (typeof PDF_FIELD_KEYS)[number]
 export const PDF_BUILTIN_IMAGES = ['logo-chu', 'lines'] as const
 export type PdfBuiltinImage = (typeof PDF_BUILTIN_IMAGES)[number]
 
-export type PdfFill = string | { token: 'pathway.color'; fallback: string }
+export type PdfColorToken = 'pathway.color' | 'pathway.contrast'
+export type PdfFill = string | { token: PdfColorToken; fallback: string }
 
 export type PdfTextRun =
   | { id: string; text: string; bold: boolean; italic: boolean }

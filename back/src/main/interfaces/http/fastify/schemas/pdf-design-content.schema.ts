@@ -13,10 +13,13 @@ export const PDF_BUILTIN_IMAGES = ['logo-chu', 'lines'] as const
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/)
 
-// Une couleur fixe, ou celle du parcours du patient avec son repli quand il n'en a pas.
+// Une couleur fixe, celle du parcours du patient, ou le noir/blanc lisible dessus ; repli sans parcours.
 const fill = z.union([
   hex,
-  z.strictObject({ token: z.literal('pathway.color'), fallback: hex }),
+  z.strictObject({
+    token: z.enum(['pathway.color', 'pathway.contrast']),
+    fallback: hex,
+  }),
 ])
 
 // L'id ne sert qu'a l'editeur et aux rendus, pour suivre un run quand on en coupe ou en retire.

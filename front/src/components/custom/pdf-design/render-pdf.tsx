@@ -14,7 +14,7 @@ import {
   type PdfTextElement,
 } from '../../../types/pdfDesign.ts'
 import CalendarPages from '../Patient/pdf/pages/calendar-pages.pdf.tsx'
-import { type PdfFieldContext, resolveField } from './fields.ts'
+import { contrasteDe, type PdfFieldContext, resolveField } from './fields.ts'
 
 const BUILTIN_IMAGES: Record<PdfBuiltinImage, string> = {
   'logo-chu': logoCHU,
@@ -49,7 +49,8 @@ const resolveFill = (fill: PdfFill, ctx: PdfFieldContext): string => {
     return fill
   }
   // `||` et non `??` : une couleur vide en base doit aussi tomber sur le repli.
-  return ctx.pathways[0]?.templateColor || fill.fallback
+  const couleur = ctx.pathways[0]?.templateColor || fill.fallback
+  return fill.token === 'pathway.contrast' ? contrasteDe(couleur) : couleur
 }
 
 const fontOf = (bold: boolean) => (bold ? 'Helvetica-Bold' : 'Helvetica')

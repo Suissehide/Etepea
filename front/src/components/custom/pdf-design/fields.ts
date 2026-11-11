@@ -62,3 +62,15 @@ export const SAMPLE_FIELD_CONTEXT: PdfFieldContext = {
   ] as Slot[],
   serviceName: 'SMCV',
 }
+
+// Noir, ou blanc quand le fond est trop fonce (luminance relative WCAG sous 0,179).
+export const contrasteDe = (fond: string): string => {
+  if (!/^#[0-9a-f]{6}$/i.test(fond)) {
+    return '#000000'
+  }
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = Number.parseInt(fond.slice(i, i + 2), 16) / 255
+    return c <= 0.039_28 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.179 ? '#ffffff' : '#000000'
+}

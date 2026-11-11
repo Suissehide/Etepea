@@ -177,15 +177,6 @@ export const REFERENCE_PRESET_CONTENT: PdfDesignContentInput = {
           align: 'center',
         },
         {
-          id: 'cover-underline',
-          kind: 'rect',
-          x: (PAGE_W - 120) / 2,
-          y: 432,
-          w: 120,
-          h: 4,
-          fill: '#e05a5a',
-        },
-        {
           id: 'cover-program',
           kind: 'text',
           x: 0,
@@ -232,7 +223,8 @@ export const REFERENCE_PRESET_CONTENT: PdfDesignContentInput = {
           runs: [{ id: 'r1', field: 'patient.name' }],
           fontSize: 32,
           bold: true,
-          color: '#221755',
+          // Meme repli que le rond : noir dessus, blanc sur un parcours fonce.
+          color: { token: 'pathway.contrast', fallback: '#e6aff6' },
           vAlign: 'bottom',
         },
       ],

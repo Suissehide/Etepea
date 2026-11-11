@@ -206,6 +206,20 @@ describe('renderElement', () => {
     expect(JSON.stringify(renderElement(nom, ctx()))).toContain('#7c3aed')
   })
 
+  it('ecrit en noir sur un parcours clair, en blanc sur un parcours fonce', () => {
+    const nom: PdfElement = {
+      ...texte,
+      color: { token: 'pathway.contrast', fallback: '#e6aff6' },
+    }
+    const sur = (templateColor: string | null) =>
+      JSON.stringify(
+        renderElement(nom, ctx({ pathways: [pathway({ templateColor })] })),
+      )
+    expect(sur('#fecaca')).toContain('"color":"#000000"')
+    expect(sur('#1E40AF')).toContain('"color":"#ffffff"')
+    expect(sur(null)).toContain('"color":"#000000"')
+  })
+
   // Review Focus 2 : sans parcours, le repli du preset.
   it('se replie sur la couleur par defaut quand le patient n a pas de parcours', () => {
     const rond = ellipse({ token: 'pathway.color', fallback: '#e6aff6' })

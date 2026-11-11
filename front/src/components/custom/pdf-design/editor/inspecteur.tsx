@@ -30,6 +30,7 @@ import {
   PDF_FIELD_KEYS,
   type PdfBuiltinImage,
   type PdfCanvasPage,
+  type PdfColorToken,
   type PdfElement,
   type PdfFieldKey,
   type PdfFill,
@@ -45,6 +46,7 @@ import { Select } from '../../../ui/select.tsx'
 import { LIBELLES_DONNEES } from '../fields.ts'
 
 const COULEUR_PARCOURS = 'pathway.color'
+const CONTRASTE_PARCOURS = 'pathway.contrast'
 
 const ETIQUETTES_LIVREES: Record<string, string> = {
   'logo-chu': 'Logo',
@@ -235,8 +237,7 @@ const Segmente = <T extends string>({
   </fieldset>
 )
 
-// Le remplissage est soit une couleur fixe, soit la couleur du parcours avec son repli : ce
-// second cas est le seul moyen d'obtenir le rond colore de la couverture.
+// Couleur fixe, couleur du parcours (le rond de la couverture), ou noir/blanc lisible dessus.
 const Remplissage = ({
   label = 'Remplissage',
   fill,
@@ -246,48 +247,51 @@ const Remplissage = ({
   fill: PdfFill
   onChange: (fill: PdfFill) => void
 }) => {
-  const parcours = typeof fill !== 'string'
-  const couleur = parcours ? fill.fallback : fill
+  const jeton = typeof fill === 'string' ? null : fill.token
+  const couleur = typeof fill === 'string' ? fill : fill.fallback
+  const avec = (c: string): PdfFill =>
+    jeton ? { token: jeton, fallback: c } : c
   return (
     <>
       <Segmente
         label={label}
         pleineLargeur
-        valeur={parcours ? COULEUR_PARCOURS : 'fixe'}
+        valeur={jeton ?? 'fixe'}
         options={[
-          { valeur: 'fixe', libelle: 'Couleur fixe' },
-          { valeur: COULEUR_PARCOURS, libelle: 'Couleur du parcours' },
+          { valeur: 'fixe', libelle: 'Fixe' },
+          { valeur: COULEUR_PARCOURS, libelle: 'Parcours' },
+          { valeur: CONTRASTE_PARCOURS, libelle: 'Lisible' },
         ]}
         onChange={(v) =>
           onChange(
-            v === COULEUR_PARCOURS
-              ? { token: 'pathway.color', fallback: couleur }
-              : couleur,
+            v === 'fixe'
+              ? couleur
+              : { token: v as PdfColorToken, fallback: couleur },
           )
         }
       />
       <label className="h-[34px] border border-border rounded-[7px] flex items-center gap-2 px-2.5">
         <input
           type="color"
-          aria-label={parcours ? 'Couleur de repli' : 'Couleur'}
+          aria-label={jeton ? 'Couleur de repli' : 'Couleur'}
           value={couleur}
-          onChange={(e) =>
-            onChange(
-              parcours
-                ? { token: 'pathway.color', fallback: e.target.value }
-                : e.target.value,
-            )
-          }
+          onChange={(e) => onChange(avec(e.target.value))}
           className="w-[18px] h-[18px] shrink-0 cursor-pointer border-none bg-transparent p-0"
         />
         <span className="text-[13px] tabular-nums">
-          {parcours ? `Repli · ${couleur}` : couleur}
+          {jeton ? `Repli · ${couleur}` : couleur}
         </span>
       </label>
-      {parcours && (
+      {jeton === COULEUR_PARCOURS && (
         <p className="text-xs text-text-light leading-snug">
           La couleur du parcours du patient. Le repli s'affiche pour un patient
           sans parcours.
+        </p>
+      )}
+      {jeton === CONTRASTE_PARCOURS && (
+        <p className="text-xs text-text-light leading-snug">
+          Noir, ou blanc sur un parcours de couleur foncée. Le repli tient lieu
+          de couleur de parcours pour un patient sans parcours.
         </p>
       )}
     </>
