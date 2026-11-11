@@ -109,6 +109,8 @@ describe('preset de reference', () => {
     expect(nom.fontSize).toBe(32)
     // bottom: 48 aujourd'hui -> le bas de la boite tombe a 841.89 - 48.
     expect(nom.y + nom.h).toBeCloseTo(PAGE_H - 48, 2)
+    // MDS-79 : la boite s'arrete au bord du rond, un nom long passe a la ligne.
+    expect(nom.w).toBe(240)
   })
 
   it('porte le sous-titre du parcours et les dates du programme', () => {
@@ -179,9 +181,11 @@ describe('preset de reference', () => {
   it('garde la geometrie relevee du bloc centre de la couverture', () => {
     expect(element(0, 'cover-underline').y).toBe(432)
     expect(texte(0, 'cover-program').y).toBe(445)
-    expect(texte(0, 'cover-program').color).toEqual({
-      token: 'pathway.color',
-      fallback: '#7c3aed',
+    // MDS-79 : le titre reste noir, la couleur du parcours passe au soulignement.
+    expect(texte(0, 'cover-program').color).toBe('#000000')
+    expect(element(0, 'cover-program-underline')).toMatchObject({
+      y: 483,
+      fill: { token: 'pathway.color', fallback: '#7c3aed' },
     })
     expect(texte(0, 'cover-dates').y).toBe(503)
   })

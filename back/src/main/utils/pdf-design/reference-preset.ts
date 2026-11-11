@@ -195,8 +195,17 @@ export const REFERENCE_PRESET_CONTENT: PdfDesignContentInput = {
           runs: [{ id: 'r1', field: 'pathway.name' }],
           fontSize: 28,
           bold: true,
-          color: { token: 'pathway.color', fallback: '#7c3aed' },
+          color: '#000000',
           align: 'center',
+        },
+        {
+          id: 'cover-program-underline',
+          kind: 'rect',
+          x: (PAGE_W - 120) / 2,
+          y: 483,
+          w: 120,
+          h: 4,
+          fill: { token: 'pathway.color', fallback: '#7c3aed' },
         },
         {
           id: 'cover-dates',
@@ -217,7 +226,8 @@ export const REFERENCE_PRESET_CONTENT: PdfDesignContentInput = {
           x: MARGIN,
           // bottom: 48 ; la boite tient deux lignes de 32 pt et le nom s'ancre en bas.
           y: PAGE_H - 48 - 78,
-          w: CONTENT_W,
+          // Largeur du rond a cette hauteur : un nom long passe a la ligne au lieu d'en sortir.
+          w: 240,
           h: 78,
           runs: [{ id: 'r1', field: 'patient.name' }],
           fontSize: 32,
