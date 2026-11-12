@@ -236,7 +236,7 @@ function SuiviPage() {
       const patients = patientFilter
         ? pathway.patients.filter((p) => p.id === patientFilter)
         : pathway.patients
-      if (patients.length === 0) {
+      if (patientFilter && patients.length === 0) {
         return []
       }
       const color = pathway.template?.color ?? '#6366f1'
