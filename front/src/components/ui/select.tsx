@@ -77,7 +77,7 @@ function SearchableOptions({
           <button
             type="button"
             onClick={() => onSelect(option.value.toString())}
-            className="cursor-pointer flex w-full items-center justify-between gap-2 rounded px-2 py-1.5"
+            className="cursor-pointer flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left"
           >
             <span className="flex items-center gap-2 min-w-0">
               <ColorDot color={option.color} />
@@ -155,7 +155,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                 aria-describedby={ariaDescribedBy}
                 disabled={disabled}
                 className={cn(
-                  'inline-flex w-full h-9 items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm cursor-pointer',
+                  'inline-flex w-full h-9 items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm text-left cursor-pointer',
                   'focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring',
                   disabled ? 'opacity-50 cursor-not-allowed' : 'text-text-dark',
                   className,
@@ -246,7 +246,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             id={id}
             aria-describedby={ariaDescribedBy}
             className={cn(
-              'inline-flex w-full h-9 items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm',
+              'inline-flex w-full h-9 items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm text-left',
               'focus:outline-none focus:ring-1 focus:ring-ring',
               disabled
                 ? 'opacity-50 cursor-not-allowed'
@@ -371,9 +371,11 @@ export function MultiSelect({
         <button
           type="button"
           disabled={disabled}
-          className="inline-flex w-full h-9 items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm text-text-dark cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex w-full h-9 items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm text-left text-text-dark cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span className="flex items-center gap-2 truncate">
+          {/* Une seule ligne, alignée à gauche : dans une colonne étroite, les
+          noms passaient à la ligne et se centraient. */}
+          <span className="flex items-center gap-2 min-w-0 overflow-hidden whitespace-nowrap">
             {value.length === 0
               ? placeholder
               : options
@@ -387,7 +389,7 @@ export function MultiSelect({
                   ))}
             {value.length > 2 && `+${value.length - 2}`}
           </span>
-          <ChevronDown className="ml-2 h-4 w-4 text-text-light" />
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-text-light" />
         </button>
       </Popover.Trigger>
 
@@ -421,7 +423,7 @@ export function MultiSelect({
                 <button
                   type="button"
                   onClick={() => toggle(option.value)}
-                  className="cursor-pointer flex w-full items-center justify-between rounded px-2 py-1.5"
+                  className="cursor-pointer flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left"
                 >
                   <span className="flex items-center gap-2">
                     <ColorDot color={option.color} />
@@ -444,7 +446,7 @@ export function MultiSelect({
                 <button
                   type="button"
                   onClick={() => toggle(option.value)}
-                  className="cursor-pointer flex w-full items-center justify-between rounded px-2 py-1.5"
+                  className="cursor-pointer flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left"
                 >
                   <span className="flex items-center gap-2">
                     <ColorDot color={option.color} />
