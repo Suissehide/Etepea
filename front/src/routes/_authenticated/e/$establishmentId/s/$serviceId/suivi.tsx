@@ -8,20 +8,23 @@ import {
   useTable,
 } from '@tanstack/react-table'
 import dayjs, { type Dayjs } from 'dayjs'
-import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { type CSSProperties, useMemo, useRef, useState } from 'react'
 
+import {
+  BarreCalendrier,
+  type ControleurBarre,
+} from '@/components/custom/Calendar/barreCalendrier.tsx'
 import AddPatientForm from '@/components/custom/popup/addPatientForm.tsx'
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { type Features, features } from '@/components/table/features.ts'
 import { HeaderTable } from '@/components/table/headerTable.tsx'
 import type { CustomMeta } from '@/components/table/reactTable.tsx'
-import { Button } from '@/components/ui/button.tsx'
 import {
+  PopoverAnchor,
   PopoverContent,
   PopoverRoot,
-  PopoverTrigger,
 } from '@/components/ui/popover.tsx'
 import { Select } from '@/components/ui/select.tsx'
 import { hexToRGBA } from '@/libs/color.ts'
@@ -174,6 +177,7 @@ function SuiviPage() {
   const navigate = useNavigate()
   const { establishmentId, serviceId } = Route.useParams()
   const [date, setDate] = useState<Dayjs>(dayjs.utc())
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [patientFilter, setPatientFilter] = useState('')
   const [pathwayFilter, setPathwayFilter] = useState('')
@@ -325,8 +329,25 @@ function SuiviPage() {
     initialState: { columnPinning: { start: ['patient'], end: [] } },
   })
 
-  const prevMonth = () => setDate((d) => d.subtract(1, 'month'))
-  const nextMonth = () => setDate((d) => d.add(1, 'month'))
+  const thisMonth = dayjs.utc().startOf('month')
+  const controleur: ControleurBarre = {
+    prev: () => setDate((d) => d.subtract(1, 'month')),
+    next: () => setDate((d) => d.add(1, 'month')),
+    today: () => setDate(dayjs.utc()),
+    view: {
+      type: 'month',
+      title: date.format('MMMM YYYY').replace(/^./, (c) => c.toUpperCase()),
+    },
+    getButtonState: () => ({
+      prev: { text: '', hint: 'Mois précédent', isDisabled: false },
+      next: { text: '', hint: 'Mois suivant', isDisabled: false },
+      today: {
+        text: 'Ce mois-ci',
+        hint: 'Ce mois-ci',
+        isDisabled: date.isSame(thisMonth, 'month'),
+      },
+    }),
+  }
 
   return (
     <DashboardLayout
@@ -336,90 +357,66 @@ function SuiviPage() {
       ]}
     >
       <div className="flex-1 min-h-0 bg-background rounded-lg flex flex-col w-full gap-4 overflow-hidden">
-        <div className="px-6 mt-6 min-h-9 flex justify-between items-center gap-2">
-          <h1 className="text-text-dark text-xl font-semibold">Suivi</h1>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="w-56">
-              <label htmlFor="filtre-patient" className="sr-only">
-                Patient
-              </label>
-              <Select
-                id="filtre-patient"
-                searchable
-                maxResults={50}
-                placeholder="Tous les patients"
-                options={patientOptions}
-                value={patientFilter}
-                onValueChange={setPatientFilter}
-                className="rounded-lg"
-              />
-            </div>
-            <div className="w-56">
-              <label htmlFor="filtre-parcours" className="sr-only">
-                Parcours
-              </label>
-              <Select
-                id="filtre-parcours"
-                searchable
-                placeholder="Tous les parcours"
-                options={pathwayOptions}
-                value={pathwayFilter}
-                onValueChange={setPathwayFilter}
-                className="rounded-lg"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <PopoverRoot>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Choisir un mois"
-                >
-                  <CalendarDays className="w-4 h-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="center" className="p-0 w-auto">
-                <DateCalendar
-                  views={['year', 'month']}
-                  openTo="month"
-                  value={date}
-                  onChange={(newDate) => {
-                    if (newDate) {
-                      setDate(newDate)
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </PopoverRoot>
-
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Mois précédent"
-              onClick={prevMonth}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-
-            <span className="min-w-36 text-center font-medium capitalize">
-              {date.format('MMMM YYYY')}
-            </span>
-
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Mois suivant"
-              onClick={nextMonth}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
+        <h1 className="sr-only">Suivi</h1>
+        <PopoverRoot
+          open={!!anchorEl}
+          onOpenChange={(open) => !open && setAnchorEl(null)}
+        >
+          <PopoverAnchor virtualRef={{ current: anchorEl }} />
+          <BarreCalendrier
+            controller={controleur}
+            onChoisirDate={setAnchorEl}
+            className="px-6 pt-6 pb-0 flex-wrap"
+            filtres={
+              <>
+                <div className="w-56">
+                  <label htmlFor="filtre-patient" className="sr-only">
+                    Patient
+                  </label>
+                  <Select
+                    id="filtre-patient"
+                    searchable
+                    maxResults={50}
+                    placeholder="Tous les patients"
+                    options={patientOptions}
+                    value={patientFilter}
+                    onValueChange={setPatientFilter}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="w-56">
+                  <label htmlFor="filtre-parcours" className="sr-only">
+                    Parcours
+                  </label>
+                  <Select
+                    id="filtre-parcours"
+                    searchable
+                    placeholder="Tous les parcours"
+                    options={pathwayOptions}
+                    value={pathwayFilter}
+                    onValueChange={setPathwayFilter}
+                    className="rounded-lg"
+                  />
+                </div>
+              </>
+            }
+          />
+          <PopoverContent align="start" className="p-0 w-auto">
+            <DateCalendar
+              views={['year', 'month']}
+              openTo="month"
+              value={date}
+              onChange={(newDate, selectionState) => {
+                if (newDate) {
+                  setDate(newDate)
+                }
+                if (selectionState === 'finish') {
+                  setAnchorEl(null)
+                }
+              }}
+            />
+          </PopoverContent>
+        </PopoverRoot>
 
         <div className="px-6 pb-6 flex-1 min-h-0 flex flex-col">
           {isPending ? (
