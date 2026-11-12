@@ -439,7 +439,7 @@ function SuiviPage() {
                 />
 
                 <tbody>
-                  {table.getRowModel().rows.map((row) => {
+                  {table.getCoreRowModel().rows.map((row) => {
                     if (row.original.type === 'group') {
                       return (
                         <GroupRow
