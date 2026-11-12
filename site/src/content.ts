@@ -40,7 +40,7 @@ const fr = {
   hero: {
     title:
       "Vos programmes d'éducation thérapeutique, pilotés cycle après cycle",
-    lead: "Etepea est le logiciel de gestion des programmes d'ETP pour les établissements de santé. Il remplace les tableurs de planning et les feuilles de présence, puis prépare vos indicateurs ARS à partir de ce que l'équipe saisit déjà.",
+    lead: "Etepea est le logiciel de gestion des programmes d'ETP pour les établissements de santé. Il remplace les **tableurs de planning** et les **feuilles de présence**, puis prépare vos **indicateurs ARS** à partir de ce que l'équipe saisit déjà.",
     primary: "Demander une démo",
     secondary: "Voir la plateforme",
     screen: SCREENS.planning,
@@ -81,7 +81,7 @@ const fr = {
       {
         name: "Planning",
         title: "Le planning du cycle",
-        text: "Vous posez les semaines d'un cycle. Etepea le répète aussi longtemps que dure le programme.",
+        text: "Vous posez les semaines d'un cycle. Etepea **le répète** aussi longtemps que dure le programme.",
         points: [
           "Allonger ou raccourcir le cycle à tout moment",
           "Fermer des semaines sans casser la répétition",
@@ -93,7 +93,7 @@ const fr = {
       {
         name: "Agenda",
         title: "L'agenda du jour",
-        text: "Le matin, chacun sait qui vient, où et avec qui.",
+        text: "Le matin, chacun sait **qui vient, où et avec qui**.",
         points: [
           "Patients attendus et places restantes",
           "Présences et accompagnants",
@@ -105,7 +105,7 @@ const fr = {
       {
         name: "Suivi",
         title: "Le suivi du mois",
-        text: "La participation de chaque patient se lit d'un coup d'œil.",
+        text: "La participation de chaque patient se lit **d'un coup d'œil**.",
         points: [
           "Pointer une présence en un clic",
           "Voir les absences et leurs motifs",
@@ -117,7 +117,7 @@ const fr = {
       {
         name: "Patients",
         title: "Les dossiers et le diagnostic éducatif",
-        text: "Chaque patient, ses parcours et son bilan éducatif partagé au même endroit.",
+        text: "Chaque patient, ses parcours et son **bilan éducatif partagé** au même endroit.",
         points: [
           "Modèles de diagnostic adaptés à votre programme",
           "Fiche patient configurable par service",
@@ -130,19 +130,19 @@ const fr = {
   },
   steering: {
     title: "Vos indicateurs se préparent pendant que l'équipe travaille",
-    text: "Chaque séance planifiée, chaque présence pointée et chaque diagnostic éducatif alimentent les indicateurs du service. Au moment du rapport d'activité, l'essentiel est déjà là.",
+    text: "Chaque séance planifiée, chaque présence pointée et chaque diagnostic éducatif alimentent les indicateurs du service. Au moment du rapport d'activité, **l'essentiel est déjà là**.",
     items: [
       [
         "La grille ARS, déjà prête",
-        "Les indicateurs demandés par l'ARS sont fournis d'origine. Il reste à compléter ce qui ne se calcule pas.",
+        "Les indicateurs demandés par l'ARS sont **fournis d'origine**. Il reste à compléter ce qui ne se calcule pas.",
       ],
       [
         "Vos propres indicateurs",
-        "Chaque service compose ses jeux d'indicateurs selon ce qu'il doit suivre.",
+        "Chaque service compose **ses jeux d'indicateurs** selon ce qu'il doit suivre.",
       ],
       [
         "Un export Excel",
-        "Un jeu d'indicateurs s'exporte sur la période de votre choix.",
+        "Un jeu d'indicateurs s'exporte **sur la période de votre choix**.",
       ],
     ],
   },
@@ -188,19 +188,19 @@ const fr = {
     cards: [
       [
         "Chaque service chez soi",
-        "Un établissement et un service ne voient que leurs propres patients. Deux structures ne se croisent jamais.",
+        "Un établissement et un service ne voient que **leurs propres patients**. Deux structures ne se croisent jamais.",
       ],
       [
         "Des comptes sur invitation",
-        "Personne ne s'inscrit seul. Chaque compte reçoit un rôle qui borne ce qu'il peut voir et modifier.",
+        "**Personne ne s'inscrit seul.** Chaque compte reçoit un rôle qui borne ce qu'il peut voir et modifier.",
       ],
       [
         "Un journal des accès aux dossiers",
-        "Chaque consultation d'un dossier patient est tracée : qui l'a ouvert et quand.",
+        "Chaque consultation d'un dossier patient est tracée : **qui l'a ouvert et quand**.",
       ],
       [
         "Un journal d'activité",
-        "Qui a créé, modifié ou supprimé quoi et quand. La trace existe sans que personne n'ait à la tenir.",
+        "**Qui a créé, modifié ou supprimé quoi** et quand. La trace existe sans que personne n'ait à la tenir.",
       ],
     ],
   },
@@ -210,7 +210,7 @@ const fr = {
     steps: [
       [
         "Démonstration",
-        "Trente minutes sur vos propres parcours, pour vérifier qu'Etepea colle à votre programme.",
+        "**Trente minutes** sur vos propres parcours, pour vérifier qu'Etepea colle à votre programme.",
       ],
       [
         "Paramétrage",
@@ -228,7 +228,7 @@ const fr = {
   },
   demo: {
     title: "Voyez Etepea tourner sur vos propres parcours",
-    text: "Une démonstration de trente minutes. Dites-nous qui vous êtes et nous revenons vers vous pour fixer un créneau.",
+    text: "Une démonstration de **trente minutes**. Dites-nous qui vous êtes et nous revenons vers vous pour fixer un créneau.",
     sceneAlt: "Animation : le logo Etepea assemblé en cubes",
     fields: {
       firstName: "Prénom",
@@ -324,7 +324,7 @@ const en: typeof fr = {
   },
   hero: {
     title: "Your patient education programs, run cycle after cycle",
-    lead: "Etepea is the management software for therapeutic patient education programs in healthcare facilities. It replaces planning spreadsheets and attendance sheets, then prepares your regulatory indicators from what the team already records.",
+    lead: "Etepea is the management software for therapeutic patient education programs in healthcare facilities. It replaces **planning spreadsheets** and **attendance sheets**, then prepares your **regulatory indicators** from what the team already records.",
     primary: "Book a demo",
     secondary: "See the platform",
     screen: SCREENS.planning,
@@ -364,7 +364,7 @@ const en: typeof fr = {
       {
         name: "Planning",
         title: "The cycle planning",
-        text: "You lay out the weeks of a cycle. Etepea repeats it for as long as the program runs.",
+        text: "You lay out the weeks of a cycle. Etepea **repeats it** for as long as the program runs.",
         points: [
           "Lengthen or shorten the cycle at any time",
           "Close weeks without breaking the repetition",
@@ -376,7 +376,7 @@ const en: typeof fr = {
       {
         name: "Agenda",
         title: "The daily agenda",
-        text: "Every morning everyone knows who is coming, where and with whom.",
+        text: "Every morning everyone knows **who is coming, where and with whom**.",
         points: [
           "Expected patients and remaining places",
           "Attendance and companions",
@@ -388,7 +388,7 @@ const en: typeof fr = {
       {
         name: "Follow-up",
         title: "The monthly follow-up",
-        text: "Every patient's attendance reads at a glance.",
+        text: "Every patient's attendance reads **at a glance**.",
         points: [
           "Record attendance in one click",
           "See absences and their reasons",
@@ -400,7 +400,7 @@ const en: typeof fr = {
       {
         name: "Patients",
         title: "Records and educational assessment",
-        text: "Every patient, their pathways and their shared educational assessment in one place.",
+        text: "Every patient, their pathways and their **shared educational assessment** in one place.",
         points: [
           "Assessment templates tailored to your program",
           "Patient record configurable per department",
@@ -413,19 +413,19 @@ const en: typeof fr = {
   },
   steering: {
     title: "Your indicators get ready while the team works",
-    text: "Every planned session, every recorded attendance and every educational assessment feeds the department's indicators. When the activity report is due, most of it is already there.",
+    text: "Every planned session, every recorded attendance and every educational assessment feeds the department's indicators. When the activity report is due, **most of it is already there**.",
     items: [
       [
         "The regulator's grid, ready to use",
-        "The indicators requested by the French regional health agency (ARS) come built in. You only complete what cannot be computed.",
+        "The indicators requested by the French regional health agency (ARS) come **built in**. You only complete what cannot be computed.",
       ],
       [
         "Your own indicators",
-        "Each department builds its indicator sets around what it has to track.",
+        "Each department builds **its indicator sets** around what it has to track.",
       ],
       [
         "An Excel export",
-        "An indicator set exports over the period of your choice.",
+        "An indicator set exports **over the period of your choice**.",
       ],
     ],
   },
@@ -471,19 +471,19 @@ const en: typeof fr = {
     cards: [
       [
         "Every department on its own",
-        "A facility and a department only see their own patients. Two organisations never overlap.",
+        "A facility and a department only see **their own patients**. Two organisations never overlap.",
       ],
       [
         "Accounts by invitation",
-        "Nobody signs up alone. Each account gets a role that limits what it can see and change.",
+        "**Nobody signs up alone.** Each account gets a role that limits what it can see and change.",
       ],
       [
         "A record access log",
-        "Every time a patient record is opened, it is traced: who opened it and when.",
+        "Every time a patient record is opened, it is traced: **who opened it and when**.",
       ],
       [
         "An activity log",
-        "Who created, changed or deleted what and when. The trail exists without anyone having to keep it.",
+        "**Who created, changed or deleted what** and when. The trail exists without anyone having to keep it.",
       ],
     ],
   },
@@ -493,7 +493,7 @@ const en: typeof fr = {
     steps: [
       [
         "Demo",
-        "Thirty minutes on your own pathways, to check that Etepea fits your program.",
+        "**Thirty minutes** on your own pathways, to check that Etepea fits your program.",
       ],
       [
         "Setup",
@@ -511,7 +511,7 @@ const en: typeof fr = {
   },
   demo: {
     title: "See Etepea running on your own pathways",
-    text: "A thirty-minute demo. Tell us who you are and we will get back to you to set a time.",
+    text: "A **thirty-minute** demo. Tell us who you are and we will get back to you to set a time.",
     sceneAlt: "Animation: the Etepea logo assembled from cubes",
     fields: {
       firstName: "First name",

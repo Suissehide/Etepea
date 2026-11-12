@@ -1,4 +1,28 @@
 import {
+  Building2,
+  CalendarDays,
+  CalendarRange,
+  ChartColumn,
+  CirclePlay,
+  ClipboardCheck,
+  ClipboardList,
+  Eye,
+  FileSpreadsheet,
+  History,
+  ListChecks,
+  LockKeyhole,
+  type LucideIcon,
+  MonitorPlay,
+  Repeat,
+  Settings2,
+  ShieldCheck,
+  SlidersHorizontal,
+  Stethoscope,
+  UserPlus,
+  Users,
+  Workflow,
+} from "lucide-react";
+import {
   type FormEvent,
   type ReactNode,
   useEffect,
@@ -14,6 +38,14 @@ import {
   pagePath,
 } from "./content";
 import Trame from "./Trame";
+
+// Une icône par entrée, dans l'ordre des textes de content.ts.
+const MANUAL_ICONS = [Repeat, ClipboardCheck, CalendarDays, ChartColumn];
+const TAB_ICONS = [CalendarRange, CalendarDays, ListChecks, Users];
+const STEERING_ICONS = [ClipboardList, SlidersHorizontal, FileSpreadsheet];
+const WHO_ICONS = [Building2, Workflow, Stethoscope, ShieldCheck];
+const SECURITY_ICONS = [LockKeyhole, UserPlus, Eye, History];
+const STEP_ICONS = [MonitorPlay, Settings2, UserPlus, CirclePlay];
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -103,6 +135,35 @@ function Logo() {
         etepe<span className="text-brand">a</span>
       </span>
     </span>
+  );
+}
+
+function Ico({
+  of: Icon,
+  className = "size-5 text-brand",
+}: {
+  of: LucideIcon;
+  className?: string;
+}) {
+  return (
+    <Icon
+      aria-hidden="true"
+      strokeWidth={1.75}
+      className={`shrink-0 ${className}`}
+    />
+  );
+}
+
+// Les passages entre ** d'un texte sont mis en avant.
+function Rich({ text }: { text: string }) {
+  return text.split("**").map((part, i) =>
+    i % 2 ? (
+      <strong key={part} className="font-medium text-ink">
+        {part}
+      </strong>
+    ) : (
+      part
+    ),
   );
 }
 
@@ -212,7 +273,9 @@ function Hero({ t }: { t: Copy }) {
       <div
         className={`${WRAP} relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between`}
       >
-        <p className="max-w-xl text-lg text-mute md:text-xl">{h.lead}</p>
+        <p className="max-w-xl text-lg text-mute md:text-xl">
+          <Rich text={h.lead} />
+        </p>
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
           <a href="#demo" className={BTN_DARK}>
             {h.primary}
@@ -265,14 +328,14 @@ function Manual({ t }: { t: Copy }) {
           <p>{m.after}</p>
         </div>
         <ul className="mt-4 border-b border-line">
-          {m.rows.map(([before, after]) => (
+          {m.rows.map(([before, after], i) => (
             <li
               key={before}
               className="grid gap-x-12 gap-y-2 border-t border-line py-6 text-lg md:grid-cols-2 md:py-7 md:text-xl"
             >
               <p className="text-mute">{before}</p>
-              <p className="flex items-baseline gap-3 font-medium">
-                <Cube />
+              <p className="flex items-start gap-3 font-medium">
+                <Ico of={MANUAL_ICONS[i]} className="mt-1 size-5 text-brand" />
                 {after}
               </p>
             </li>
@@ -325,8 +388,12 @@ function Platform({ t }: { t: Copy }) {
               aria-selected={i === active}
               aria-controls={`panel-${i}`}
               onClick={() => setActive(i)}
-              className={`pb-3 text-lg font-medium whitespace-nowrap ${i === active ? "text-ink" : "text-mute hover:text-ink"}`}
+              className={`flex items-center gap-2 pb-3 text-lg font-medium whitespace-nowrap ${i === active ? "text-ink" : "text-mute hover:text-ink"}`}
             >
+              <Ico
+                of={TAB_ICONS[i]}
+                className={`size-5 ${i === active ? "text-brand" : ""}`}
+              />
               {f.name}
             </button>
           ))}
@@ -354,7 +421,9 @@ function Platform({ t }: { t: Copy }) {
                   <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
                     {f.title}
                   </h3>
-                  <p className="mt-3 text-lg text-mute">{f.text}</p>
+                  <p className="mt-3 text-lg text-mute">
+                    <Rich text={f.text} />
+                  </p>
                   <ul className="mt-6 flex flex-col gap-3">
                     {f.points.map((point) => (
                       <li key={point} className="flex items-baseline gap-3">
@@ -386,18 +455,22 @@ function Steering({ t }: { t: Copy }) {
       <div className={`${RAIL} grid gap-12 lg:grid-cols-2 lg:gap-20`}>
         <div>
           <Title className={H2}>{s.title}</Title>
-          <p className="mt-6 max-w-lg text-lg text-mute">{s.text}</p>
+          <p className="mt-6 max-w-lg text-lg text-mute">
+            <Rich text={s.text} />
+          </p>
         </div>
         <dl>
-          {s.items.map(([title, text]) => (
+          {s.items.map(([title, text], i) => (
             <div
               key={title}
               className="flex gap-4 border-t border-line py-6 last:border-b"
             >
-              <Cube className="mt-2 bg-brand" />
+              <Ico of={STEERING_ICONS[i]} className="mt-1 size-5 text-brand" />
               <div>
                 <dt className="text-xl font-medium tracking-tight">{title}</dt>
-                <dd className="mt-2 text-mute">{text}</dd>
+                <dd className="mt-2 text-mute">
+                  <Rich text={text} />
+                </dd>
               </div>
             </div>
           ))}
@@ -435,8 +508,9 @@ function Stakeholders({ t }: { t: Copy }) {
                 onFocus={() => setActive(i)}
                 className={`flex items-center gap-4 py-1.5 text-left text-2xl font-medium tracking-tight md:text-[2rem] ${i === active ? "text-ink" : "text-ink/30"}`}
               >
-                <Cube
-                  className={`bg-brand transition-[scale] duration-300 ${i === active ? "" : "scale-0"}`}
+                <Ico
+                  of={WHO_ICONS[i]}
+                  className={`size-6 md:size-7 ${i === active ? "text-brand" : ""}`}
                 />
                 {who}
               </button>
@@ -494,13 +568,16 @@ function Onboarding({ t }: { t: Copy }) {
                   />
                 ))}
               </div>
-              <p className="mt-5 text-sm text-mute">
+              <p className="mt-5 flex items-center gap-2 text-sm text-mute">
+                <Ico of={STEP_ICONS[i]} className="size-4 text-brand" />
                 {j.step} {i + 1}
               </p>
               <h3 className="mt-1 text-xl font-medium tracking-tight">
                 {name}
               </h3>
-              <p className="mt-3 text-[0.95rem] text-mute">{text}</p>
+              <p className="mt-3 text-[0.95rem] text-mute">
+                <Rich text={text} />
+              </p>
             </li>
           ))}
         </ol>
@@ -518,10 +595,15 @@ function Security({ t }: { t: Copy }) {
           {s.title}
         </Title>
         <dl className="grid gap-x-10 sm:grid-cols-2">
-          {s.cards.map(([title, text]) => (
+          {s.cards.map(([title, text], i) => (
             <div key={title} className="border-t border-ink/15 py-7">
-              <dt className="text-xl font-medium tracking-tight">{title}</dt>
-              <dd className="mt-3 text-mute">{text}</dd>
+              <Ico of={SECURITY_ICONS[i]} className="size-6 text-brand" />
+              <dt className="mt-4 text-xl font-medium tracking-tight">
+                {title}
+              </dt>
+              <dd className="mt-3 text-mute">
+                <Rich text={text} />
+              </dd>
             </div>
           ))}
         </dl>
@@ -595,7 +677,9 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
       <div className={`${RAIL} grid gap-12 md:grid-cols-2 md:gap-20`}>
         <div>
           <Title className={H2}>{d.title}</Title>
-          <p className="mt-6 max-w-md text-lg text-mute">{d.text}</p>
+          <p className="mt-6 max-w-md text-lg text-mute">
+            <Rich text={d.text} />
+          </p>
           <Trame
             variant="logo"
             label={d.sceneAlt}
