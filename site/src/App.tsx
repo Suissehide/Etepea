@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import {
   CONTACT_EMAIL,
   CONTENT,
@@ -156,12 +156,16 @@ function Nav({
 
 function Screen({
   src,
+  alt,
   focus = "0% 0%",
   className = "",
+  eager = false,
 }: {
   src: string;
+  alt: string;
   focus?: string;
   className?: string;
+  eager?: boolean;
 }) {
   return (
     <div
@@ -174,8 +178,9 @@ function Screen({
       </div>
       <img
         src={src}
-        alt=""
-        loading="lazy"
+        alt={alt}
+        loading={eager ? "eager" : "lazy"}
+        fetchPriority={eager ? "high" : "auto"}
         style={{ objectPosition: focus }}
         className="aspect-[16/10] w-full object-cover"
       />
@@ -214,7 +219,12 @@ function Hero({ t }: { t: Copy }) {
             </li>
           ))}
         </ul>
-        <Screen src={h.screen} className="mx-auto mt-14 max-w-5xl" />
+        <Screen
+          src={h.screen}
+          alt={t.platform.features[0].title}
+          className="mx-auto mt-14 max-w-5xl"
+          eager
+        />
       </div>
     </section>
   );
@@ -233,14 +243,14 @@ function Problem({ t }: { t: Copy }) {
           <p className="mt-6 text-lg text-mute">{p.text}</p>
         </div>
         <ul className="reveal grid grid-cols-2 gap-3">
-          {p.stats.map(([value, text], i) => (
+          {p.highlights.map(([value, text], i) => (
             <li
               key={value}
               className={`flex aspect-square flex-col justify-between rounded-3xl p-5 sm:p-7 ${i === 1 ? "bg-brand text-white" : "bg-tint"}`}
             >
-              <span className="text-2xl font-medium tracking-tight sm:text-4xl">
+              <h3 className="text-xl font-medium tracking-tight sm:text-3xl">
                 {value}
-              </span>
+              </h3>
               <span
                 className={`text-sm sm:text-base ${i === 1 ? "text-white/85" : "text-mute"}`}
               >
@@ -281,7 +291,7 @@ function Platform({ t }: { t: Copy }) {
                   ))}
                 </ul>
               </div>
-              <Screen src={f.screen} focus={f.focus} />
+              <Screen src={f.screen} alt={f.title} focus={f.focus} />
             </article>
           ))}
         </div>
@@ -426,6 +436,11 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
         body: JSON.stringify(body),
       });
       setState(response.ok ? "sent" : "error");
+      if (response.ok) {
+        (window as { umami?: { track: (event: string) => void } }).umami?.track(
+          "demande-demo",
+        );
+      }
     } catch {
       setState("error");
     }
@@ -621,9 +636,7 @@ function Footer({
           />
         </div>
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-sm text-mute">
-          <p>
-            © {new Date().getFullYear()} Etepea. {f.rights}
-          </p>
+          <p>© Etepea. {f.rights}</p>
           <a
             href={pagePath(other, page)}
             hrefLang={other}
@@ -640,7 +653,8 @@ function Footer({
 const NOTICE_KEY = "etepea-cookie-notice";
 
 function CookieNotice({ t, lang }: { t: Copy; lang: Lang }) {
-  const [open, setOpen] = useState(() => !localStorage.getItem(NOTICE_KEY));
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(!localStorage.getItem(NOTICE_KEY)), []);
   if (!open) {
     return null;
   }

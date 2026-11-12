@@ -2,6 +2,9 @@ export type Lang = "fr" | "en";
 export type Page = "home" | "privacy" | "cookies";
 
 export const CONTACT_EMAIL = "contact@etepea.fr";
+export const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://etepea.fr";
+export const LANGS: Lang[] = ["fr", "en"];
+export const PAGES: Page[] = ["home", "privacy", "cookies"];
 
 export const SLUGS: Record<Exclude<Page, "home">, Record<Lang, string>> = {
   privacy: { fr: "confidentialite", en: "privacy" },
@@ -20,9 +23,10 @@ const SCREENS = {
 
 const fr = {
   meta: {
-    title: "Etepea | Le logiciel des programmes d'éducation thérapeutique",
+    title:
+      "Etepea | Logiciel de gestion des programmes d'éducation thérapeutique (ETP)",
     description:
-      "Etepea planifie, coordonne et suit vos programmes d'éducation thérapeutique du patient, de l'inclusion à la sortie.",
+      "Etepea est le logiciel qui planifie, coordonne et suit vos programmes d'éducation thérapeutique du patient (ETP) : planning annuel, agenda, suivi des présences et diagnostic éducatif.",
   },
   nav: {
     links: [
@@ -50,11 +54,14 @@ const fr = {
     label: "Le constat",
     title: "Un programme d'ETP ne tient pas dans un tableur.",
     text: "Des dizaines de séances collectives et individuelles, des intervenants aux agendas croisés, des patients qui avancent chacun à leur rythme. Etepea remplace les tableurs et les classeurs par une trame claire, déroulée sur l'année, que toute l'équipe partage.",
-    stats: [
-      ["1 trame", "construite une fois puis déroulée sur toute l'année."],
-      ["1 clic", "pour pointer la présence d'un patient à une séance."],
-      ["0 doublon", "le patient rejoint ses séances sans double saisie."],
-      ["4 rôles", "coordination, intervenants, secrétariat et lecture seule."],
+    highlights: [
+      [
+        "Trame annuelle",
+        "Construite une fois puis déroulée sur toute l'année.",
+      ],
+      ["Pointage", "La présence d'un patient à une séance se note en un clic."],
+      ["Saisie unique", "Le patient rejoint ses séances depuis son parcours."],
+      ["Rôles", "Coordination, intervenants, secrétariat et lecture seule."],
     ],
   },
   platform: {
@@ -227,7 +234,7 @@ const fr = {
         ],
         [
           "Mesure d'audience",
-          "Le site n'utilise aucun outil de mesure d'audience ni aucun traceur publicitaire.",
+          "La fréquentation du site est mesurée avec Umami, un outil libre installé sur notre propre serveur. Il ne dépose aucun cookie et ne permet pas de vous suivre d'un site à l'autre. Les statistiques sont anonymes et agrégées. Le site n'utilise aucun traceur publicitaire.",
         ],
         [
           "Vos droits",
@@ -240,7 +247,7 @@ const fr = {
       sections: [
         [
           "Aucun cookie de suivi",
-          "Ce site ne dépose aucun cookie publicitaire ou de mesure d'audience. Aucun consentement ne vous est donc demandé.",
+          "Ce site ne dépose aucun cookie publicitaire ou de suivi. La mesure d'audience fonctionne sans cookie.",
         ],
         [
           "Ce qui est mémorisé dans votre navigateur",
@@ -248,7 +255,7 @@ const fr = {
         ],
         [
           "Ressources externes",
-          "Les polices et les images sont servies par le site lui-même. Aucune ressource n'est chargée depuis un service tiers.",
+          "Les polices et les images sont servies par le site lui-même. Le seul script externe est celui de la mesure d'audience, chargé depuis notre propre serveur Umami.",
         ],
       ],
     },
@@ -257,9 +264,9 @@ const fr = {
 
 const en: typeof fr = {
   meta: {
-    title: "Etepea | Software for therapeutic patient education programs",
+    title: "Etepea | Software to run therapeutic patient education programs",
     description:
-      "Etepea plans, coordinates and tracks your therapeutic patient education programs, from enrolment to discharge.",
+      "Etepea is the software that plans, coordinates and tracks your therapeutic patient education programs: yearly planning, daily agenda, attendance follow-up and educational assessment.",
   },
   nav: {
     links: [
@@ -287,11 +294,20 @@ const en: typeof fr = {
     label: "The problem",
     title: "A patient education program does not fit in a spreadsheet.",
     text: "Dozens of group and one-to-one sessions, practitioners with overlapping schedules, patients who each move at their own pace. Etepea replaces spreadsheets and binders with one clear framework, rolled out across the year and shared by the whole team.",
-    stats: [
-      ["1 framework", "designed once then rolled out over the whole year."],
-      ["1 click", "to record a patient's attendance at a session."],
-      ["0 duplicates", "patients join their sessions with no double entry."],
-      ["4 roles", "coordinators, practitioners, front desk and read-only."],
+    highlights: [
+      [
+        "Yearly framework",
+        "Designed once then rolled out over the whole year.",
+      ],
+      [
+        "Attendance",
+        "A patient's attendance at a session is recorded in one click.",
+      ],
+      [
+        "Single entry",
+        "Patients join their sessions straight from their pathway.",
+      ],
+      ["Roles", "Coordinators, practitioners, front desk and read-only."],
     ],
   },
   platform: {
@@ -464,7 +480,7 @@ const en: typeof fr = {
         ],
         [
           "Audience measurement",
-          "The site uses no analytics tool and no advertising tracker.",
+          "Site traffic is measured with Umami, an open-source tool running on our own server. It sets no cookies and cannot follow you from one site to another. Statistics are anonymous and aggregated. The site uses no advertising tracker.",
         ],
         [
           "Your rights",
@@ -477,7 +493,7 @@ const en: typeof fr = {
       sections: [
         [
           "No tracking cookies",
-          "This site sets no advertising or analytics cookies. No consent is therefore requested.",
+          "This site sets no advertising or tracking cookies. Audience measurement works without cookies.",
         ],
         [
           "What is stored in your browser",
@@ -485,7 +501,7 @@ const en: typeof fr = {
         ],
         [
           "External resources",
-          "Fonts and images are served by the site itself. Nothing is loaded from a third-party service.",
+          "Fonts and images are served by the site itself. The only external script is the audience measurement one, loaded from our own Umami server.",
         ],
       ],
     },
@@ -493,4 +509,9 @@ const en: typeof fr = {
 };
 
 export const CONTENT = { fr, en };
+
+export const pageTitle = (lang: Lang, page: Page) =>
+  page === "home"
+    ? CONTENT[lang].meta.title
+    : `${CONTENT[lang].legal[page].title} | Etepea`;
 export type Copy = typeof fr;
