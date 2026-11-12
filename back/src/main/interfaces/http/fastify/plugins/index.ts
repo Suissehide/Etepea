@@ -6,6 +6,7 @@ import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 import fastifyGracefulShutdown from 'fastify-graceful-shutdown'
 import fastifyPlugin from 'fastify-plugin'
 
+import { DEMO_REQUEST_URL } from '../routes/demoRequest'
 import { registerPlugin } from '../util/fastify-plugin.registerer'
 import { awilixPlugin } from './awilix.plugin'
 import { cookiePlugin } from './cookie.plugin'
@@ -43,9 +44,17 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     await registerPlugin<FastifyCorsOptions>(fastify, 'cors', fastifyCors, {
       // Ne jamais refléter une origine arbitraire avec credentials: on retombe
       // sur l'URL du front (toujours définie) si CORS_ORIGIN est absent.
-      origin: config.corsOrigin ?? config.frontUrl,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      // Le site vitrine n'a droit qu'à la demande de démo, sans cookies.
+      delegator: (request, callback) => {
+        const fromSite = request.url === DEMO_REQUEST_URL
+        callback(null, {
+          origin: fromSite
+            ? (config.siteUrl ?? false)
+            : (config.corsOrigin ?? config.frontUrl),
+          credentials: !fromSite,
+          methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        })
+      },
     })
     await registerPlugin(fastify, 'accepts', fastifyAccepts)
     await registerPlugin(fastify, 'awilix', awilixPlugin)

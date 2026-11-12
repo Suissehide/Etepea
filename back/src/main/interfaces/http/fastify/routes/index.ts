@@ -2,6 +2,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 
 import { assertTenantShapedRoute } from '../plugins/tenant.plugin'
 import { authRouter } from './auth'
+import { DEMO_REQUEST_URL, demoRequestRouter } from './demoRequest'
 import { establishmentAdminRoutes } from './establishment-admin.routes'
 import { healthcheckRouter } from './healthcheck'
 import { meRouter } from './me'
@@ -18,7 +19,7 @@ import {
 } from './tenant.routes'
 
 // Routes publiques (sans session) : racine, healthcheck et authentification.
-const PUBLIC_ROUTES = new Set(['/', '/health'])
+const PUBLIC_ROUTES = new Set(['/', '/health', DEMO_REQUEST_URL])
 
 const routes: FastifyPluginAsyncZod = async (fastify) => {
   // Toute route de forme multi-tenant doit déclarer sa permission, où qu'elle
@@ -73,6 +74,7 @@ const routes: FastifyPluginAsyncZod = async (fastify) => {
   })
 
   await fastify.register(healthcheckRouter)
+  await fastify.register(demoRequestRouter, { prefix: DEMO_REQUEST_URL })
   await fastify.register(authRouter, { prefix: '/auth' })
   await fastify.register(meRouter, { prefix: '/me' })
   await fastify.register(tenantRoutes, { prefix: TENANT_PREFIX })

@@ -31,6 +31,12 @@ const configSchema = z.object({
   host: z.string().optional(),
   corsOrigin: z.string().optional(),
   frontUrl: z.string(),
+  // Origine du site vitrine, seule autorisée à poster une demande de démo.
+  siteUrl: z.string().optional(),
+  demoRequestTo: z
+    .string()
+    .optional()
+    .transform((val) => val || 'contact@etepea.fr'),
 
   jwtSecret: z.string().default('medisync-jwt'),
   jwtRefreshSecret: z.string().default('medisync-refresh'),
@@ -86,6 +92,8 @@ const envVarNames = [
   'CORS_ORIGIN',
   'HOST',
   'FRONT_URL',
+  'SITE_URL',
+  'DEMO_REQUEST_TO',
   'JWT_SECRET',
   'JWT_REFRESH_SECRET',
   'JWT_EXPIRES_IN',

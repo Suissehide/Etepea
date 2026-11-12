@@ -96,3 +96,29 @@ export const memberAddedMail = ({
     html: layout([escapeHtml(intro), escapeHtml(how)], link, 'Se connecter'),
   }
 }
+
+export const demoRequestMail = (
+  to: string,
+  demo: {
+    firstName: string
+    lastName: string
+    email: string
+    establishment: string
+    role: string
+    message?: string
+  },
+): Mail => {
+  const lines = [
+    `Nom : ${demo.firstName} ${demo.lastName}`,
+    `E-mail : ${demo.email}`,
+    `Établissement : ${demo.establishment}`,
+    `Fonction : ${demo.role}`,
+    ...(demo.message ? [`Message : ${demo.message}`] : []),
+  ]
+  return {
+    to,
+    subject: `Demande de démo : ${demo.establishment}`,
+    text: lines.join('\n'),
+    html: lines.map((l) => `<p>${escapeHtml(l)}</p>`).join('\n'),
+  }
+}

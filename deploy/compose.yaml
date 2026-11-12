@@ -56,6 +56,8 @@ services:
       - NODE_TLS_REJECT_UNAUTHORIZED
       - PORT
       - FRONT_URL
+      - SITE_URL
+      - DEMO_REQUEST_TO
       - SMTP_HOST
       - SMTP_PORT
       - SMTP_SECURE
