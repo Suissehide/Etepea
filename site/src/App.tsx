@@ -15,7 +15,7 @@ const H2 =
   "text-3xl leading-[1.12] font-medium tracking-tight text-balance md:text-[2.75rem]";
 const BTN =
   "inline-flex items-center justify-center rounded-xl px-5 py-3 font-medium transition-colors";
-const BTN_DARK = `${BTN} bg-ink text-white hover:bg-brand`;
+const BTN_DARK = `${BTN} bg-ink text-white hover:-translate-y-0.5 hover:bg-brand active:translate-y-0`;
 const BTN_LIGHT = `${BTN} border border-line bg-white hover:border-ink`;
 const WRAP = "mx-auto w-full max-w-6xl px-4 sm:px-6";
 const SECTION = "py-20 md:py-28";
@@ -153,30 +153,27 @@ function Screen({
   alt,
   focus = "0% 0%",
   className = "",
+  ratio = "aspect-[16/10]",
   eager = false,
 }: {
   src: string;
   alt: string;
   focus?: string;
   className?: string;
+  ratio?: string;
   eager?: boolean;
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-line bg-white shadow-[0_40px_80px_-45px_rgba(37,99,235,0.45)] ${className}`}
+      className={`overflow-hidden rounded-2xl bg-white shadow-[0_30px_90px_-35px_rgba(4,24,43,0.45)] ring-1 ring-ink/5 ${className}`}
     >
-      <div className="flex gap-1.5 border-b border-line px-3.5 py-3">
-        <Cube className="bg-line" />
-        <Cube className="bg-line" />
-        <Cube className="bg-brand" />
-      </div>
       <img
         src={src}
         alt={alt}
         loading={eager ? "eager" : "lazy"}
         fetchPriority={eager ? "high" : "auto"}
         style={{ objectPosition: focus }}
-        className="aspect-[16/10] w-full object-cover"
+        className={`${ratio} w-full object-cover`}
       />
     </div>
   );
@@ -185,15 +182,15 @@ function Screen({
 function Hero({ t }: { t: Copy }) {
   const h = t.hero;
   return (
-    <section className="overflow-hidden">
-      <div
-        className={`${WRAP} grid items-center gap-x-8 pt-14 lg:grid-cols-[minmax(0,11fr)_minmax(0,10fr)] lg:pt-20`}
-      >
-        <div>
+    <section className="relative overflow-hidden">
+      <div className={`${WRAP} relative z-10 pt-14 lg:pt-24`}>
+        <div className="lg:max-w-[34rem]">
           <h1 className="text-[clamp(2.5rem,5.2vw,4.4rem)] leading-[1.04] font-medium tracking-[-0.035em] text-balance">
             {h.title}
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-mute md:text-xl">{h.lead}</p>
+          <p className="mt-6 max-w-xl text-lg text-mute md:text-xl lg:max-w-[27rem]">
+            {h.lead}
+          </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <a href="#demo" className={BTN_DARK}>
               {h.primary}
@@ -204,20 +201,21 @@ function Hero({ t }: { t: Copy }) {
           </div>
           <p className="mt-6 text-sm text-mute">{h.note}</p>
         </div>
-        <figure>
-          <Trame
-            variant="cycle"
-            label={h.sceneAlt}
-            labels={h.scene}
-            className="h-80 sm:h-96 lg:h-[34rem]"
-          />
-          <figcaption className="text-center text-sm text-mute">
-            {h.sceneCaption}
-          </figcaption>
-        </figure>
       </div>
-      <div className={WRAP}>
-        <Screen src={h.screen} alt={h.screenAlt} className="mt-6" eager />
+      <Trame
+        variant="cycle"
+        label={h.sceneAlt}
+        labels={h.scene}
+        className="h-[26rem] w-full lg:absolute lg:-top-12 lg:-right-10 lg:h-[50rem] lg:w-[62%]"
+      />
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
+        <Screen
+          src={h.screen}
+          alt={h.screenAlt}
+          className="rounded-b-none [mask-image:linear-gradient(#000_55%,transparent)] lg:mt-20"
+          ratio="aspect-[16/8]"
+          eager
+        />
       </div>
     </section>
   );
@@ -256,12 +254,12 @@ function Platform({ t }: { t: Copy }) {
   const p = t.platform;
   const [active, setActive] = useState(0);
   return (
-    <section id="plateforme" className={`${SECTION} bg-tint`}>
+    <section id="plateforme" className={`${SECTION} overflow-hidden`}>
       <div className={WRAP}>
         <h2 className={`${H2} max-w-3xl`}>{p.title}</h2>
         <div
           role="tablist"
-          className="mt-10 flex flex-wrap gap-1 rounded-2xl border border-line bg-white p-1 sm:inline-flex"
+          className="mt-10 flex flex-wrap gap-x-9 gap-y-2 border-b border-line"
         >
           {p.features.map((f, i) => (
             <button
@@ -272,7 +270,7 @@ function Platform({ t }: { t: Copy }) {
               aria-selected={i === active}
               aria-controls={`panel-${i}`}
               onClick={() => setActive(i)}
-              className={`flex-1 rounded-xl px-5 py-2.5 font-medium transition-colors ${i === active ? "bg-ink text-white" : "text-mute hover:text-ink"}`}
+              className={`-mb-px border-b-2 pb-3 text-lg font-medium ${i === active ? "border-brand text-ink" : "border-transparent text-mute hover:text-ink"}`}
             >
               {f.name}
             </button>
@@ -285,7 +283,7 @@ function Platform({ t }: { t: Copy }) {
             id={`panel-${i}`}
             aria-labelledby={`tab-${i}`}
             hidden={i !== active}
-            className="mt-10 grid items-center gap-8 md:grid-cols-[2fr_3fr] md:gap-14"
+            className="mt-12 grid items-center gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-14"
           >
             <div>
               <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
@@ -301,7 +299,12 @@ function Platform({ t }: { t: Copy }) {
                 ))}
               </ul>
             </div>
-            <Screen src={f.screen} alt={f.title} focus={f.focus} />
+            <Screen
+              src={f.screen}
+              alt={f.title}
+              focus={f.focus}
+              className="lg:w-[125%]"
+            />
           </article>
         ))}
       </div>
@@ -393,7 +396,7 @@ function Onboarding({ t }: { t: Copy }) {
 function Security({ t }: { t: Copy }) {
   const s = t.security;
   return (
-    <section id="securite" className={`${SECTION} bg-tint`}>
+    <section id="securite" className={`${SECTION} border-t border-line`}>
       <div className={`${WRAP} grid gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20`}>
         <h2 className={`${H2} lg:sticky lg:top-28 lg:self-start`}>{s.title}</h2>
         <dl className="grid gap-x-10 sm:grid-cols-2">
@@ -492,7 +495,7 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
         ) : (
           <form
             onSubmit={submit}
-            className="grid gap-4 self-start rounded-3xl border border-line bg-white p-6 sm:grid-cols-2 sm:p-8"
+            className="grid gap-4 self-start sm:grid-cols-2"
           >
             <Field
               name="firstName"

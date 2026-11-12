@@ -176,7 +176,6 @@ export function mount(
   const renderer = new WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.domElement.style.cssText = "display:block;width:100%;height:100%";
-  host.style.position = "relative";
   host.append(renderer.domElement);
 
   const tags: Tag[] = [];
@@ -246,8 +245,8 @@ export function mount(
   }
   // Le logo pivote : on lui laisse de la marge.
   const slack = variant === "logo" ? 1.25 : 1;
-  const padX = tags.length ? 56 : 12;
-  const padY = 20;
+  const padX = tags.length ? 44 : 12;
+  const padY = 14;
 
   const resize = () => {
     const { clientWidth: w, clientHeight: h } = host;

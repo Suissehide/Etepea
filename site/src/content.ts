@@ -48,7 +48,6 @@ const fr = {
     screenAlt: "Planning d'un programme d'ETP dans Etepea",
     sceneAlt:
       "Animation : un cycle de trois semaines de séances, puis sa répétition",
-    sceneCaption: "Un cycle de trois semaines, construit une fois puis répété.",
     scene: {
       days: ["Lun", "Mar", "Mer", "Jeu", "Ven"],
       cycle: "Cycle",
@@ -317,7 +316,6 @@ const en: typeof fr = {
     screen: SCREENS.planning,
     screenAlt: "Planning of a patient education program in Etepea",
     sceneAlt: "Animation: a three-week cycle of sessions, then its repetition",
-    sceneCaption: "A three-week cycle, built once then repeated.",
     scene: {
       days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
       cycle: "Cycle",

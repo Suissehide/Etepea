@@ -36,5 +36,10 @@ export default function Trame({
     };
   }, [variant, labels]);
 
-  return <div ref={ref} role="img" aria-label={label} className={className} />;
+  // L'enveloppe porte la mise en page, l'intérieur sert de repère aux étiquettes.
+  return (
+    <div role="img" aria-label={label} className={className}>
+      <div ref={ref} className="relative size-full" />
+    </div>
+  );
 }

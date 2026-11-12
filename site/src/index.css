@@ -8,6 +8,8 @@
   --color-line: #e4e8ee;
   --color-brand: #2563eb;
   --color-tint: #f3f6fb;
+  --default-transition-duration: 320ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html {
@@ -25,6 +27,16 @@ body {
 button:not(:disabled),
 label:has(input[type="checkbox"]) {
   cursor: pointer;
+}
+
+/* Tout ce qui réagit au survol le fait en douceur. */
+a,
+button,
+input,
+textarea {
+  transition-property: color, background-color, border-color, translate;
+  transition-duration: var(--default-transition-duration);
+  transition-timing-function: var(--default-transition-timing-function);
 }
 
 :focus-visible {
