@@ -640,7 +640,7 @@ function PlacesLibres({
   return (
     <span
       className={clsx(
-        'relative z-10 pointer-events-none whitespace-nowrap rounded px-1.5 text-[0.7rem] font-semibold leading-[18px] text-white',
+        'relative z-10 pointer-events-none whitespace-nowrap rounded-sm px-1 text-[0.6rem] font-semibold leading-[14px] text-white',
         isRowLayout ? 'ml-auto self-center' : 'mt-auto self-start',
         libres != null && libres > 0 ? 'bg-destructive' : 'bg-black/40',
       )}
@@ -651,7 +651,7 @@ function PlacesLibres({
         `${libres} libre${libres > 1 ? 's' : ''}`
       ) : (
         <>
-          <Check className="inline w-3 h-3 mr-0.5" />
+          <Check className="inline w-2.5 h-2.5 mr-0.5" />
           Complet
         </>
       )}
