@@ -187,6 +187,7 @@ export const EventContent = ({
         textColor={event.contrastColor}
         slotStart={event.start}
         archived={archived}
+        conflit={conflicts.length > 0}
       />
     </div>
   )
@@ -209,9 +210,11 @@ function SlotAppointments({
   textColor,
   slotStart,
   archived,
+  conflit,
 }: Omit<AppointmentListProps, 'appointments'> & {
   clair: boolean
   archived?: boolean
+  conflit: boolean
   textColor?: string
   slotStart: EventDisplayInfo['event']['start']
   appointments?: Appointment[]
@@ -261,6 +264,7 @@ function SlotAppointments({
           capacity={capacity}
           isRowLayout={isRowLayout}
           supprime={archived}
+          conflit={conflit}
         />
       )}
 
@@ -653,10 +657,13 @@ function PlacesLibres({
   capacity,
   isRowLayout,
   supprime,
+  conflit,
 }: {
   inscrits: number
   capacity?: number | null
   isRowLayout: boolean
+  /** Se range à gauche du badge de conflit, posé dans le coin bas droit. */
+  conflit?: boolean
   /** Créneau supprimé gardé pour ses rendez-vous : plus aucune place à prendre. */
   supprime?: boolean
 }) {
@@ -664,8 +671,14 @@ function PlacesLibres({
   return (
     <span
       className={clsx(
-        'relative z-10 pointer-events-none inline-flex items-center gap-0.5 whitespace-nowrap rounded-sm px-1 text-[0.6rem] font-semibold leading-[14px] text-white',
-        isRowLayout ? 'ml-auto self-center' : 'mt-auto self-start',
+        'z-10 pointer-events-none inline-flex min-w-0 items-center gap-0.5 whitespace-nowrap rounded-sm px-1 text-[0.6rem] font-semibold leading-[14px] text-white',
+        isRowLayout
+          ? 'relative ml-auto shrink-[0.001] self-center'
+          : 'absolute bottom-0.5',
+        !isRowLayout &&
+          (conflit
+            ? 'right-[1.125rem] max-w-[calc(100%-1.375rem)]'
+            : 'right-0.5 max-w-[calc(100%-0.25rem)]'),
         libres != null && libres > 0 ? 'bg-destructive' : 'bg-black/40',
       )}
     >
@@ -682,21 +695,25 @@ function libellePlaces(
   if (supprime) {
     return (
       <>
-        <Ban className="h-2.5 w-2.5" />
-        Bloqué
+        <Ban className="h-2.5 w-2.5 shrink-0" />
+        <span className="truncate">Bloqué</span>
       </>
     )
   }
   if (libres == null) {
-    return `${inscrits} inscrit${inscrits > 1 ? 's' : ''}`
+    return (
+      <span className="truncate">{`${inscrits} inscrit${inscrits > 1 ? 's' : ''}`}</span>
+    )
   }
   if (libres > 0) {
-    return `${libres} libre${libres > 1 ? 's' : ''}`
+    return (
+      <span className="truncate">{`${libres} libre${libres > 1 ? 's' : ''}`}</span>
+    )
   }
   return (
     <>
-      <Check className="h-2.5 w-2.5" />
-      Complet
+      <Check className="h-2.5 w-2.5 shrink-0" />
+      <span className="truncate">Complet</span>
     </>
   )
 }
@@ -811,7 +828,7 @@ function EnTeteIndividuel({
         color: readableTint(slotColor, 0.4),
       }}
     >
-      <span className="min-w-0 truncate">
+      <span className="min-w-6 shrink-[100] truncate">
         <span className="font-semibold">{thematic}</span>
         {location && <span className="opacity-80"> {location}</span>}
       </span>
