@@ -59,17 +59,13 @@ const MARK_LABEL: Record<SuiviMark, string> = {
   pending: 'Non pointé',
 }
 
-function SuiviMarkIcon({ mark, color }: { mark: SuiviMark; color: string }) {
+function SuiviMarkIcon({ mark }: { mark: SuiviMark }) {
   if (mark === 'absent') {
-    return <X className="w-3 h-3 mx-auto text-pink-500" />
+    return <X className="w-4 h-4 mx-auto text-foreground" strokeWidth={2.5} />
   }
   return (
     <span
-      className="w-2 h-2 rounded-full inline-block border"
-      style={{
-        borderColor: mark === 'pending' ? 'var(--color-foreground)' : color,
-        backgroundColor: mark === 'present' ? color : 'transparent',
-      }}
+      className={`w-3 h-3 rounded-full inline-block border-[1.5px] border-foreground ${mark === 'present' ? 'bg-foreground' : ''}`}
     />
   )
 }
@@ -310,10 +306,7 @@ function SuiviPage() {
                 })
               }}
             >
-              <SuiviMarkIcon
-                mark={day.mark}
-                color={row.original.pathwayColor}
-              />
+              <SuiviMarkIcon mark={day.mark} />
             </button>
           )
         },
@@ -481,7 +474,7 @@ function SuiviPage() {
             <div className="mt-3 shrink-0 flex items-center gap-4 text-xs text-text-light">
               {(['present', 'absent', 'pending'] as const).map((mark) => (
                 <span key={mark} className="flex items-center gap-1.5">
-                  <SuiviMarkIcon mark={mark} color="var(--color-foreground)" />
+                  <SuiviMarkIcon mark={mark} />
                   {MARK_LABEL[mark]}
                 </span>
               ))}
