@@ -20,6 +20,7 @@ import { usePlanningStore } from '../../../store/usePlanningStore.ts'
 import type { PathwayTemplate } from '../../../types/pathwayTemplate.ts'
 import { Button } from '../../ui/button.tsx'
 import AddPathwayForm from '../popup/addPathwayForm.tsx'
+import PathwayTemplatesSummary from '../popup/pathwayTemplatesSummary.tsx'
 import PathwayTemplateSheet from '../sheet/pathwayTemplateSheet.tsx'
 
 function SidebarPathway() {
@@ -78,13 +79,20 @@ function SidebarPathway() {
     <>
       <div className="pl-4 pr-2 flex justify-between items-center text-text-sidebar py-2">
         <p>Parcours</p>
-        <AddPathwayForm
-          trigger={
-            <Button variant="gradient" size="icon">
-              <Plus className="w-5 h-5" />
-            </Button>
-          }
-        />
+        <div className="flex items-center gap-1">
+          <PathwayTemplatesSummary
+            onShowInPlanning={(template) =>
+              setPathwayTemplate(template, viewStart)
+            }
+          />
+          <AddPathwayForm
+            trigger={
+              <Button variant="gradient" size="icon">
+                <Plus className="w-5 h-5" />
+              </Button>
+            }
+          />
+        </div>
       </div>
       <div
         ref={containerRef}
