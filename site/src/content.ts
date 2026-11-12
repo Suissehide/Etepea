@@ -31,37 +31,37 @@ const fr = {
   nav: {
     links: [
       ["Plateforme", "#plateforme"],
-      ["Parcours patient", "#parcours"],
+      ["Pilotage", "#pilotage"],
       ["Sécurité", "#securite"],
-      ["Équipes", "#equipes"],
+      ["Mise en place", "#mise-en-place"],
     ],
     cta: "Demander une démo",
   },
   hero: {
-    title: "Une trame pour toute votre année d'éducation thérapeutique.",
-    lead: "Etepea est le logiciel des équipes d'ETP. Vous construisez la semaine type de chaque parcours. Etepea la déroule sur l'année, y inscrit vos patients et suit leur présence.",
+    title:
+      "Vos programmes d'éducation thérapeutique, pilotés cycle après cycle.",
+    lead: "Etepea est le logiciel de gestion des programmes d'ETP pour les établissements de santé. Il remplace les tableurs de planning et les feuilles de présence, puis prépare vos indicateurs ARS à partir de ce que l'équipe saisit déjà.",
     primary: "Demander une démo",
     secondary: "Voir la plateforme",
-    note: "Comptes ouverts sur invitation. Données cloisonnées par service.",
+    note: "Pour les services de réadaptation, les UTEP et toute équipe qui porte un programme d'ETP.",
     screen: SCREENS.planning,
-    screenAlt: "Planning annuel d'un programme d'ETP dans Etepea",
+    screenAlt: "Planning d'un programme d'ETP dans Etepea",
     sceneAlt:
-      "Animation : la semaine type d'un parcours, recopiée semaine après semaine",
-    sceneCaption: "La semaine type d'un parcours, répétée sur l'année.",
+      "Animation : un cycle de trois semaines de séances, puis sa répétition",
+    sceneCaption: "Un cycle de trois semaines, construit une fois puis répété.",
     scene: {
       days: ["Lun", "Mar", "Mer", "Jeu", "Ven"],
-      template: "Semaine type",
-      closed: "Semaine fermée",
+      cycle: "Cycle",
     },
   },
   manual: {
-    title: "Ce que l'équipe arrête de faire à la main.",
+    title: "Ce que vos équipes arrêtent de faire à la main.",
     before: "Aujourd'hui",
     after: "Avec Etepea",
     rows: [
       [
-        "Recopier le planning d'une semaine sur l'autre.",
-        "La semaine type se répète seule, semaines fermées comprises.",
+        "Recopier le planning d'un cycle sur le suivant.",
+        "Le cycle se répète seul, semaines fermées comprises.",
       ],
       [
         "Tenir une feuille de présence par atelier.",
@@ -72,8 +72,8 @@ const fr = {
         "L'agenda du jour réunit les patients, les salles et les places restantes.",
       ],
       [
-        "Ressaisir le même patient dans chaque tableau.",
-        "Le patient est inscrit à son parcours. Ses séances en découlent.",
+        "Compter les séances à la main pour le rapport d'activité.",
+        "Les indicateurs du service se remplissent au fil des saisies.",
       ],
     ],
   },
@@ -82,11 +82,11 @@ const fr = {
     features: [
       {
         name: "Planning",
-        title: "Le planning de l'année",
-        text: "Vous posez la semaine type d'un parcours, puis vous la déroulez sur les mois à venir.",
+        title: "Le planning du cycle",
+        text: "Vous posez les semaines d'un cycle. Etepea le répète aussi longtemps que dure le programme.",
         points: [
-          "Dupliquer ou déplacer plusieurs séances d'un coup",
-          "Fermer des semaines et régler les cycles de répétition",
+          "Allonger ou raccourcir le cycle à tout moment",
+          "Fermer des semaines sans casser la répétition",
           "Exporter par soignant ou par période",
         ],
         screen: SCREENS.planning,
@@ -130,29 +130,42 @@ const fr = {
       },
     ],
   },
-  journey: {
-    title: "Le patient avance, son dossier suit.",
-    step: "Étape",
-    steps: [
+  steering: {
+    title: "Vos indicateurs se préparent pendant que l'équipe travaille.",
+    text: "Chaque séance planifiée, chaque présence pointée et chaque diagnostic éducatif alimentent les indicateurs du service. Au moment du rapport d'activité, l'essentiel est déjà là.",
+    items: [
       [
-        "Inclusion",
-        "Identité, contexte social, orientation et objectif : le dossier s'ouvre dès l'entrée.",
+        "La grille ARS, déjà prête",
+        "Les indicateurs demandés par l'ARS sont fournis d'origine. Il reste à compléter ce qui ne se calcule pas.",
       ],
       [
-        "Diagnostic",
-        "Le bilan éducatif partagé se remplit avec un modèle adapté à votre programme.",
+        "Vos propres indicateurs",
+        "Chaque service compose ses jeux d'indicateurs selon ce qu'il doit suivre.",
       ],
       [
-        "Séances",
-        "Le patient rejoint les séances de son parcours principal et de ses parcours optionnels.",
+        "Un export Excel",
+        "Un jeu d'indicateurs s'exporte sur la période de votre choix.",
+      ],
+    ],
+  },
+  stakeholders: {
+    title: "Ce que chacun y gagne.",
+    items: [
+      [
+        "Direction",
+        "Une activité d'ETP enfin lisible et des indicateurs prêts pour le rapport à l'ARS.",
       ],
       [
-        "Suivi",
-        "Présences, absences et motifs remontent dans la vue de suivi.",
+        "Cadres et coordination",
+        "Un planning qui se répète seul, des conflits de salle signalés et moins de temps passé à recopier.",
       ],
       [
-        "Sortie",
-        "Date, motif et bilan de fin de parcours, avec un programme PDF remis au patient.",
+        "Soignants et secrétariat",
+        "L'agenda du jour, les présences en un clic et le dossier éducatif au même endroit.",
+      ],
+      [
+        "DSI et DPO",
+        "Des données cloisonnées par service, des comptes sur invitation et un journal des accès aux dossiers.",
       ],
     ],
   },
@@ -168,8 +181,8 @@ const fr = {
         "Personne ne s'inscrit seul. Chaque compte reçoit un rôle qui borne ce qu'il peut voir et modifier.",
       ],
       [
-        "Les conflits signalés",
-        "Une salle déjà prise ou deux rendez-vous qui se chevauchent : Etepea prévient avant que le patient ne le découvre.",
+        "Un journal des accès aux dossiers",
+        "Chaque consultation d'un dossier patient est tracée : qui l'a ouvert et quand.",
       ],
       [
         "Un journal d'activité",
@@ -177,20 +190,25 @@ const fr = {
       ],
     ],
   },
-  roles: {
-    title: "Chacun voit ce qui le concerne.",
-    items: [
+  onboarding: {
+    title: "De la démonstration au premier cycle.",
+    step: "Étape",
+    steps: [
       [
-        "Coordination",
-        "Conçoit les modèles de parcours, construit le planning de l'année et pilote l'équipe.",
+        "Démonstration",
+        "Trente minutes sur vos propres parcours, pour vérifier qu'Etepea colle à votre programme.",
       ],
       [
-        "Intervenants",
-        "Retrouvent leurs séances, l'agenda du jour, les dossiers et leurs pense-bêtes.",
+        "Paramétrage",
+        "Vos services, vos parcours, vos modèles de diagnostic et les champs de votre fiche patient.",
       ],
       [
-        "Secrétariat",
-        "Gère l'identité et les rendez-vous des patients, sans accès au contenu clinique.",
+        "Invitation de l'équipe",
+        "Chaque professionnel reçoit un compte avec le rôle qui lui correspond.",
+      ],
+      [
+        "Premier cycle",
+        "Les patients sont inscrits à leur parcours et les séances démarrent.",
       ],
     ],
   },
@@ -284,37 +302,35 @@ const en: typeof fr = {
   nav: {
     links: [
       ["Platform", "#plateforme"],
-      ["Patient journey", "#parcours"],
+      ["Indicators", "#pilotage"],
       ["Security", "#securite"],
-      ["Teams", "#equipes"],
+      ["Getting started", "#mise-en-place"],
     ],
     cta: "Book a demo",
   },
   hero: {
-    title: "One framework for your whole year of patient education.",
-    lead: "Etepea is the software for therapeutic patient education teams. You build the typical week of each pathway. Etepea rolls it out over the year, enrols your patients and tracks their attendance.",
+    title: "Your patient education programs, run cycle after cycle.",
+    lead: "Etepea is the management software for therapeutic patient education programs in healthcare facilities. It replaces planning spreadsheets and attendance sheets, then prepares your regulatory indicators from what the team already records.",
     primary: "Book a demo",
     secondary: "See the platform",
-    note: "Accounts by invitation only. Data isolated per department.",
+    note: "For rehabilitation departments, patient education units and any team running a program.",
     screen: SCREENS.planning,
-    screenAlt: "Yearly planning of a patient education program in Etepea",
-    sceneAlt:
-      "Animation: the typical week of a pathway, copied week after week",
-    sceneCaption: "The typical week of a pathway, repeated over the year.",
+    screenAlt: "Planning of a patient education program in Etepea",
+    sceneAlt: "Animation: a three-week cycle of sessions, then its repetition",
+    sceneCaption: "A three-week cycle, built once then repeated.",
     scene: {
       days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      template: "Typical week",
-      closed: "Closed week",
+      cycle: "Cycle",
     },
   },
   manual: {
-    title: "What the team stops doing by hand.",
+    title: "What your teams stop doing by hand.",
     before: "Today",
     after: "With Etepea",
     rows: [
       [
-        "Copying the schedule from one week to the next.",
-        "The typical week repeats by itself, closed weeks included.",
+        "Copying the schedule from one cycle to the next.",
+        "The cycle repeats by itself, closed weeks included.",
       ],
       [
         "Keeping one attendance sheet per workshop.",
@@ -325,8 +341,8 @@ const en: typeof fr = {
         "The daily agenda brings together patients, rooms and remaining places.",
       ],
       [
-        "Typing the same patient into every spreadsheet.",
-        "The patient is enrolled in a pathway. Their sessions follow from it.",
+        "Counting sessions by hand for the activity report.",
+        "The department's indicators fill in as the team works.",
       ],
     ],
   },
@@ -335,11 +351,11 @@ const en: typeof fr = {
     features: [
       {
         name: "Planning",
-        title: "The yearly planning",
-        text: "You lay out the typical week of a pathway, then roll it out over the coming months.",
+        title: "The cycle planning",
+        text: "You lay out the weeks of a cycle. Etepea repeats it for as long as the program runs.",
         points: [
-          "Duplicate or move several sessions at once",
-          "Close weeks and set repeat cycles",
+          "Lengthen or shorten the cycle at any time",
+          "Close weeks without breaking the repetition",
           "Export by practitioner or by period",
         ],
         screen: SCREENS.planning,
@@ -383,29 +399,42 @@ const en: typeof fr = {
       },
     ],
   },
-  journey: {
-    title: "The patient moves on, the record keeps up.",
-    step: "Step",
-    steps: [
+  steering: {
+    title: "Your indicators get ready while the team works.",
+    text: "Every planned session, every recorded attendance and every educational assessment feeds the department's indicators. When the activity report is due, most of it is already there.",
+    items: [
       [
-        "Enrolment",
-        "Identity, social context, referral and goal: the record opens on day one.",
+        "The regulator's grid, ready to use",
+        "The indicators requested by the French regional health agency (ARS) come built in. You only complete what cannot be computed.",
       ],
       [
-        "Assessment",
-        "The shared educational assessment is filled in with a template tailored to your program.",
+        "Your own indicators",
+        "Each department builds its indicator sets around what it has to track.",
       ],
       [
-        "Sessions",
-        "The patient joins the sessions of their main pathway and of their optional pathways.",
+        "An Excel export",
+        "An indicator set exports over the period of your choice.",
+      ],
+    ],
+  },
+  stakeholders: {
+    title: "What everyone gets out of it.",
+    items: [
+      [
+        "Management",
+        "Patient education activity you can finally read and indicators ready for the regulator's report.",
       ],
       [
-        "Follow-up",
-        "Attendance, absences and reasons flow into the follow-up view.",
+        "Nurse managers and coordinators",
+        "A schedule that repeats by itself, room conflicts flagged and less time spent copying.",
       ],
       [
-        "Discharge",
-        "Date, reason and end-of-pathway review, with a PDF program handed to the patient.",
+        "Practitioners and front desk",
+        "Today's agenda, attendance in one click and the educational record in one place.",
+      ],
+      [
+        "IT and data protection",
+        "Data isolated per department, accounts by invitation and a log of every record access.",
       ],
     ],
   },
@@ -421,8 +450,8 @@ const en: typeof fr = {
         "Nobody signs up alone. Each account gets a role that limits what it can see and change.",
       ],
       [
-        "Conflicts flagged",
-        "A room already booked or two overlapping appointments: Etepea warns you before the patient finds out.",
+        "A record access log",
+        "Every time a patient record is opened, it is traced: who opened it and when.",
       ],
       [
         "An activity log",
@@ -430,20 +459,25 @@ const en: typeof fr = {
       ],
     ],
   },
-  roles: {
-    title: "Everyone sees what concerns them.",
-    items: [
+  onboarding: {
+    title: "From the demo to the first cycle.",
+    step: "Step",
+    steps: [
       [
-        "Coordinators",
-        "Design pathway templates, build the yearly schedule and lead the team.",
+        "Demo",
+        "Thirty minutes on your own pathways, to check that Etepea fits your program.",
       ],
       [
-        "Practitioners",
-        "Find their sessions, today's agenda, patient records and their to-dos.",
+        "Setup",
+        "Your departments, your pathways, your assessment templates and the fields of your patient record.",
       ],
       [
-        "Front desk",
-        "Manages patient identity and appointments, without access to clinical content.",
+        "Inviting the team",
+        "Each professional gets an account with the matching role.",
+      ],
+      [
+        "First cycle",
+        "Patients are enrolled in their pathway and sessions begin.",
       ],
     ],
   },

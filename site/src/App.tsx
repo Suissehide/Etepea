@@ -32,9 +32,10 @@ export default function App({ lang, page }: { lang: Lang; page: Page }) {
             <Hero t={t} />
             <Manual t={t} />
             <Platform t={t} />
-            <Journey t={t} />
+            <Steering t={t} />
+            <Stakeholders t={t} />
             <Security t={t} />
-            <Roles t={t} />
+            <Onboarding t={t} />
             <Demo t={t} lang={lang} />
           </>
         ) : (
@@ -203,9 +204,9 @@ function Hero({ t }: { t: Copy }) {
           </div>
           <p className="mt-6 text-sm text-mute">{h.note}</p>
         </div>
-        <figure className="lg:-mr-28 lg:-ml-8">
+        <figure>
           <Trame
-            variant="year"
+            variant="cycle"
             label={h.sceneAlt}
             labels={h.scene}
             className="h-80 sm:h-96 lg:h-[34rem]"
@@ -308,13 +309,60 @@ function Platform({ t }: { t: Copy }) {
   );
 }
 
-function Journey({ t }: { t: Copy }) {
-  const j = t.journey;
+function Steering({ t }: { t: Copy }) {
+  const s = t.steering;
   return (
-    <section id="parcours" className={SECTION}>
+    <section id="pilotage" className={SECTION}>
+      <div className={`${WRAP} grid gap-12 lg:grid-cols-2 lg:gap-20`}>
+        <div>
+          <h2 className={H2}>{s.title}</h2>
+          <p className="mt-6 max-w-lg text-lg text-mute">{s.text}</p>
+        </div>
+        <dl>
+          {s.items.map(([title, text]) => (
+            <div
+              key={title}
+              className="flex gap-4 border-t border-line py-6 last:border-b"
+            >
+              <Cube className="mt-2 bg-brand" />
+              <div>
+                <dt className="text-xl font-medium tracking-tight">{title}</dt>
+                <dd className="mt-2 text-mute">{text}</dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function Stakeholders({ t }: { t: Copy }) {
+  const s = t.stakeholders;
+  return (
+    <section className="border-t border-line py-20 md:py-28">
+      <div className={WRAP}>
+        <h2 className={H2}>{s.title}</h2>
+        <ul className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {s.items.map(([who, text]) => (
+            <li key={who} className="border-t border-ink pt-6">
+              <h3 className="text-xl font-medium tracking-tight">{who}</h3>
+              <p className="mt-3 text-mute">{text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Onboarding({ t }: { t: Copy }) {
+  const j = t.onboarding;
+  return (
+    <section id="mise-en-place" className={SECTION}>
       <div className={WRAP}>
         <h2 className={`${H2} max-w-3xl`}>{j.title}</h2>
-        <ol className="mt-14 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">
+        <ol className="mt-14 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {j.steps.map(([name, text], i) => (
             <li key={name}>
               <div className="flex gap-1" aria-hidden="true">
@@ -356,25 +404,6 @@ function Security({ t }: { t: Copy }) {
             </div>
           ))}
         </dl>
-      </div>
-    </section>
-  );
-}
-
-function Roles({ t }: { t: Copy }) {
-  const r = t.roles;
-  return (
-    <section id="equipes" className={SECTION}>
-      <div className={WRAP}>
-        <h2 className={H2}>{r.title}</h2>
-        <ul className="mt-12 grid gap-10 md:grid-cols-3">
-          {r.items.map(([role, text]) => (
-            <li key={role} className="border-t border-ink pt-6">
-              <h3 className="text-xl font-medium tracking-tight">{role}</h3>
-              <p className="mt-3 text-mute">{text}</p>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );
