@@ -73,7 +73,7 @@ function TableToolbar<TData extends { id: string }>({
     <div
       role="toolbar"
       aria-label="Filtres du tableau"
-      className="mb-4 flex flex-wrap items-center gap-3"
+      className="mb-4 flex flex-wrap items-center gap-2"
     >
       {start}
       <ChoiceFilters table={table} />

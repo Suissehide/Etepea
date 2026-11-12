@@ -352,6 +352,7 @@ function SuiviPage() {
                 options={patientOptions}
                 value={patientFilter}
                 onValueChange={setPatientFilter}
+                className="rounded-lg"
               />
             </div>
             <div className="w-56">
@@ -365,6 +366,7 @@ function SuiviPage() {
                 options={pathwayOptions}
                 value={pathwayFilter}
                 onValueChange={setPathwayFilter}
+                className="rounded-lg"
               />
             </div>
           </div>
@@ -395,16 +397,26 @@ function SuiviPage() {
               </PopoverContent>
             </PopoverRoot>
 
-            <Button variant="outline" size="icon" onClick={prevMonth}>
-              <ChevronLeft className="w-5 h-5" />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Mois précédent"
+              onClick={prevMonth}
+            >
+              <ChevronLeft className="size-4" />
             </Button>
 
             <span className="min-w-36 text-center font-medium capitalize">
               {date.format('MMMM YYYY')}
             </span>
 
-            <Button variant="outline" size="icon" onClick={nextMonth}>
-              <ChevronRight className="w-5 h-5" />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Mois suivant"
+              onClick={nextMonth}
+            >
+              <ChevronRight className="size-4" />
             </Button>
           </div>
         </div>

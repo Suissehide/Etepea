@@ -11,6 +11,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { PatientApi } from '@/api/patient.api.ts'
 import { getPatientColumns } from '@/columns/patient.column.tsx'
+import {
+  SEGMENT,
+  SEGMENTS,
+} from '@/components/custom/Calendar/barreCalendrier.tsx'
 import AddPatientForm from '@/components/custom/popup/addPatientForm.tsx'
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
@@ -20,7 +24,7 @@ import DropdownFilter from '@/components/ui/dropdownFilter.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
 import { useCan } from '@/hooks/useCan.ts'
-import { safeParse } from '@/libs/utils.ts'
+import { cn, safeParse } from '@/libs/utils.ts'
 import { usePathwayTemplateQueries } from '@/queries/usePathwayTemplate.ts'
 import { usePatientWithTagsQuery } from '@/queries/usePatient.tsx'
 import {
@@ -200,7 +204,7 @@ function PatientList() {
       ]}
     >
       <div className="flex-1 min-h-0 bg-background p-6 rounded-lg flex flex-col w-full gap-4">
-        <div className="min-h-9 flex items-center gap-3">
+        <div className="min-h-9 flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -260,14 +264,19 @@ function PatientList() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Nom, prénom..."
-                      className="w-72"
+                      className="w-72 rounded-lg"
                     />
                     <ToggleGroup
+                      className={SEGMENTS}
                       value={status}
                       onValueChange={(v) => v && setStatus(v as Status)}
                     >
                       {(Object.keys(STATUSES) as Status[]).map((key) => (
-                        <ToggleGroupItem key={key} value={key}>
+                        <ToggleGroupItem
+                          key={key}
+                          value={key}
+                          className={cn(SEGMENT, 'h-[30px]')}
+                        >
                           {STATUSES[key]}
                         </ToggleGroupItem>
                       ))}

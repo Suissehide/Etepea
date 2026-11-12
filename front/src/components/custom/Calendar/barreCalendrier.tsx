@@ -53,8 +53,8 @@ export function BarreCalendrier({
   const vue = controller.view
 
   return (
-    <div className={cn('flex items-center gap-3 px-7 pb-[18px]', className)}>
-      <div className="flex items-center gap-1.5">
+    <div className={cn('flex items-center gap-2 px-7 pb-[18px]', className)}>
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -67,7 +67,7 @@ export function BarreCalendrier({
         {aujourdhui && (
           <Button
             variant="outline"
-            className="px-3"
+            className="rounded-lg px-3 font-normal"
             disabled={etat.today.isDisabled}
             onClick={() => controller.today()}
           >
@@ -100,7 +100,7 @@ export function BarreCalendrier({
         </span>
       )}
       <span className="flex-1" />
-      {filtres && <div className="flex items-center gap-1.5">{filtres}</div>}
+      {filtres && <div className="flex items-center gap-2">{filtres}</div>}
       {vues && (
         <>
           {filtres && <span className="h-6 w-px bg-border" />}

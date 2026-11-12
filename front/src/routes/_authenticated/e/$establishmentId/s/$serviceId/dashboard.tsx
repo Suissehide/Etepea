@@ -399,7 +399,7 @@ function Dashboard() {
             {canExportPdf && (
               <Button
                 variant="outline"
-                className="h-[38px] rounded-lg px-3.5"
+                className="rounded-lg px-3.5"
                 onClick={() => setExportOpen(true)}
               >
                 <Printer size={16} />
@@ -419,7 +419,7 @@ function Dashboard() {
               initialDate={savedDate}
               initialView={initialView}
               planningCycle={planningCycle}
-              classeBarre="px-6"
+              classeBarre="px-6 pb-4"
               filtresBarre={<ToggleVerrouilles />}
               onViewChange={(view) =>
                 localStorage.setItem(VIEW_STORAGE_KEY, view)
