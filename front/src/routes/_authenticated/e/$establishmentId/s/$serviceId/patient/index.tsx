@@ -296,6 +296,7 @@ function PatientList() {
                     <Button
                       variant={errorsOnly ? 'default' : 'outline'}
                       aria-pressed={errorsOnly}
+                      className="font-normal rounded-lg"
                       onClick={() => setErrorsOnly((v) => !v)}
                     >
                       <AlertTriangle className="w-4 h-4" />
