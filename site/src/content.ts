@@ -44,15 +44,15 @@ const fr = {
     cards: {
       planning: {
         title: "Planning annuel",
-        text: "Construisez la trame d'un parcours une fois, puis déroulez-la sur l'année. Duplication et déplacement en masse, semaines fermées, cycles de répétition.",
+        text: "Construisez la trame d'un parcours une fois, puis déroulez-la sur l'année. Duplication et déplacement en masse, semaines fermées, cycles de répétition, export par soignant ou par période.",
       },
       agenda: {
         title: "Agenda du jour",
-        text: "Patients attendus, présences, accompagnants et transmissions.",
+        text: "Patients attendus, places restantes, présences, accompagnants et transmissions.",
       },
       suivi: {
         title: "Suivi mensuel",
-        text: "La participation de chaque patient, lue d'un coup d'œil.",
+        text: "La participation de chaque patient, pointée d'un clic et lue d'un coup d'œil.",
       },
       diagnostic: {
         title: "Dossiers patients et diagnostic éducatif",
@@ -80,7 +80,7 @@ const fr = {
       },
       {
         name: "Séances",
-        text: "Le patient rejoint les séances collectives et individuelles du parcours, sans double saisie.",
+        text: "Le patient rejoint les séances de son parcours principal et de ses parcours optionnels, sans double saisie.",
         seed: "etepea-workshop",
       },
       {
@@ -104,7 +104,7 @@ const fr = {
       },
       {
         title: "Des rôles précis",
-        text: "Coordination, intervenants, secrétariat, lecture seule : chacun accède à ce dont il a besoin, et pas au-delà.",
+        text: "Comptes ouverts sur invitation uniquement. Coordination, intervenants, secrétariat, lecture seule : chacun accède à ce dont il a besoin, et pas au-delà.",
       },
       {
         title: "Conflits signalés",
@@ -177,15 +177,15 @@ const en: typeof fr = {
     cards: {
       planning: {
         title: "Yearly planning",
-        text: "Design a pathway once, then roll it out over the year. Bulk duplicate and move sessions, block closed weeks, set repeat cycles.",
+        text: "Design a pathway once, then roll it out over the year. Bulk duplicate and move sessions, block closed weeks, set repeat cycles, export by practitioner or period.",
       },
       agenda: {
         title: "Daily agenda",
-        text: "Expected patients, attendance, companions and handover notes.",
+        text: "Expected patients, remaining places, attendance, companions and handover notes.",
       },
       suivi: {
         title: "Monthly follow-up",
-        text: "Every patient's attendance, readable at a glance.",
+        text: "Every patient's attendance, checked in one click and readable at a glance.",
       },
       diagnostic: {
         title: "Patient records and educational assessment",
@@ -213,7 +213,7 @@ const en: typeof fr = {
       },
       {
         name: "Sessions",
-        text: "Patients join the pathway's group and individual sessions, with no double entry.",
+        text: "Patients join the sessions of their main pathway and optional pathways, with no double entry.",
         seed: "etepea-workshop",
       },
       {
@@ -237,7 +237,7 @@ const en: typeof fr = {
       },
       {
         title: "Precise roles",
-        text: "Coordinators, practitioners, front desk, read-only: everyone gets exactly what they need, nothing more.",
+        text: "Accounts by invitation only. Coordinators, practitioners, front desk, read-only: everyone gets exactly what they need, nothing more.",
       },
       {
         title: "Conflicts flagged",

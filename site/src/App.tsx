@@ -238,7 +238,7 @@ function Platform({ t }: { t: Copy }) {
           />
           <BentoCard
             src={IMAGES.agenda}
-            focus="70% 25%"
+            focus="78% 50%"
             zoom={1.9}
             {...c.agenda}
           />
