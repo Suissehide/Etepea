@@ -1,0 +1,22 @@
+# Site vitrine, à déployer dans Dokploy comme service « Compose » (sans Swarm).
+# Le domaine (etepea.fr, port 80 du service `site`) se déclare dans l'onglet Domains de Dokploy.
+services:
+  site:
+    build:
+      context: ../../site
+      args:
+        # URL publique de l'API, qui reçoit les demandes de démo.
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SITE_URL: ${VITE_SITE_URL:-https://etepea.fr}
+    image: etepea-site:${VERSION:-latest}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/fr/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
