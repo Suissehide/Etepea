@@ -1,20 +1,26 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import { CONTENT, type Lang } from "./content";
+import { CONTENT, type Lang, type Page, SLUGS } from "./content";
 import "./index.css";
 
-const lang: Lang = window.location.pathname.startsWith("/en") ? "en" : "fr";
-const { meta } = CONTENT[lang];
+const [, langPart, slug] = window.location.pathname.split("/");
+const lang: Lang = langPart === "en" ? "en" : "fr";
+const page: Page =
+  (["privacy", "cookies"] as const).find((p) => SLUGS[p][lang] === slug) ??
+  "home";
+
+const t = CONTENT[lang];
 document.documentElement.lang = lang;
-document.title = meta.title;
+document.title =
+  page === "home" ? t.meta.title : `${t.legal[page].title} | Etepea`;
 document
   .querySelector('meta[name="description"]')
-  ?.setAttribute("content", meta.description);
+  ?.setAttribute("content", t.meta.description);
 
 const root = document.getElementById("root") as HTMLElement;
 createRoot(root).render(
   <StrictMode>
-    <App lang={lang} />
+    <App lang={lang} page={page} />
   </StrictMode>,
 );

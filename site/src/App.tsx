@@ -1,79 +1,47 @@
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import {
   CONTACT_EMAIL,
   CONTENT,
-  IMAGES,
+  type Copy,
   type Lang,
-  stepImage,
+  type Page,
+  pagePath,
 } from "./content";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
-type Copy = (typeof CONTENT)["fr"];
+const H2 =
+  "text-3xl leading-tight font-medium tracking-tight md:text-[2.75rem]";
+const BTN =
+  "inline-flex items-center justify-center rounded-xl px-5 py-3 font-medium transition-colors";
+const BTN_DARK = `${BTN} bg-ink text-white hover:bg-brand`;
+const BTN_LIGHT = `${BTN} border border-line bg-white hover:border-ink`;
+const WRAP = "mx-auto w-full max-w-6xl px-4 sm:px-6";
 
-const MOTION = "(prefers-reduced-motion: no-preference)";
-const mailto = (subject: string) =>
-  `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
-const photo = "grayscale contrast-125 opacity-90";
-
-export default function App({ lang }: { lang: Lang }) {
+export default function App({ lang, page }: { lang: Lang; page: Page }) {
   const t = CONTENT[lang];
+  const home = page === "home" ? "" : pagePath(lang, "home");
   return (
-    <main className="w-full max-w-full overflow-x-hidden">
-      <Nav t={t} lang={lang} />
-      <Hero t={t} />
-      <Manifesto text={t.manifesto} />
-      <Platform t={t} />
-      <Journey t={t} />
-      <Stack t={t} />
-      <Roles t={t} />
-      <Cta t={t} />
-      <Footer t={t} />
-    </main>
-  );
-}
-
-function Nav({ t, lang }: { t: Copy; lang: Lang }) {
-  const other = lang === "fr" ? "en" : "fr";
-  return (
-    <header className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
-      <nav className="flex w-full max-w-4xl items-center gap-2 rounded-full border border-white/10 bg-ink/60 py-2 pr-2 pl-5 shadow-2xl shadow-black/30 backdrop-blur-xl">
-        <a
-          href={`/${lang}/`}
-          className="mr-auto flex items-center gap-2 font-semibold tracking-tight"
-        >
-          <LogoMark />
-          etepe<span className="text-brand-light">a</span>
-        </a>
-        <div className="hidden items-center md:flex">
-          {t.nav.links.map(([label, href]) => (
-            <a
-              key={href}
-              href={href}
-              className="rounded-full px-4 py-2 text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {label}
-            </a>
-          ))}
-        </div>
-        <a
-          href={`/${other}/`}
-          hrefLang={other}
-          className="rounded-full px-3 py-2 text-sm font-medium text-white/70 uppercase transition-colors hover:text-white"
-        >
-          {other}
-        </a>
-        <a
-          href={mailto(t.nav.cta)}
-          className="rounded-full bg-white px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand-light hover:text-white"
-        >
-          {t.nav.cta}
-        </a>
-      </nav>
-    </header>
+    <>
+      <Nav t={t} lang={lang} page={page} home={home} />
+      <main>
+        {page === "home" ? (
+          <>
+            <Hero t={t} />
+            <Problem t={t} />
+            <Platform t={t} />
+            <Journey t={t} />
+            <Security t={t} />
+            <Roles t={t} />
+            <Demo t={t} lang={lang} />
+          </>
+        ) : (
+          <Legal t={t} lang={lang} page={page} />
+        )}
+      </main>
+      <Footer t={t} lang={lang} page={page} home={home} />
+      <CookieNotice t={t} lang={lang} />
+    </>
   );
 }
 
@@ -86,351 +54,234 @@ const FAINT = [
   [34, 34],
 ];
 
-function LogoMark() {
+function Logo() {
   return (
-    <svg viewBox="0 0 47 47" aria-hidden="true" className="size-4 shrink-0">
-      {FAINT.map(([x, y]) => (
+    <span className="inline-flex items-center gap-[0.35em] text-xl font-semibold tracking-tight">
+      <svg viewBox="0 0 47 47" aria-hidden="true" className="size-[0.9em]">
+        {FAINT.map(([x, y]) => (
+          <rect
+            key={`${x}-${y}`}
+            x={x}
+            y={y}
+            width="13"
+            height="13"
+            rx="3"
+            fill="currentColor"
+            opacity="0.18"
+          />
+        ))}
+        <rect x="0" y="34" width="13" height="13" rx="3" fill="currentColor" />
+        <rect x="17" y="17" width="13" height="13" rx="3" fill="currentColor" />
         <rect
-          key={`${x}-${y}`}
-          x={x}
-          y={y}
+          x="34"
+          y="0"
           width="13"
           height="13"
           rx="3"
-          fill="currentColor"
-          opacity="0.22"
+          className="fill-brand"
         />
-      ))}
-      <rect x="0" y="34" width="13" height="13" rx="3" fill="currentColor" />
-      <rect x="17" y="17" width="13" height="13" rx="3" fill="currentColor" />
-      <rect
-        x="34"
-        y="0"
-        width="13"
-        height="13"
-        rx="3"
-        className="fill-brand-light"
+      </svg>
+      <span>
+        etepe<span className="text-brand">a</span>
+      </span>
+    </span>
+  );
+}
+
+function Cube({ className = "bg-brand" }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-block size-2.5 shrink-0 rounded-[3px] ${className}`}
+    />
+  );
+}
+
+function Label({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-center gap-2 text-sm font-medium text-brand">
+      <Cube />
+      {children}
+    </p>
+  );
+}
+
+function Nav({
+  t,
+  lang,
+  page,
+  home,
+}: {
+  t: Copy;
+  lang: Lang;
+  page: Page;
+  home: string;
+}) {
+  const other = lang === "fr" ? "en" : "fr";
+  return (
+    <header className="sticky top-0 z-40 border-b border-line bg-white/85 backdrop-blur">
+      <nav className={`${WRAP} flex h-16 items-center gap-2`}>
+        <a
+          href={pagePath(lang, "home")}
+          aria-label="Etepea"
+          className="mr-auto"
+        >
+          <Logo />
+        </a>
+        <div className="hidden items-center md:flex">
+          {t.nav.links.map(([label, href]) => (
+            <a
+              key={href}
+              href={home + href}
+              className="rounded-lg px-3 py-2 text-[0.95rem] text-mute transition-colors hover:text-ink"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+        <a
+          href={pagePath(other, page)}
+          hrefLang={other}
+          className="rounded-lg px-3 py-2 text-sm font-medium text-mute uppercase transition-colors hover:text-ink"
+        >
+          {other}
+        </a>
+        <a href={`${home}#demo`} className={`${BTN_DARK} px-4 py-2 text-sm`}>
+          {t.nav.cta}
+        </a>
+      </nav>
+    </header>
+  );
+}
+
+function Screen({
+  src,
+  focus = "0% 0%",
+  className = "",
+}: {
+  src: string;
+  focus?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-2xl border border-line bg-white shadow-[0_40px_80px_-45px_rgba(37,99,235,0.45)] ${className}`}
+    >
+      <div className="flex gap-1.5 border-b border-line px-3.5 py-3">
+        <Cube className="bg-line" />
+        <Cube className="bg-line" />
+        <Cube className="bg-brand" />
+      </div>
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        style={{ objectPosition: focus }}
+        className="aspect-[16/10] w-full object-cover"
       />
-    </svg>
+    </div>
   );
 }
 
 function Hero({ t }: { t: Copy }) {
-  const ref = useRef<HTMLElement>(null);
-  useGSAP(
-    () => {
-      gsap.matchMedia().add(MOTION, () => {
-        gsap
-          .timeline({ defaults: { ease: "expo.out", duration: 1.4 } })
-          .from(".hero-bg", { scale: 1.15, duration: 2.4 })
-          .from(".hero-in", { y: 40, opacity: 0, stagger: 0.12 }, "<0.2");
-        gsap.to(".hero-bg", {
-          yPercent: 12,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ref.current,
-            start: "top top",
-            scrub: true,
-          },
-        });
-      });
-    },
-    { scope: ref },
-  );
+  const h = t.hero;
   return (
-    <section
-      ref={ref}
-      className="grain relative flex min-h-[100svh] items-center justify-center overflow-hidden px-4 pt-28 pb-20"
-    >
-      <img
-        src={IMAGES.hero}
-        alt=""
-        className={`hero-bg absolute inset-0 size-full object-cover ${photo}`}
-      />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(4,24,43,0.45)_0%,rgba(4,24,43,0.8)_70%,#04182b_100%)]" />
-      <div className="absolute -bottom-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 rounded-full bg-brand/30 blur-[120px]" />
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center text-center">
-        <h1 className="hero-in w-full text-[clamp(2.6rem,5.4vw,5.6rem)] leading-[1.02] font-medium tracking-tight text-balance">
-          {t.hero.title}
+    <section className="relative overflow-hidden">
+      <div className="cubes absolute inset-0" />
+      <div className={`${WRAP} relative pt-16 text-center md:pt-24`}>
+        <div className="flex justify-center">
+          <Label>{h.label}</Label>
+        </div>
+        <h1 className="mx-auto mt-5 max-w-4xl text-[clamp(2.4rem,5.4vw,4.25rem)] leading-[1.06] font-medium tracking-tight text-balance">
+          {h.title}
         </h1>
-        <p className="hero-in mt-8 max-w-2xl text-lg text-white/70 md:text-xl">
-          {t.hero.lead}
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-mute md:text-xl">
+          {h.lead}
         </p>
-        <div className="hero-in mt-12 flex flex-col gap-3 sm:flex-row">
-          <a
-            href={mailto(t.hero.primary)}
-            className="rounded-full bg-white px-8 py-4 font-medium text-ink transition-colors hover:bg-brand-light hover:text-white"
-          >
-            {t.hero.primary}
+        <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+          <a href="#demo" className={BTN_DARK}>
+            {h.primary}
           </a>
-          <a
-            href="#plateforme"
-            className="rounded-full border border-white/25 px-8 py-4 font-medium text-white transition-colors hover:bg-white/10"
-          >
-            {t.hero.secondary}
+          <a href="#plateforme" className={BTN_LIGHT}>
+            {h.secondary}
           </a>
         </div>
+        <ul className="mt-8 flex flex-col items-center justify-center gap-x-8 gap-y-2 text-sm text-mute sm:flex-row">
+          {h.trust.map((item) => (
+            <li key={item} className="flex items-center gap-2">
+              <Cube />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <Screen src={h.screen} className="mx-auto mt-14 max-w-5xl" />
       </div>
     </section>
   );
 }
 
-function Manifesto({ text }: { text: string }) {
-  const ref = useRef<HTMLElement>(null);
-  useGSAP(
-    () => {
-      gsap.matchMedia().add(MOTION, () => {
-        gsap.fromTo(
-          ".word",
-          { opacity: 0.1 },
-          {
-            opacity: 1,
-            stagger: 0.1,
-            ease: "none",
-            scrollTrigger: {
-              trigger: ref.current,
-              start: "top 70%",
-              end: "bottom 45%",
-              scrub: true,
-            },
-          },
-        );
-      });
-    },
-    { scope: ref },
-  );
+function Problem({ t }: { t: Copy }) {
+  const p = t.problem;
   return (
-    <section ref={ref} className="px-4 py-32 md:py-48">
-      <p className="mx-auto max-w-5xl text-[clamp(1.6rem,3vw,2.9rem)] leading-snug font-light tracking-tight">
-        {[...text.matchAll(/\S+/g)].map((m) => (
-          <span key={m.index} className="word">
-            {m[0]}{" "}
-          </span>
-        ))}
-      </p>
+    <section className="py-24 md:py-32">
+      <div
+        className={`${WRAP} grid items-center gap-12 md:grid-cols-2 md:gap-20`}
+      >
+        <div className="reveal">
+          <Label>{p.label}</Label>
+          <h2 className={`${H2} mt-4`}>{p.title}</h2>
+          <p className="mt-6 text-lg text-mute">{p.text}</p>
+        </div>
+        <ul className="reveal grid grid-cols-2 gap-3">
+          {p.stats.map(([value, text], i) => (
+            <li
+              key={value}
+              className={`flex aspect-square flex-col justify-between rounded-3xl p-5 sm:p-7 ${i === 1 ? "bg-brand text-white" : "bg-tint"}`}
+            >
+              <span className="text-2xl font-medium tracking-tight sm:text-4xl">
+                {value}
+              </span>
+              <span
+                className={`text-sm sm:text-base ${i === 1 ? "text-white/85" : "text-mute"}`}
+              >
+                {text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
 
 function Platform({ t }: { t: Copy }) {
-  const c = t.bento.cards;
+  const p = t.platform;
   return (
-    <section
-      id="plateforme"
-      className="rounded-t-[2.5rem] bg-paper px-4 py-32 text-ink md:py-48"
-    >
-      <div className="mx-auto max-w-6xl">
-        <h2 className="max-w-5xl text-[clamp(2.2rem,4.6vw,4.5rem)] leading-[1.08] font-medium tracking-tight">
-          {t.inline.before}
-          <Pill src={IMAGES.pillA} />
-          {t.inline.middle}
-          <Pill src={IMAGES.pillB} />
-          {t.inline.after}
-        </h2>
-        <p className="mt-6 text-lg text-ink/60">{t.bento.title}</p>
-        <div className="mt-16 grid grid-flow-dense auto-rows-[24rem] grid-cols-1 gap-4 md:grid-cols-3">
-          <BentoCard
-            className="md:col-span-2 md:row-span-2"
-            src={IMAGES.planning}
-            focus="62% 40%"
-            {...c.planning}
-            large
-          />
-          <BentoCard
-            src={IMAGES.agenda}
-            focus="78% 50%"
-            zoom={1.9}
-            {...c.agenda}
-          />
-          <BentoCard
-            src={IMAGES.suivi}
-            focus="35% 30%"
-            zoom={1.9}
-            {...c.suivi}
-          />
-          <BentoCard
-            className="md:col-span-3"
-            src={IMAGES.diagnostic}
-            focus="60% 30%"
-            {...c.diagnostic}
-            wide
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Pill({ src }: { src: string }) {
-  return (
-    <span
-      className="mx-3 inline-block h-[0.8em] w-[1.9em] rounded-full bg-cover bg-center align-middle grayscale"
-      style={{ backgroundImage: `url(${src})` }}
-    />
-  );
-}
-
-function BentoCard({
-  title,
-  text,
-  src,
-  focus,
-  zoom = 1,
-  className = "",
-  large = false,
-  wide = false,
-}: {
-  title: string;
-  text: string;
-  src: string;
-  focus: string;
-  zoom?: number;
-  className?: string;
-  large?: boolean;
-  wide?: boolean;
-}) {
-  return (
-    <article
-      className={`group flex overflow-hidden rounded-3xl bg-ink text-white ${wide ? "flex-col md:flex-row" : "flex-col"} ${className}`}
-    >
-      <div
-        className={`shrink-0 p-7 md:p-9 ${wide ? "md:w-2/5 md:self-center" : ""}`}
-      >
-        <h3
-          className={`font-medium tracking-tight ${large ? "text-3xl md:text-4xl" : "text-2xl"}`}
-        >
-          {title}
-        </h3>
-        <p
-          className={`mt-3 text-white/65 ${large ? "max-w-lg text-lg" : "max-w-md"}`}
-        >
-          {text}
-        </p>
-      </div>
-      <div
-        className={`relative min-h-0 flex-1 overflow-hidden rounded-tl-2xl border-t border-l border-white/10 bg-paper shadow-2xl ${wide ? "ml-7 md:mt-9 md:ml-0" : "ml-7 md:ml-9"}`}
-      >
-        <div
-          className="absolute inset-0"
-          style={{ transform: `scale(${zoom})`, transformOrigin: focus }}
-        >
-          <img
-            src={src}
-            alt=""
-            loading="lazy"
-            style={{ objectPosition: focus }}
-            className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-          />
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function Journey({ t }: { t: Copy }) {
-  const [active, setActive] = useState(0);
-  return (
-    <section id="parcours" className="relative px-4 py-32 md:py-48">
-      <div className="absolute top-1/3 -left-40 h-[30rem] w-[30rem] rounded-full bg-brand/20 blur-[140px]" />
-      <div className="relative mx-auto max-w-6xl">
-        <h2 className="max-w-4xl text-[clamp(2.2rem,4.6vw,4.5rem)] leading-[1.08] font-medium tracking-tight">
-          {t.journey.title}
-        </h2>
-        <div className="mt-16 flex flex-col gap-3 md:h-[34rem] md:flex-row">
-          {t.journey.steps.map((step, i) => {
-            const open = i === active;
-            return (
-              <button
-                type="button"
-                key={step.name}
-                onMouseEnter={() => setActive(i)}
-                onFocus={() => setActive(i)}
-                onClick={() => setActive(i)}
-                aria-expanded={open}
-                className={`group relative h-80 overflow-hidden rounded-3xl text-left transition-[flex-grow] duration-700 ease-[cubic-bezier(.2,.8,.2,1)] md:h-auto md:min-w-0 ${open ? "md:flex-[5]" : "md:flex-1"}`}
-              >
-                <img
-                  src={stepImage(step.seed)}
-                  alt=""
-                  loading="lazy"
-                  className={`absolute inset-0 size-full object-cover ${photo} transition-transform duration-700 ease-out group-hover:scale-105`}
-                />
-                <div
-                  className={`absolute inset-0 transition-colors duration-700 ${open ? "bg-gradient-to-t from-ink via-ink/50 to-transparent" : "bg-ink/75"}`}
-                />
-                <div className="absolute inset-x-0 bottom-0 p-7">
-                  <span className="text-sm text-brand-light tabular-nums">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3
-                    className={`mt-1 text-2xl font-medium whitespace-nowrap ${open ? "" : "md:rotate-180 md:[writing-mode:vertical-rl]"}`}
-                  >
-                    {step.name}
-                  </h3>
-                  <p
-                    className={`mt-3 max-w-sm text-white/75 transition-opacity duration-500 ${open ? "opacity-100 delay-300" : "opacity-100 md:opacity-0"}`}
-                  >
-                    {step.text}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Stack({ t }: { t: Copy }) {
-  const ref = useRef<HTMLElement>(null);
-  useGSAP(
-    () => {
-      gsap.matchMedia().add(MOTION, () => {
-        const cards = gsap.utils.toArray<HTMLElement>(".stack-card");
-        cards.slice(0, -1).forEach((card, i) => {
-          gsap.to(card, {
-            scale: 0.92,
-            opacity: 0.45,
-            ease: "none",
-            scrollTrigger: {
-              trigger: cards[i + 1],
-              start: "top bottom",
-              end: "top 20%",
-              scrub: true,
-            },
-          });
-        });
-      });
-    },
-    { scope: ref },
-  );
-  return (
-    <section
-      ref={ref}
-      className="rounded-[2.5rem] bg-paper px-4 py-32 text-ink md:py-48"
-    >
-      <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1fr_1.3fr]">
-        <h2 className="text-[clamp(2.2rem,4vw,4rem)] leading-[1.08] font-medium tracking-tight md:sticky md:top-32 md:self-start">
-          {t.stack.title}
-        </h2>
-        <div className="flex flex-col gap-8">
-          {t.stack.cards.map((card, i) => (
+    <section id="plateforme" className="bg-tint py-24 md:py-32">
+      <div className={WRAP}>
+        <Label>{p.label}</Label>
+        <h2 className={`${H2} mt-4 max-w-2xl`}>{p.title}</h2>
+        <div className="mt-16 flex flex-col gap-20 md:gap-28">
+          {p.features.map((f, i) => (
             <article
-              key={card.title}
-              className="stack-card sticky flex min-h-80 origin-top flex-col justify-between rounded-3xl border border-ink/5 bg-white p-9 shadow-xl shadow-ink/5 md:p-12"
-              style={{ top: `${7 + i * 1.5}rem` }}
+              key={f.title}
+              className="reveal grid items-center gap-8 md:grid-cols-[2fr_3fr] md:gap-16"
             >
-              <span className="text-sm text-brand tabular-nums">
-                {String(i + 1).padStart(2, "0")} /{" "}
-                {String(t.stack.cards.length).padStart(2, "0")}
-              </span>
-              <div>
-                <h3 className="text-3xl font-medium tracking-tight md:text-4xl">
-                  {card.title}
+              <div className={i % 2 ? "md:order-2" : ""}>
+                <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
+                  {f.title}
                 </h3>
-                <p className="mt-4 max-w-md text-lg text-ink/60">{card.text}</p>
+                <p className="mt-3 text-lg text-mute">{f.text}</p>
+                <ul className="mt-6 flex flex-col gap-3">
+                  {f.points.map((point) => (
+                    <li key={point} className="flex items-baseline gap-3">
+                      <Cube />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
               </div>
+              <Screen src={f.screen} focus={f.focus} />
             </article>
           ))}
         </div>
@@ -439,150 +290,382 @@ function Stack({ t }: { t: Copy }) {
   );
 }
 
-function Roles({ t }: { t: Copy }) {
-  const ref = useRef<HTMLElement>(null);
-  const [index, setIndex] = useState(0);
-  const items = t.roles.items;
-  const go = (step: number) =>
-    setIndex((i) => (i + step + items.length) % items.length);
-
-  useGSAP(
-    () => {
-      gsap.matchMedia().add(MOTION, () => {
-        gsap.from(".role-text", { y: 24, opacity: 0, duration: 0.7 });
-      });
-    },
-    { scope: ref, dependencies: [index] },
-  );
-
-  const current = items[index];
+function Journey({ t }: { t: Copy }) {
+  const j = t.journey;
   return (
-    <section id="equipes" ref={ref} className="px-4 py-32 md:py-48">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="text-[clamp(2.2rem,4.6vw,4.5rem)] leading-[1.08] font-medium tracking-tight">
-          {t.roles.title}
-        </h2>
-        <div className="mt-16 grid items-center gap-12 md:grid-cols-[auto_1fr] md:gap-20">
-          <div className="relative h-80 w-72 sm:w-96">
-            {items.map((item, i) => {
-              const offset = (i - index + items.length) % items.length;
-              return (
-                <img
-                  key={item.role}
-                  src={stepImage(item.seed)}
-                  alt=""
-                  className={`absolute top-0 h-80 w-56 rounded-3xl object-cover shadow-2xl shadow-black/40 transition-all duration-700 ease-out ${photo}`}
-                  style={{
-                    left: `${offset * 4.5}rem`,
-                    zIndex: items.length - offset,
-                    transform: `scale(${1 - offset * 0.08})`,
-                    opacity: offset === 0 ? 1 : 0.5,
-                  }}
-                />
-              );
-            })}
-          </div>
-          <div>
-            <div className="role-text" aria-live="polite">
-              <p className="text-brand-light">{current.role}</p>
-              <p className="mt-4 max-w-xl text-[clamp(1.5rem,2.6vw,2.4rem)] leading-snug font-light">
-                {current.text}
+    <section id="parcours" className="py-24 md:py-32">
+      <div className={WRAP}>
+        <Label>{j.label}</Label>
+        <h2 className={`${H2} mt-4 max-w-3xl`}>{j.title}</h2>
+        <ol className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {j.steps.map(([name, text], i) => (
+            <li
+              key={name}
+              className="reveal rounded-3xl border border-line p-6"
+            >
+              <div className="flex gap-1" aria-hidden="true">
+                {j.steps.map(([other], k) => (
+                  <Cube
+                    key={other}
+                    className={
+                      k === i ? "bg-brand" : k < i ? "bg-ink" : "bg-line"
+                    }
+                  />
+                ))}
+              </div>
+              <p className="mt-6 text-sm text-mute">
+                {j.step} {i + 1}
               </p>
-            </div>
-            <div className="mt-10 flex gap-3">
-              <Arrow label={t.roles.prev} onClick={() => go(-1)} flip />
-              <Arrow label={t.roles.next} onClick={() => go(1)} />
-            </div>
-          </div>
-        </div>
+              <h3 className="mt-1 text-xl font-medium tracking-tight">
+                {name}
+              </h3>
+              <p className="mt-3 text-[0.95rem] text-mute">{text}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
 }
 
-function Arrow({
+function Security({ t }: { t: Copy }) {
+  const s = t.security;
+  return (
+    <section id="securite" className="bg-ink py-24 text-white md:py-32">
+      <div className={WRAP}>
+        <p className="flex items-center gap-2 text-sm font-medium text-white/70">
+          <Cube />
+          {s.label}
+        </p>
+        <h2 className={`${H2} mt-4`}>{s.title}</h2>
+        <ul className="mt-14 grid gap-3 sm:grid-cols-2">
+          {s.cards.map(([title, text]) => (
+            <li
+              key={title}
+              className="reveal rounded-3xl bg-white/[0.06] p-7 md:p-9"
+            >
+              <h3 className="text-xl font-medium tracking-tight md:text-2xl">
+                {title}
+              </h3>
+              <p className="mt-3 text-white/70">{text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function Roles({ t }: { t: Copy }) {
+  const r = t.roles;
+  return (
+    <section id="equipes" className="py-24 md:py-32">
+      <div className={WRAP}>
+        <Label>{r.label}</Label>
+        <h2 className={`${H2} mt-4`}>{r.title}</h2>
+        <ul className="mt-14 grid gap-10 md:grid-cols-3">
+          {r.items.map(([role, text]) => (
+            <li key={role} className="reveal border-t border-ink pt-6">
+              <h3 className="text-xl font-medium tracking-tight">{role}</h3>
+              <p className="mt-3 text-mute">{text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+const INPUT =
+  "mt-1.5 w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-ink transition-colors hover:border-mute";
+
+function Field({
+  name,
   label,
-  onClick,
-  flip = false,
+  type = "text",
+  autoComplete,
+  full = false,
 }: {
+  name: string;
   label: string;
-  onClick: () => void;
-  flip?: boolean;
+  type?: string;
+  autoComplete?: string;
+  full?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="grid size-12 place-items-center rounded-full border border-white/20 text-white transition-colors hover:bg-white hover:text-ink"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        className={`size-5 ${flip ? "rotate-180" : ""}`}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
-    </button>
+    <label className={`text-sm text-mute ${full ? "sm:col-span-2" : ""}`}>
+      {label}
+      <input
+        name={name}
+        type={type}
+        autoComplete={autoComplete}
+        required
+        maxLength={160}
+        className={INPUT}
+      />
+    </label>
   );
 }
 
-function Cta({ t }: { t: Copy }) {
+function Demo({ t, lang }: { t: Copy; lang: Lang }) {
+  const d = t.demo;
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle",
+  );
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const { consent: _, ...body } = Object.fromEntries(
+      new FormData(event.currentTarget),
+    );
+    setState("sending");
+    try {
+      const response = await fetch(`${API_URL}/demo-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      setState(response.ok ? "sent" : "error");
+    } catch {
+      setState("error");
+    }
+  };
+
   return (
-    <section className="px-4 pb-32 md:pb-48">
-      <div className="grain group relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] px-6 py-28 text-center md:py-40">
-        <img
-          src={IMAGES.cta}
-          alt=""
-          loading="lazy"
-          className={`absolute inset-0 size-full object-cover ${photo} mix-blend-luminosity transition-transform duration-1000 ease-out group-hover:scale-105`}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-brand/90 via-ink/85 to-ink" />
-        <div className="relative mx-auto max-w-5xl">
-          <h2 className="text-[clamp(2.4rem,5.5vw,5.5rem)] leading-[1.02] font-medium tracking-tight text-balance">
-            {t.cta.title}
-          </h2>
-          <p className="mt-6 text-lg text-white/75">{t.cta.text}</p>
-          <a
-            href={mailto(t.cta.button)}
-            className="mt-12 inline-block rounded-full bg-white px-10 py-5 text-lg font-medium text-ink transition-colors hover:bg-ink hover:text-white"
-          >
-            {t.cta.button}
-          </a>
+    <section id="demo" className="bg-tint py-24 md:py-32">
+      <div className={`${WRAP} grid gap-12 md:grid-cols-2 md:gap-20`}>
+        <div>
+          <Label>{d.label}</Label>
+          <h2 className={`${H2} mt-4`}>{d.title}</h2>
+          <p className="mt-6 text-lg text-mute">{d.text}</p>
         </div>
+        {state === "sent" ? (
+          <p
+            role="status"
+            className="flex items-center gap-3 self-start rounded-3xl bg-white p-8 text-lg"
+          >
+            <Cube />
+            {d.sent}
+          </p>
+        ) : (
+          <form
+            onSubmit={submit}
+            className="grid gap-4 rounded-3xl border border-line bg-white p-6 sm:grid-cols-2 sm:p-8"
+          >
+            <Field
+              name="firstName"
+              label={d.fields.firstName}
+              autoComplete="given-name"
+            />
+            <Field
+              name="lastName"
+              label={d.fields.lastName}
+              autoComplete="family-name"
+            />
+            <Field
+              name="email"
+              label={d.fields.email}
+              type="email"
+              autoComplete="email"
+              full
+            />
+            <Field
+              name="establishment"
+              label={d.fields.establishment}
+              autoComplete="organization"
+            />
+            <Field
+              name="role"
+              label={d.fields.role}
+              autoComplete="organization-title"
+            />
+            <label className="text-sm text-mute sm:col-span-2">
+              {d.fields.message}
+              <textarea
+                name="message"
+                rows={3}
+                maxLength={2000}
+                className={INPUT}
+              />
+            </label>
+            <input
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="hidden"
+            />
+            <label className="flex items-baseline gap-2.5 text-sm text-mute sm:col-span-2">
+              <input name="consent" type="checkbox" required />
+              <span>
+                {d.consent}{" "}
+                <a
+                  href={pagePath(lang, "privacy")}
+                  className="text-ink underline"
+                >
+                  {d.consentLink}
+                </a>
+              </span>
+            </label>
+            <button
+              type="submit"
+              disabled={state === "sending"}
+              className={`${BTN_DARK} disabled:opacity-60 sm:col-span-2`}
+            >
+              {state === "sending" ? d.sending : d.submit}
+            </button>
+            {state === "error" && (
+              <p role="alert" className="text-sm text-red-700 sm:col-span-2">
+                {d.error}{" "}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="underline">
+                  {CONTACT_EMAIL}
+                </a>
+              </p>
+            )}
+          </form>
+        )}
       </div>
     </section>
   );
 }
 
-function Footer({ t }: { t: Copy }) {
+function Legal({
+  t,
+  lang,
+  page,
+}: {
+  t: Copy;
+  lang: Lang;
+  page: Exclude<Page, "home">;
+}) {
+  const doc = t.legal[page];
   return (
-    <footer className="border-t border-white/10 px-4 py-12">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 text-sm text-white/60 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="flex items-center gap-2 text-base font-semibold text-white">
-            <LogoMark />
-            etepe<span className="text-brand-light">a</span>
-          </p>
-          <p className="mt-1">{t.footer.tagline}</p>
-        </div>
-        <div className="flex flex-wrap gap-6">
-          {t.nav.links.map(([label, href]) => (
-            <a key={href} href={href} className="hover:text-white">
+    <article className={`${WRAP} max-w-3xl py-16 md:py-24`}>
+      <a
+        href={pagePath(lang, "home")}
+        className="text-sm text-mute hover:text-ink"
+      >
+        ← {t.legal.back}
+      </a>
+      <h1 className="mt-6 text-4xl font-medium tracking-tight md:text-5xl">
+        {doc.title}
+      </h1>
+      {doc.sections.map(([title, text]) => (
+        <section key={title} className="mt-10">
+          <h2 className="flex items-center gap-2.5 text-xl font-medium tracking-tight">
+            <Cube />
+            {title}
+          </h2>
+          <p className="mt-3 text-lg text-mute">{text}</p>
+        </section>
+      ))}
+    </article>
+  );
+}
+
+function FooterColumn({ title, links }: { title: string; links: string[][] }) {
+  return (
+    <div>
+      <h2 className="text-sm font-medium text-mute">{title}</h2>
+      <ul className="mt-4 flex flex-col gap-2.5">
+        {links.map(([label, href]) => (
+          <li key={href}>
+            <a href={href} className="transition-colors hover:text-brand">
               {label}
             </a>
-          ))}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-white">
-            {t.footer.contact}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Footer({
+  t,
+  lang,
+  page,
+  home,
+}: {
+  t: Copy;
+  lang: Lang;
+  page: Page;
+  home: string;
+}) {
+  const f = t.footer;
+  const other = lang === "fr" ? "en" : "fr";
+  return (
+    <footer className="border-t border-line py-14">
+      <div className={WRAP}>
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div>
+            <Logo />
+            <p className="mt-3 max-w-xs text-mute">{f.tagline}</p>
+          </div>
+          <FooterColumn
+            title={f.product}
+            links={[
+              ...t.nav.links.map(([label, href]) => [label, home + href]),
+              [t.nav.cta, `${home}#demo`],
+            ]}
+          />
+          <FooterColumn
+            title={f.contact}
+            links={[[CONTACT_EMAIL, `mailto:${CONTACT_EMAIL}`]]}
+          />
+          <FooterColumn
+            title={f.legal}
+            links={[
+              [f.privacy, pagePath(lang, "privacy")],
+              [f.cookies, pagePath(lang, "cookies")],
+            ]}
+          />
+        </div>
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-sm text-mute">
+          <p>
+            © {new Date().getFullYear()} Etepea. {f.rights}
+          </p>
+          <a
+            href={pagePath(other, page)}
+            hrefLang={other}
+            className="hover:text-ink"
+          >
+            {other === "en" ? "English" : "Français"}
           </a>
         </div>
-        <p>
-          © {new Date().getFullYear()} Etepea. {t.footer.rights}
-        </p>
       </div>
     </footer>
+  );
+}
+
+const NOTICE_KEY = "etepea-cookie-notice";
+
+function CookieNotice({ t, lang }: { t: Copy; lang: Lang }) {
+  const [open, setOpen] = useState(() => !localStorage.getItem(NOTICE_KEY));
+  if (!open) {
+    return null;
+  }
+  const close = () => {
+    localStorage.setItem(NOTICE_KEY, "1");
+    setOpen(false);
+  };
+  return (
+    <aside className="fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-line bg-white p-5 text-sm shadow-xl sm:right-auto sm:w-80">
+      <p>{t.cookieNotice.text}</p>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={close}
+          className={`${BTN_DARK} px-3.5 py-1.5`}
+        >
+          {t.cookieNotice.ok}
+        </button>
+        <a
+          href={pagePath(lang, "cookies")}
+          className={`${BTN_LIGHT} px-3.5 py-1.5`}
+        >
+          {t.cookieNotice.more}
+        </a>
+      </div>
+    </aside>
   );
 }

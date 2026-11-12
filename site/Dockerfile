@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
+# URL de l'API qui reçoit les demandes de démo.
+ARG VITE_API_URL
 RUN npm run build
 
 FROM nginx:1.27-alpine

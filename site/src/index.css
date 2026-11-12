@@ -1,32 +1,56 @@
 @import "tailwindcss";
+@import "@fontsource-variable/outfit";
 
 @theme {
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit Variable", ui-sans-serif, system-ui, sans-serif;
   --color-ink: #04182b;
-  --color-ink-soft: #0b2742;
+  --color-mute: #566273;
+  --color-line: #e4e8ee;
   --color-brand: #2563eb;
-  --color-brand-light: #3b82f6;
-  --color-paper: #f4f6fa;
+  --color-tint: #f3f6fb;
 }
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
-  background: var(--color-ink);
-  color: #fff;
+  background: #fff;
+  color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
 }
 
-.grain::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.08;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Trame de cubes du logo, estompée vers le bas. */
+.cubes {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect x='5' y='5' width='34' height='34' rx='8' fill='%232563eb' fill-opacity='.07'/%3E%3C/svg%3E");
+  mask-image: radial-gradient(
+    ellipse 75% 85% at 50% 0%,
+    #000 20%,
+    transparent 75%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 1.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
