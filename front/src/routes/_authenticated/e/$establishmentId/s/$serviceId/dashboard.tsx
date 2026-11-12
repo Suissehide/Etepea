@@ -240,7 +240,9 @@ function Dashboard() {
       ).map((event, i) => {
         const template = filtered[i].slotTemplate
         const duration =
-          template?.isIndividual && durations.get(template.thematicId ?? '')
+          template?.isIndividual &&
+          !filtered[i].archivedAt &&
+          durations.get(template.thematicId ?? '')
         return duration
           ? {
               ...event,

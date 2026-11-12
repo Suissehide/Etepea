@@ -123,7 +123,7 @@ export const EventContent = ({
             isSelected,
         },
       )}
-      style={styleHero(event, clair)}
+      style={styleHero(event, clair, effectifSeul)}
     >
       {onToggleSelect && isSelectable && !isEditable && (
         <SelectToggle
@@ -185,6 +185,7 @@ export const EventContent = ({
         clair={clair}
         textColor={event.contrastColor}
         slotStart={event.start}
+        archived={archived}
       />
     </div>
   )
@@ -206,8 +207,10 @@ function SlotAppointments({
   clair,
   textColor,
   slotStart,
+  archived,
 }: Omit<AppointmentListProps, 'appointments'> & {
   clair: boolean
+  archived?: boolean
   textColor?: string
   slotStart: EventDisplayInfo['event']['start']
   appointments?: Appointment[]
@@ -256,12 +259,15 @@ function SlotAppointments({
           inscrits={inscrits}
           capacity={capacity}
           isRowLayout={isRowLayout}
+          supprime={archived}
         />
       )}
 
-      {isMultiple && !locked && ajoutPossible && placesRestantes && (
-        <AjoutAuSurvol />
-      )}
+      {isMultiple &&
+        !locked &&
+        !archived &&
+        ajoutPossible &&
+        placesRestantes && <AjoutAuSurvol />}
     </>
   )
 }
@@ -269,24 +275,38 @@ function SlotAppointments({
 const couleurRendezVous = (slotColor: string, clair: boolean) =>
   clair ? slotColor : darkenHex(slotColor, 0.3)
 
-function styleHero(event: EventDisplayInfo['event'], clair: boolean) {
-  if (!clair) {
-    return slotStyle(event)
-  }
+// Dashboard : un créneau supprimé, gardé pour ses rendez-vous, est hachuré.
+function styleHero(
+  event: EventDisplayInfo['event'],
+  clair: boolean,
+  effectifSeul: boolean,
+) {
   const slotColor = event.color || '#2563eb'
+  const hachure = clair ? hexToRGBA(slotColor, 0.35) : 'rgba(255,255,255,0.35)'
+  const hachures =
+    effectifSeul && event.extendedProps.archived
+      ? { backgroundImage: hachuresDe(hachure) }
+      : {}
+  if (!clair) {
+    return { ...slotStyle(event), ...hachures }
+  }
   return {
     backgroundColor: tintOnWhite(slotColor, 0.15),
     color: readableTint(slotColor, 0.15),
     boxShadow: `inset 0 0 0 1px ${hexToRGBA(slotColor, 0.6)}`,
     padding: 0,
+    ...hachures,
   }
 }
+
+const hachuresDe = (couleur: string) =>
+  `repeating-linear-gradient(135deg, transparent 0 5px, ${couleur} 5px 6px)`
 
 /** « + Ajouter » au survol, comme sur les tranches des individuels. */
 function AjoutAuSurvol() {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end rounded-sm p-1 transition-colors group-hover:bg-black/5">
-      <span className="flex items-center gap-0.5 rounded bg-white/75 px-1 text-[0.6rem] font-semibold leading-4 opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="flex items-center gap-0.5 rounded bg-background px-1 text-[0.6rem] font-semibold leading-4 text-foreground shadow-sm opacity-0 transition-opacity group-hover:opacity-100">
         <Plus className="h-3 w-3" />
         Ajouter
       </span>
@@ -631,12 +651,15 @@ function PlacesLibres({
   inscrits,
   capacity,
   isRowLayout,
+  supprime,
 }: {
   inscrits: number
   capacity?: number | null
   isRowLayout: boolean
+  /** Créneau supprimé gardé pour ses rendez-vous : plus aucune place à prendre. */
+  supprime?: boolean
 }) {
-  const libres = capacity == null ? null : capacity - inscrits
+  const libres = supprime || capacity == null ? null : capacity - inscrits
   return (
     <span
       className={clsx(
@@ -645,17 +668,35 @@ function PlacesLibres({
         libres != null && libres > 0 ? 'bg-destructive' : 'bg-black/40',
       )}
     >
-      {libres == null ? (
-        `${inscrits} inscrit${inscrits > 1 ? 's' : ''}`
-      ) : libres > 0 ? (
-        `${libres} libre${libres > 1 ? 's' : ''}`
-      ) : (
-        <>
-          <Check className="inline w-2.5 h-2.5 mr-0.5" />
-          Complet
-        </>
-      )}
+      {libellePlaces(supprime, libres, inscrits)}
     </span>
+  )
+}
+
+function libellePlaces(
+  supprime: boolean | undefined,
+  libres: number | null,
+  inscrits: number,
+) {
+  if (supprime) {
+    return (
+      <>
+        <Trash2 className="inline w-2.5 h-2.5 mr-0.5" />
+        Supprimé
+      </>
+    )
+  }
+  if (libres == null) {
+    return `${inscrits} inscrit${inscrits > 1 ? 's' : ''}`
+  }
+  if (libres > 0) {
+    return `${libres} libre${libres > 1 ? 's' : ''}`
+  }
+  return (
+    <>
+      <Check className="inline w-2.5 h-2.5 mr-0.5" />
+      Complet
+    </>
   )
 }
 
@@ -753,11 +794,13 @@ function EnTeteIndividuel({
   location,
   slotColor,
   tranches,
+  supprime,
 }: {
   thematic?: string
   location?: string
   slotColor: string
   tranches: SlotTranche[]
+  supprime?: boolean
 }) {
   return (
     <div
@@ -771,11 +814,12 @@ function EnTeteIndividuel({
         <span className="font-semibold">{thematic}</span>
         {location && <span className="opacity-80"> {location}</span>}
       </span>
-      {tranches.length > 0 && (
+      {(supprime || tranches.length > 0) && (
         <PlacesLibres
           inscrits={tranches.filter((t) => t.taken).length}
           capacity={tranches.length}
           isRowLayout
+          supprime={supprime}
         />
       )}
     </div>
@@ -850,6 +894,7 @@ function IndividuelClair({
         location={location}
         slotColor={slotColor}
         tranches={tranches}
+        supprime={event.extendedProps.archived}
       />
       <Tranches
         event={event}
@@ -934,7 +979,7 @@ function Tranches({
             ...position(finTranches, dayjs(event.end).toISOString()),
             backgroundColor: undefined,
             borderColor: separateur,
-            backgroundImage: `repeating-linear-gradient(135deg, transparent 0 5px, ${separateur} 5px 6px)`,
+            backgroundImage: hachuresDe(separateur),
           }}
         />
       )}
