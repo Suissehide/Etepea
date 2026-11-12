@@ -1,14 +1,16 @@
 import { useEffect, useRef } from "react";
-import type { Variant } from "./trameScene";
+import type { SceneLabels, Variant } from "./trameScene";
 
 // Three.js n'est chargé qu'après l'affichage : la page pré-rendue reste légère.
 export default function Trame({
   variant,
   label,
+  labels,
   className = "",
 }: {
   variant: Variant;
   label: string;
+  labels?: SceneLabels;
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -23,7 +25,7 @@ export default function Trame({
     import("./trameScene")
       .then(({ mount }) => {
         if (!cancelled) {
-          dispose = mount(host, variant);
+          dispose = mount(host, variant, labels);
         }
       })
       // Sans WebGL, la scène reste vide : elle est décorative.
@@ -32,7 +34,7 @@ export default function Trame({
       cancelled = true;
       dispose();
     };
-  }, [variant]);
+  }, [variant, labels]);
 
   return <div ref={ref} role="img" aria-label={label} className={className} />;
 }

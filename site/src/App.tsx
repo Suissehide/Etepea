@@ -203,11 +203,17 @@ function Hero({ t }: { t: Copy }) {
           </div>
           <p className="mt-6 text-sm text-mute">{h.note}</p>
         </div>
-        <Trame
-          variant="year"
-          label={h.sceneAlt}
-          className="h-72 sm:h-96 lg:-mr-28 lg:-ml-8 lg:h-[36rem]"
-        />
+        <figure className="lg:-mr-28 lg:-ml-8">
+          <Trame
+            variant="year"
+            label={h.sceneAlt}
+            labels={h.scene}
+            className="h-80 sm:h-96 lg:h-[34rem]"
+          />
+          <figcaption className="text-center text-sm text-mute">
+            {h.sceneCaption}
+          </figcaption>
+        </figure>
       </div>
       <div className={WRAP}>
         <Screen src={h.screen} alt={h.screenAlt} className="mt-6" eager />

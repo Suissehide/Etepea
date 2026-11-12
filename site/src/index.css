@@ -21,6 +21,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Tailwind 4 ne met plus la main sur les boutons. */
+button:not(:disabled),
+label:has(input[type="checkbox"]) {
+  cursor: pointer;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;

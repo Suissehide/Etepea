@@ -46,7 +46,13 @@ const fr = {
     screen: SCREENS.planning,
     screenAlt: "Planning annuel d'un programme d'ETP dans Etepea",
     sceneAlt:
-      "Animation : la trame de séances d'une année, sous forme de cubes",
+      "Animation : la semaine type d'un parcours, recopiée semaine après semaine",
+    sceneCaption: "La semaine type d'un parcours, répétée sur l'année.",
+    scene: {
+      days: ["Lun", "Mar", "Mer", "Jeu", "Ven"],
+      template: "Semaine type",
+      closed: "Semaine fermée",
+    },
   },
   manual: {
     title: "Ce que l'équipe arrête de faire à la main.",
@@ -292,7 +298,14 @@ const en: typeof fr = {
     note: "Accounts by invitation only. Data isolated per department.",
     screen: SCREENS.planning,
     screenAlt: "Yearly planning of a patient education program in Etepea",
-    sceneAlt: "Animation: a year of sessions laid out as a grid of cubes",
+    sceneAlt:
+      "Animation: the typical week of a pathway, copied week after week",
+    sceneCaption: "The typical week of a pathway, repeated over the year.",
+    scene: {
+      days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+      template: "Typical week",
+      closed: "Closed week",
+    },
   },
   manual: {
     title: "What the team stops doing by hand.",
