@@ -2,6 +2,7 @@ import type { EventDisplayInfo } from '@fullcalendar/react'
 import { clsx } from 'clsx'
 import dayjs from 'dayjs'
 import {
+  Ban,
   Check,
   Copy,
   Lock,
@@ -663,7 +664,7 @@ function PlacesLibres({
   return (
     <span
       className={clsx(
-        'relative z-10 pointer-events-none whitespace-nowrap rounded-sm px-1 text-[0.6rem] font-semibold leading-[14px] text-white',
+        'relative z-10 pointer-events-none inline-flex items-center gap-0.5 whitespace-nowrap rounded-sm px-1 text-[0.6rem] font-semibold leading-[14px] text-white',
         isRowLayout ? 'ml-auto self-center' : 'mt-auto self-start',
         libres != null && libres > 0 ? 'bg-destructive' : 'bg-black/40',
       )}
@@ -681,8 +682,8 @@ function libellePlaces(
   if (supprime) {
     return (
       <>
-        <Trash2 className="inline w-2.5 h-2.5 mr-0.5" />
-        Supprimé
+        <Ban className="h-2.5 w-2.5" />
+        Bloqué
       </>
     )
   }
@@ -694,7 +695,7 @@ function libellePlaces(
   }
   return (
     <>
-      <Check className="inline w-2.5 h-2.5 mr-0.5" />
+      <Check className="h-2.5 w-2.5" />
       Complet
     </>
   )
