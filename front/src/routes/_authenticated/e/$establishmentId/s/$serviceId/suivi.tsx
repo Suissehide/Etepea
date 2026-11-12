@@ -347,6 +347,7 @@ function SuiviPage() {
               <Select
                 id="filtre-patient"
                 searchable
+                maxResults={50}
                 placeholder="Tous les patients"
                 options={patientOptions}
                 value={patientFilter}
@@ -359,6 +360,7 @@ function SuiviPage() {
               </label>
               <Select
                 id="filtre-parcours"
+                searchable
                 placeholder="Tous les parcours"
                 options={pathwayOptions}
                 value={pathwayFilter}

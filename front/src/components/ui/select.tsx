@@ -23,6 +23,8 @@ export interface SelectProps {
   className?: string
   clearable?: boolean
   searchable?: boolean
+  /** Mode recherche : nombre d'options affichées au plus, le reste en tapant. */
+  maxResults?: number
   icon?: React.ReactNode
   value?: string | number
   onValueChange?: (value: string) => void
@@ -108,6 +110,7 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
       onValueChange,
       clearable = true,
       searchable = false,
+      maxResults,
       icon,
       disabled,
       'aria-describedby': ariaDescribedBy,
@@ -125,9 +128,11 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
 
     // ─── Searchable mode (Popover-based) ───
     if (searchable) {
-      const filteredOptions = options.filter((o) =>
+      const matches = options.filter((o) =>
         o.label.toLowerCase().includes(searchTerm.toLowerCase()),
       )
+      const filteredOptions = matches.slice(0, maxResults)
+      const hiddenCount = matches.length - filteredOptions.length
       const selectedOption = options.find(
         (o) => o.value.toString() === value?.toString(),
       )
@@ -215,6 +220,11 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                   value={value}
                   onSelect={handleSelect}
                 />
+                {hiddenCount > 0 && (
+                  <li className="px-2 py-1.5 text-xs text-text-light">
+                    {hiddenCount} autres résultats, affinez la recherche
+                  </li>
+                )}
               </ul>
             </Popover.Content>
           </Popover.Portal>
