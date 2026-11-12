@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import {
   CONTACT_EMAIL,
   CONTENT,
@@ -7,16 +7,18 @@ import {
   type Page,
   pagePath,
 } from "./content";
+import Trame from "./Trame";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 const H2 =
-  "text-3xl leading-tight font-medium tracking-tight md:text-[2.75rem]";
+  "text-3xl leading-[1.12] font-medium tracking-tight text-balance md:text-[2.75rem]";
 const BTN =
   "inline-flex items-center justify-center rounded-xl px-5 py-3 font-medium transition-colors";
 const BTN_DARK = `${BTN} bg-ink text-white hover:bg-brand`;
 const BTN_LIGHT = `${BTN} border border-line bg-white hover:border-ink`;
 const WRAP = "mx-auto w-full max-w-6xl px-4 sm:px-6";
+const SECTION = "py-20 md:py-28";
 
 export default function App({ lang, page }: { lang: Lang; page: Page }) {
   const t = CONTENT[lang];
@@ -28,7 +30,7 @@ export default function App({ lang, page }: { lang: Lang; page: Page }) {
         {page === "home" ? (
           <>
             <Hero t={t} />
-            <Problem t={t} />
+            <Manual t={t} />
             <Platform t={t} />
             <Journey t={t} />
             <Security t={t} />
@@ -94,15 +96,6 @@ function Cube({ className = "bg-brand" }: { className?: string }) {
       aria-hidden="true"
       className={`inline-block size-2.5 shrink-0 rounded-[3px] ${className}`}
     />
-  );
-}
-
-function Label({ children }: { children: ReactNode }) {
-  return (
-    <p className="flex items-center gap-2 text-sm font-medium text-brand">
-      <Cube />
-      {children}
-    </p>
   );
 }
 
@@ -191,71 +184,59 @@ function Screen({
 function Hero({ t }: { t: Copy }) {
   const h = t.hero;
   return (
-    <section className="relative overflow-hidden">
-      <div className="cubes absolute inset-0" />
-      <div className={`${WRAP} relative pt-16 text-center md:pt-24`}>
-        <div className="flex justify-center">
-          <Label>{h.label}</Label>
+    <section className="overflow-hidden">
+      <div
+        className={`${WRAP} grid items-center gap-x-8 pt-14 lg:grid-cols-[minmax(0,11fr)_minmax(0,10fr)] lg:pt-20`}
+      >
+        <div>
+          <h1 className="text-[clamp(2.5rem,5.2vw,4.4rem)] leading-[1.04] font-medium tracking-[-0.035em] text-balance">
+            {h.title}
+          </h1>
+          <p className="mt-6 max-w-xl text-lg text-mute md:text-xl">{h.lead}</p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <a href="#demo" className={BTN_DARK}>
+              {h.primary}
+            </a>
+            <a href="#plateforme" className={BTN_LIGHT}>
+              {h.secondary}
+            </a>
+          </div>
+          <p className="mt-6 text-sm text-mute">{h.note}</p>
         </div>
-        <h1 className="mx-auto mt-5 max-w-4xl text-[clamp(2.4rem,5.4vw,4.25rem)] leading-[1.06] font-medium tracking-tight text-balance">
-          {h.title}
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-mute md:text-xl">
-          {h.lead}
-        </p>
-        <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a href="#demo" className={BTN_DARK}>
-            {h.primary}
-          </a>
-          <a href="#plateforme" className={BTN_LIGHT}>
-            {h.secondary}
-          </a>
-        </div>
-        <ul className="mt-8 flex flex-col items-center justify-center gap-x-8 gap-y-2 text-sm text-mute sm:flex-row">
-          {h.trust.map((item) => (
-            <li key={item} className="flex items-center gap-2">
-              <Cube />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <Screen
-          src={h.screen}
-          alt={t.platform.features[0].title}
-          className="mx-auto mt-14 max-w-5xl"
-          eager
+        <Trame
+          variant="year"
+          label={h.sceneAlt}
+          className="h-72 sm:h-96 lg:-mr-28 lg:-ml-8 lg:h-[36rem]"
         />
+      </div>
+      <div className={WRAP}>
+        <Screen src={h.screen} alt={h.screenAlt} className="mt-6" eager />
       </div>
     </section>
   );
 }
 
-function Problem({ t }: { t: Copy }) {
-  const p = t.problem;
+function Manual({ t }: { t: Copy }) {
+  const m = t.manual;
   return (
-    <section className="py-24 md:py-32">
-      <div
-        className={`${WRAP} grid items-center gap-12 md:grid-cols-2 md:gap-20`}
-      >
-        <div className="reveal">
-          <Label>{p.label}</Label>
-          <h2 className={`${H2} mt-4`}>{p.title}</h2>
-          <p className="mt-6 text-lg text-mute">{p.text}</p>
+    <section className={SECTION}>
+      <div className={WRAP}>
+        <h2 className={`${H2} max-w-3xl`}>{m.title}</h2>
+        <div className="mt-12 hidden grid-cols-2 gap-x-12 text-sm text-mute md:grid">
+          <p>{m.before}</p>
+          <p>{m.after}</p>
         </div>
-        <ul className="reveal grid grid-cols-2 gap-3">
-          {p.highlights.map(([value, text], i) => (
+        <ul className="mt-4 border-b border-line">
+          {m.rows.map(([before, after]) => (
             <li
-              key={value}
-              className={`flex aspect-square flex-col justify-between rounded-3xl p-5 sm:p-7 ${i === 1 ? "bg-brand text-white" : "bg-tint"}`}
+              key={before}
+              className="grid gap-x-12 gap-y-2 border-t border-line py-6 text-lg md:grid-cols-2 md:py-7 md:text-xl"
             >
-              <h3 className="text-xl font-medium tracking-tight sm:text-3xl">
-                {value}
-              </h3>
-              <span
-                className={`text-sm sm:text-base ${i === 1 ? "text-white/85" : "text-mute"}`}
-              >
-                {text}
-              </span>
+              <p className="text-mute">{before}</p>
+              <p className="flex items-baseline gap-3 font-medium">
+                <Cube />
+                {after}
+              </p>
             </li>
           ))}
         </ul>
@@ -266,35 +247,56 @@ function Problem({ t }: { t: Copy }) {
 
 function Platform({ t }: { t: Copy }) {
   const p = t.platform;
+  const [active, setActive] = useState(0);
   return (
-    <section id="plateforme" className="bg-tint py-24 md:py-32">
+    <section id="plateforme" className={`${SECTION} bg-tint`}>
       <div className={WRAP}>
-        <Label>{p.label}</Label>
-        <h2 className={`${H2} mt-4 max-w-2xl`}>{p.title}</h2>
-        <div className="mt-16 flex flex-col gap-20 md:gap-28">
+        <h2 className={`${H2} max-w-3xl`}>{p.title}</h2>
+        <div
+          role="tablist"
+          className="mt-10 flex flex-wrap gap-1 rounded-2xl border border-line bg-white p-1 sm:inline-flex"
+        >
           {p.features.map((f, i) => (
-            <article
-              key={f.title}
-              className="reveal grid items-center gap-8 md:grid-cols-[2fr_3fr] md:gap-16"
+            <button
+              key={f.name}
+              type="button"
+              role="tab"
+              id={`tab-${i}`}
+              aria-selected={i === active}
+              aria-controls={`panel-${i}`}
+              onClick={() => setActive(i)}
+              className={`flex-1 rounded-xl px-5 py-2.5 font-medium transition-colors ${i === active ? "bg-ink text-white" : "text-mute hover:text-ink"}`}
             >
-              <div className={i % 2 ? "md:order-2" : ""}>
-                <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
-                  {f.title}
-                </h3>
-                <p className="mt-3 text-lg text-mute">{f.text}</p>
-                <ul className="mt-6 flex flex-col gap-3">
-                  {f.points.map((point) => (
-                    <li key={point} className="flex items-baseline gap-3">
-                      <Cube />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Screen src={f.screen} alt={f.title} focus={f.focus} />
-            </article>
+              {f.name}
+            </button>
           ))}
         </div>
+        {p.features.map((f, i) => (
+          <article
+            key={f.name}
+            role="tabpanel"
+            id={`panel-${i}`}
+            aria-labelledby={`tab-${i}`}
+            hidden={i !== active}
+            className="mt-10 grid items-center gap-8 md:grid-cols-[2fr_3fr] md:gap-14"
+          >
+            <div>
+              <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
+                {f.title}
+              </h3>
+              <p className="mt-3 text-lg text-mute">{f.text}</p>
+              <ul className="mt-6 flex flex-col gap-3">
+                {f.points.map((point) => (
+                  <li key={point} className="flex items-baseline gap-3">
+                    <Cube />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Screen src={f.screen} alt={f.title} focus={f.focus} />
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -303,16 +305,12 @@ function Platform({ t }: { t: Copy }) {
 function Journey({ t }: { t: Copy }) {
   const j = t.journey;
   return (
-    <section id="parcours" className="py-24 md:py-32">
+    <section id="parcours" className={SECTION}>
       <div className={WRAP}>
-        <Label>{j.label}</Label>
-        <h2 className={`${H2} mt-4 max-w-3xl`}>{j.title}</h2>
-        <ol className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <h2 className={`${H2} max-w-3xl`}>{j.title}</h2>
+        <ol className="mt-14 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">
           {j.steps.map(([name, text], i) => (
-            <li
-              key={name}
-              className="reveal rounded-3xl border border-line p-6"
-            >
+            <li key={name}>
               <div className="flex gap-1" aria-hidden="true">
                 {j.steps.map(([other], k) => (
                   <Cube
@@ -323,7 +321,7 @@ function Journey({ t }: { t: Copy }) {
                   />
                 ))}
               </div>
-              <p className="mt-6 text-sm text-mute">
+              <p className="mt-5 text-sm text-mute">
                 {j.step} {i + 1}
               </p>
               <h3 className="mt-1 text-xl font-medium tracking-tight">
@@ -341,26 +339,17 @@ function Journey({ t }: { t: Copy }) {
 function Security({ t }: { t: Copy }) {
   const s = t.security;
   return (
-    <section id="securite" className="bg-ink py-24 text-white md:py-32">
-      <div className={WRAP}>
-        <p className="flex items-center gap-2 text-sm font-medium text-white/70">
-          <Cube />
-          {s.label}
-        </p>
-        <h2 className={`${H2} mt-4`}>{s.title}</h2>
-        <ul className="mt-14 grid gap-3 sm:grid-cols-2">
+    <section id="securite" className={`${SECTION} bg-tint`}>
+      <div className={`${WRAP} grid gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20`}>
+        <h2 className={`${H2} lg:sticky lg:top-28 lg:self-start`}>{s.title}</h2>
+        <dl className="grid gap-x-10 sm:grid-cols-2">
           {s.cards.map(([title, text]) => (
-            <li
-              key={title}
-              className="reveal rounded-3xl bg-white/[0.06] p-7 md:p-9"
-            >
-              <h3 className="text-xl font-medium tracking-tight md:text-2xl">
-                {title}
-              </h3>
-              <p className="mt-3 text-white/70">{text}</p>
-            </li>
+            <div key={title} className="border-t border-ink/15 py-7">
+              <dt className="text-xl font-medium tracking-tight">{title}</dt>
+              <dd className="mt-3 text-mute">{text}</dd>
+            </div>
           ))}
-        </ul>
+        </dl>
       </div>
     </section>
   );
@@ -369,13 +358,12 @@ function Security({ t }: { t: Copy }) {
 function Roles({ t }: { t: Copy }) {
   const r = t.roles;
   return (
-    <section id="equipes" className="py-24 md:py-32">
+    <section id="equipes" className={SECTION}>
       <div className={WRAP}>
-        <Label>{r.label}</Label>
-        <h2 className={`${H2} mt-4`}>{r.title}</h2>
-        <ul className="mt-14 grid gap-10 md:grid-cols-3">
+        <h2 className={H2}>{r.title}</h2>
+        <ul className="mt-12 grid gap-10 md:grid-cols-3">
           {r.items.map(([role, text]) => (
-            <li key={role} className="reveal border-t border-ink pt-6">
+            <li key={role} className="border-t border-ink pt-6">
               <h3 className="text-xl font-medium tracking-tight">{role}</h3>
               <p className="mt-3 text-mute">{text}</p>
             </li>
@@ -447,12 +435,16 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
   };
 
   return (
-    <section id="demo" className="bg-tint py-24 md:py-32">
+    <section id="demo" className={`${SECTION} bg-tint`}>
       <div className={`${WRAP} grid gap-12 md:grid-cols-2 md:gap-20`}>
         <div>
-          <Label>{d.label}</Label>
-          <h2 className={`${H2} mt-4`}>{d.title}</h2>
-          <p className="mt-6 text-lg text-mute">{d.text}</p>
+          <h2 className={H2}>{d.title}</h2>
+          <p className="mt-6 max-w-md text-lg text-mute">{d.text}</p>
+          <Trame
+            variant="logo"
+            label={d.sceneAlt}
+            className="mt-6 hidden h-64 max-w-sm md:block"
+          />
         </div>
         {state === "sent" ? (
           <p
@@ -465,7 +457,7 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
         ) : (
           <form
             onSubmit={submit}
-            className="grid gap-4 rounded-3xl border border-line bg-white p-6 sm:grid-cols-2 sm:p-8"
+            className="grid gap-4 self-start rounded-3xl border border-line bg-white p-6 sm:grid-cols-2 sm:p-8"
           >
             <Field
               name="firstName"
@@ -567,10 +559,7 @@ function Legal({
       </h1>
       {doc.sections.map(([title, text]) => (
         <section key={title} className="mt-10">
-          <h2 className="flex items-center gap-2.5 text-xl font-medium tracking-tight">
-            <Cube />
-            {title}
-          </h2>
+          <h2 className="text-xl font-medium tracking-tight">{title}</h2>
           <p className="mt-3 text-lg text-mute">{text}</p>
         </section>
       ))}

@@ -38,50 +38,58 @@ const fr = {
     cta: "Demander une démo",
   },
   hero: {
-    label: "Éducation thérapeutique du patient",
-    title: "Le logiciel qui fait tourner votre programme d'ETP.",
-    lead: "Parcours, séances, patients et diagnostics éducatifs réunis dans un seul outil, pensé avec les équipes de réadaptation.",
+    title: "Une trame pour toute votre année d'éducation thérapeutique.",
+    lead: "Etepea est le logiciel des équipes d'ETP. Vous construisez la semaine type de chaque parcours. Etepea la déroule sur l'année, y inscrit vos patients et suit leur présence.",
     primary: "Demander une démo",
-    secondary: "Découvrir la plateforme",
+    secondary: "Voir la plateforme",
+    note: "Comptes ouverts sur invitation. Données cloisonnées par service.",
     screen: SCREENS.planning,
-    trust: [
-      "Données cloisonnées par service",
-      "Comptes sur invitation",
-      "Conçu avec des équipes de soins",
-    ],
+    screenAlt: "Planning annuel d'un programme d'ETP dans Etepea",
+    sceneAlt:
+      "Animation : la trame de séances d'une année, sous forme de cubes",
   },
-  problem: {
-    label: "Le constat",
-    title: "Un programme d'ETP ne tient pas dans un tableur.",
-    text: "Des dizaines de séances collectives et individuelles, des intervenants aux agendas croisés, des patients qui avancent chacun à leur rythme. Etepea remplace les tableurs et les classeurs par une trame claire, déroulée sur l'année, que toute l'équipe partage.",
-    highlights: [
+  manual: {
+    title: "Ce que l'équipe arrête de faire à la main.",
+    before: "Aujourd'hui",
+    after: "Avec Etepea",
+    rows: [
       [
-        "Trame annuelle",
-        "Construite une fois puis déroulée sur toute l'année.",
+        "Recopier le planning d'une semaine sur l'autre.",
+        "La semaine type se répète seule, semaines fermées comprises.",
       ],
-      ["Pointage", "La présence d'un patient à une séance se note en un clic."],
-      ["Saisie unique", "Le patient rejoint ses séances depuis son parcours."],
-      ["Rôles", "Coordination, intervenants, secrétariat et lecture seule."],
+      [
+        "Tenir une feuille de présence par atelier.",
+        "Chaque séance a sa liste de patients attendus. Une présence se note en un clic.",
+      ],
+      [
+        "Chercher qui vient ce matin et dans quelle salle.",
+        "L'agenda du jour réunit les patients, les salles et les places restantes.",
+      ],
+      [
+        "Ressaisir le même patient dans chaque tableau.",
+        "Le patient est inscrit à son parcours. Ses séances en découlent.",
+      ],
     ],
   },
   platform: {
-    label: "La plateforme",
-    title: "Tout le programme dans un seul outil.",
+    title: "Les écrans que l'équipe ouvre chaque jour.",
     features: [
       {
-        title: "Planning annuel",
-        text: "Construisez la trame d'un parcours une fois, puis déroulez-la sur l'année.",
+        name: "Planning",
+        title: "Le planning de l'année",
+        text: "Vous posez la semaine type d'un parcours, puis vous la déroulez sur les mois à venir.",
         points: [
-          "Duplication et déplacement en masse",
-          "Semaines fermées et cycles de répétition",
-          "Export par soignant ou par période",
+          "Dupliquer ou déplacer plusieurs séances d'un coup",
+          "Fermer des semaines et régler les cycles de répétition",
+          "Exporter par soignant ou par période",
         ],
         screen: SCREENS.planning,
         focus: "70% 0%",
       },
       {
-        title: "Agenda du jour",
-        text: "Chaque matin, l'équipe sait qui vient, où et avec qui.",
+        name: "Agenda",
+        title: "L'agenda du jour",
+        text: "Le matin, chacun sait qui vient, où et avec qui.",
         points: [
           "Patients attendus et places restantes",
           "Présences et accompagnants",
@@ -91,23 +99,25 @@ const fr = {
         focus: "0% 0%",
       },
       {
-        title: "Suivi mensuel",
+        name: "Suivi",
+        title: "Le suivi du mois",
         text: "La participation de chaque patient se lit d'un coup d'œil.",
         points: [
-          "Pointage d'une présence en un clic",
-          "Absences et motifs remontés automatiquement",
+          "Pointer une présence en un clic",
+          "Voir les absences et leurs motifs",
           "Une vue par mois pour tout le service",
         ],
         screen: SCREENS.suivi,
         focus: "0% 0%",
       },
       {
-        title: "Dossiers patients et diagnostic éducatif",
-        text: "Tous vos patients, leurs parcours et leur bilan éducatif partagé.",
+        name: "Patients",
+        title: "Les dossiers et le diagnostic éducatif",
+        text: "Chaque patient, ses parcours et son bilan éducatif partagé au même endroit.",
         points: [
           "Modèles de diagnostic adaptés à votre programme",
           "Fiche patient configurable par service",
-          "Programme PDF remis au patient",
+          "Programme PDF à remettre au patient",
         ],
         screen: SCREENS.patients,
         focus: "0% 0%",
@@ -115,17 +125,16 @@ const fr = {
     ],
   },
   journey: {
-    label: "Le parcours patient",
-    title: "De l'inclusion à la sortie, sans rien ressaisir.",
+    title: "Le patient avance, son dossier suit.",
     step: "Étape",
     steps: [
       [
         "Inclusion",
-        "Identité, contexte social, décision ETP, orientation et objectif : le dossier se constitue dès l'entrée.",
+        "Identité, contexte social, orientation et objectif : le dossier s'ouvre dès l'entrée.",
       ],
       [
         "Diagnostic",
-        "Le bilan éducatif partagé, guidé par un modèle adapté à votre programme.",
+        "Le bilan éducatif partagé se remplit avec un modèle adapté à votre programme.",
       ],
       [
         "Séances",
@@ -133,39 +142,37 @@ const fr = {
       ],
       [
         "Suivi",
-        "Présences, absences et motifs remontent automatiquement dans la vue de suivi.",
+        "Présences, absences et motifs remontent dans la vue de suivi.",
       ],
       [
         "Sortie",
-        "Date, motif et point final du parcours, avec un programme PDF remis au patient.",
+        "Date, motif et bilan de fin de parcours, avec un programme PDF remis au patient.",
       ],
     ],
   },
   security: {
-    label: "Sécurité",
-    title: "Conçu pour un service de soins.",
+    title: "Des données de santé, traitées comme telles.",
     cards: [
       [
-        "Données cloisonnées",
-        "Chaque établissement et chaque service ne voit que ses propres patients. Deux structures ne se croisent jamais.",
+        "Chaque service chez soi",
+        "Un établissement et un service ne voient que leurs propres patients. Deux structures ne se croisent jamais.",
       ],
       [
-        "Des rôles précis",
-        "Les comptes s'ouvrent sur invitation uniquement. Chacun accède à ce dont il a besoin, pas au-delà.",
+        "Des comptes sur invitation",
+        "Personne ne s'inscrit seul. Chaque compte reçoit un rôle qui borne ce qu'il peut voir et modifier.",
       ],
       [
-        "Conflits signalés",
-        "Une salle déjà occupée, un rendez-vous qui en chevauche un autre : Etepea vous prévient avant que le patient ne le découvre.",
+        "Les conflits signalés",
+        "Une salle déjà prise ou deux rendez-vous qui se chevauchent : Etepea prévient avant que le patient ne le découvre.",
       ],
       [
-        "Journal d'activité",
-        "Qui a créé, modifié ou supprimé quoi et quand. La traçabilité sans effort.",
+        "Un journal d'activité",
+        "Qui a créé, modifié ou supprimé quoi et quand. La trace existe sans que personne n'ait à la tenir.",
       ],
     ],
   },
   roles: {
-    label: "Équipes",
-    title: "Chaque métier y trouve son écran.",
+    title: "Chacun voit ce qui le concerne.",
     items: [
       [
         "Coordination",
@@ -182,9 +189,9 @@ const fr = {
     ],
   },
   demo: {
-    label: "Démonstration",
-    title: "Trente minutes sur vos propres parcours.",
-    text: "Dites-nous qui vous êtes. Nous revenons vers vous pour fixer un créneau.",
+    title: "Voyez Etepea tourner sur vos propres parcours.",
+    text: "Une démonstration de trente minutes. Dites-nous qui vous êtes et nous revenons vers vous pour fixer un créneau.",
+    sceneAlt: "Animation : le logo Etepea assemblé en cubes",
     fields: {
       firstName: "Prénom",
       lastName: "Nom",
@@ -195,10 +202,10 @@ const fr = {
     },
     consent: "J'accepte que ces informations servent à me recontacter.",
     consentLink: "Politique de confidentialité",
-    submit: "Demander une démonstration",
+    submit: "Demander une démo",
     sending: "Envoi en cours",
-    sent: "Merci, votre demande est bien partie. Nous vous répondons très vite.",
-    error: "L'envoi n'a pas abouti. Vous pouvez nous écrire directement à",
+    sent: "Demande envoyée. Nous vous répondons très vite.",
+    error: "La demande n'est pas partie. Réessayez ou écrivez-nous à",
   },
   footer: {
     tagline: "Le logiciel des programmes d'éducation thérapeutique du patient.",
@@ -278,56 +285,57 @@ const en: typeof fr = {
     cta: "Book a demo",
   },
   hero: {
-    label: "Therapeutic patient education",
-    title: "The software that runs your patient education program.",
-    lead: "Pathways, sessions, patients and educational assessments in one place, built alongside rehabilitation teams.",
+    title: "One framework for your whole year of patient education.",
+    lead: "Etepea is the software for therapeutic patient education teams. You build the typical week of each pathway. Etepea rolls it out over the year, enrols your patients and tracks their attendance.",
     primary: "Book a demo",
-    secondary: "Explore the platform",
+    secondary: "See the platform",
+    note: "Accounts by invitation only. Data isolated per department.",
     screen: SCREENS.planning,
-    trust: [
-      "Data isolated per department",
-      "Accounts by invitation only",
-      "Built with care teams",
-    ],
+    screenAlt: "Yearly planning of a patient education program in Etepea",
+    sceneAlt: "Animation: a year of sessions laid out as a grid of cubes",
   },
-  problem: {
-    label: "The problem",
-    title: "A patient education program does not fit in a spreadsheet.",
-    text: "Dozens of group and one-to-one sessions, practitioners with overlapping schedules, patients who each move at their own pace. Etepea replaces spreadsheets and binders with one clear framework, rolled out across the year and shared by the whole team.",
-    highlights: [
+  manual: {
+    title: "What the team stops doing by hand.",
+    before: "Today",
+    after: "With Etepea",
+    rows: [
       [
-        "Yearly framework",
-        "Designed once then rolled out over the whole year.",
+        "Copying the schedule from one week to the next.",
+        "The typical week repeats by itself, closed weeks included.",
       ],
       [
-        "Attendance",
-        "A patient's attendance at a session is recorded in one click.",
+        "Keeping one attendance sheet per workshop.",
+        "Every session has its list of expected patients. Attendance takes one click.",
       ],
       [
-        "Single entry",
-        "Patients join their sessions straight from their pathway.",
+        "Working out who is coming this morning and in which room.",
+        "The daily agenda brings together patients, rooms and remaining places.",
       ],
-      ["Roles", "Coordinators, practitioners, front desk and read-only."],
+      [
+        "Typing the same patient into every spreadsheet.",
+        "The patient is enrolled in a pathway. Their sessions follow from it.",
+      ],
     ],
   },
   platform: {
-    label: "The platform",
-    title: "The whole program in a single tool.",
+    title: "The screens the team opens every day.",
     features: [
       {
-        title: "Yearly planning",
-        text: "Design a pathway once, then roll it out over the year.",
+        name: "Planning",
+        title: "The yearly planning",
+        text: "You lay out the typical week of a pathway, then roll it out over the coming months.",
         points: [
-          "Bulk duplicate and move sessions",
-          "Closed weeks and repeat cycles",
+          "Duplicate or move several sessions at once",
+          "Close weeks and set repeat cycles",
           "Export by practitioner or by period",
         ],
         screen: SCREENS.planning,
         focus: "70% 0%",
       },
       {
-        title: "Daily agenda",
-        text: "Every morning the team knows who is coming, where and with whom.",
+        name: "Agenda",
+        title: "The daily agenda",
+        text: "Every morning everyone knows who is coming, where and with whom.",
         points: [
           "Expected patients and remaining places",
           "Attendance and companions",
@@ -337,23 +345,25 @@ const en: typeof fr = {
         focus: "0% 0%",
       },
       {
-        title: "Monthly follow-up",
-        text: "Every patient's attendance, readable at a glance.",
+        name: "Follow-up",
+        title: "The monthly follow-up",
+        text: "Every patient's attendance reads at a glance.",
         points: [
           "Record attendance in one click",
-          "Absences and reasons collected automatically",
+          "See absences and their reasons",
           "One monthly view for the whole department",
         ],
         screen: SCREENS.suivi,
         focus: "0% 0%",
       },
       {
-        title: "Patient records and educational assessment",
-        text: "Every patient, their pathways and their shared educational assessment.",
+        name: "Patients",
+        title: "Records and educational assessment",
+        text: "Every patient, their pathways and their shared educational assessment in one place.",
         points: [
           "Assessment templates tailored to your program",
           "Patient record configurable per department",
-          "PDF program handed to the patient",
+          "PDF program to hand to the patient",
         ],
         screen: SCREENS.patients,
         focus: "0% 0%",
@@ -361,57 +371,54 @@ const en: typeof fr = {
     ],
   },
   journey: {
-    label: "The patient journey",
-    title: "From enrolment to discharge, with nothing typed twice.",
+    title: "The patient moves on, the record keeps up.",
     step: "Step",
     steps: [
       [
         "Enrolment",
-        "Identity, social context, program decision, referral and goal: the record builds up from day one.",
+        "Identity, social context, referral and goal: the record opens on day one.",
       ],
       [
         "Assessment",
-        "The shared educational assessment, guided by a template tailored to your program.",
+        "The shared educational assessment is filled in with a template tailored to your program.",
       ],
       [
         "Sessions",
-        "Patients join the sessions of their main pathway and of their optional pathways.",
+        "The patient joins the sessions of their main pathway and of their optional pathways.",
       ],
       [
         "Follow-up",
-        "Attendance, absences and reasons flow straight into the follow-up view.",
+        "Attendance, absences and reasons flow into the follow-up view.",
       ],
       [
         "Discharge",
-        "Date, reason and pathway outcome, with a PDF program handed to the patient.",
+        "Date, reason and end-of-pathway review, with a PDF program handed to the patient.",
       ],
     ],
   },
   security: {
-    label: "Security",
-    title: "Built for a care department.",
+    title: "Health data, handled as such.",
     cards: [
       [
-        "Isolated data",
-        "Each facility and each department only sees its own patients. Two organisations never overlap.",
+        "Every department on its own",
+        "A facility and a department only see their own patients. Two organisations never overlap.",
       ],
       [
-        "Precise roles",
-        "Accounts are opened by invitation only. Everyone gets exactly what they need, nothing more.",
+        "Accounts by invitation",
+        "Nobody signs up alone. Each account gets a role that limits what it can see and change.",
       ],
       [
         "Conflicts flagged",
-        "A room already booked, an appointment overlapping another: Etepea warns you before the patient finds out.",
+        "A room already booked or two overlapping appointments: Etepea warns you before the patient finds out.",
       ],
       [
-        "Activity log",
-        "Who created, changed or deleted what and when. Traceability without the effort.",
+        "An activity log",
+        "Who created, changed or deleted what and when. The trail exists without anyone having to keep it.",
       ],
     ],
   },
   roles: {
-    label: "Teams",
-    title: "Every role gets its own screen.",
+    title: "Everyone sees what concerns them.",
     items: [
       [
         "Coordinators",
@@ -428,9 +435,9 @@ const en: typeof fr = {
     ],
   },
   demo: {
-    label: "Demo",
-    title: "Thirty minutes on your own pathways.",
-    text: "Tell us who you are. We will get back to you to set a time.",
+    title: "See Etepea running on your own pathways.",
+    text: "A thirty-minute demo. Tell us who you are and we will get back to you to set a time.",
+    sceneAlt: "Animation: the Etepea logo assembled from cubes",
     fields: {
       firstName: "First name",
       lastName: "Last name",
@@ -441,10 +448,10 @@ const en: typeof fr = {
     },
     consent: "I agree that this information is used to contact me.",
     consentLink: "Privacy policy",
-    submit: "Request a demo",
+    submit: "Book a demo",
     sending: "Sending",
-    sent: "Thank you, your request is on its way. We will reply shortly.",
-    error: "The request could not be sent. You can write to us directly at",
+    sent: "Request sent. We will reply shortly.",
+    error: "The request did not go through. Try again or write to us at",
   },
   footer: {
     tagline: "Software for therapeutic patient education programs.",

@@ -26,33 +26,6 @@ body {
   outline-offset: 2px;
 }
 
-/* Trame de cubes du logo, estompée vers le bas. */
-.cubes {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect x='5' y='5' width='34' height='34' rx='8' fill='%232563eb' fill-opacity='.07'/%3E%3C/svg%3E");
-  mask-image: radial-gradient(
-    ellipse 75% 85% at 50% 0%,
-    #000 20%,
-    transparent 75%
-  );
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 30%;
-    }
-  }
-}
-
-@keyframes reveal {
-  from {
-    opacity: 0;
-    translate: 0 1.5rem;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
