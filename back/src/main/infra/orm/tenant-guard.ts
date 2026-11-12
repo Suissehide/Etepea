@@ -602,13 +602,8 @@ export const SUPERADMIN_GLOBAL_OPERATIONS: Readonly<
 // fermé). La suite unitaire, relancée de même, n'en produit aucun : elle appelle
 // `assertTenantScope` directement, sans client Prisma.
 //
-// LA MESURE A MANQUÉ UNE ENTRÉE, ET C'EST DIT ICI PLUTÔT QU'ENTERRÉ : `User.create` n'a été vu
-// par AUCUN des 1 243 appels, parce qu'aucun test e2e n'exerçait `POST /auth/register` — la
-// seule route non tenant qui crée un compte hors `runAsSuperAdmin`. Une liste purement
-// journalisée aurait donc fermé cette route en production sans qu'un seul test rougisse. Le
-// couple est déclaré ci-dessous, ET la route est désormais couverte par
-// `src/test/e2e/auth-register.test.ts`, pour que la méthode de découverte redevienne complète :
-// une prochaine relance de l'instrumentation le verrait.
+// `User.create` n'y figure plus depuis la fermeture de `POST /auth/register` (MDS-17) : un
+// compte naît d'une invitation, sous contexte de tenant ou `runAsSuperAdmin`.
 //
 // CE QUE CETTE TABLE NE FERME PAS — à lire avant de croire le cas « sans contexte » verrouillé :
 //   1. Une opération DÉCLARÉE ici peut encore porter un `include` vers un modèle de tenant si
@@ -634,8 +629,7 @@ export const SUPERADMIN_GLOBAL_OPERATIONS: Readonly<
 //        `User.updateMany({ where: {}, data: { isSuperAdmin: true } })`      -> refusé
 //      Autrement dit : le défaut emblématique est bien fermé EN MASSE, et son jumeau
 //      LIGNE À LIGNE ne l'est pas. Ce n'est pas exploitable aujourd'hui — vérifié route par
-//      route, et c'est une propriété des APPELANTS, pas de cette table : `registerSchema` (Zod)
-//      dépouille les clés inconnues du corps, et `PATCH /me` déstructure explicitement
+//      route, et c'est une propriété des APPELANTS, pas de cette table : `PATCH /me` déstructure explicitement
 //      `firstName`/`lastName` avant d'appeler `updateProfile`. Mais c'est à une ligne d'appel
 //      près, et rien ici ne rattraperait cette ligne.
 //      NE PAS LIRE « n'écrit que des colonnes scalaires » COMME UNE GARANTIE : `isSuperAdmin`
@@ -667,9 +661,6 @@ export const NO_CONTEXT_GLOBAL_OPERATIONS: Readonly<
     // `.updatePassword` (`POST /auth/access-link/consume`), `.updateProfile` (`PATCH /me`).
     // `.setNotificationPrefs` : `PUT /me/notification-preferences`.
     'update',
-    // `UserRepository.create` depuis `AuthDomain.register` : `POST /auth/register`. Le seul
-    // couple qu'aucun test e2e n'exerçait — voir le paragraphe ci-dessus.
-    'create',
   ],
   Establishment: [
     // `EstablishmentRepository.findAll` (`GET /super-admin/establishments`) et `.findManyByIds`

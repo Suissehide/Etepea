@@ -217,11 +217,12 @@ describe('assertTenantScope', () => {
       },
     },
     {
-      nom: 'User.create + select establishmentMemberships (branche select)',
+      nom: 'User.update + select establishmentMemberships (branche select)',
       model: 'User',
-      operation: 'create',
+      operation: 'update',
       args: {
-        data: { email: 'a@b.c' },
+        where: { id: 'u1' },
+        data: {},
         select: { establishmentMemberships: true },
       },
     },
@@ -3136,12 +3137,6 @@ describe('sans aucun contexte, un modele global suit une liste declaree', () => 
       args: { where: { id: 'u1' }, select: { isSuperAdmin: true } },
     },
     {
-      route: 'POST /auth/register — UserRepository.create',
-      model: 'User',
-      operation: 'create',
-      args: { data: { email: 'a@b.c', password: 'h', salt: 's' } },
-    },
-    {
       route:
         'GET /super-admin/establishments — EstablishmentRepository.findAll',
       model: 'Establishment',
@@ -3229,6 +3224,12 @@ describe('sans aucun contexte, un modele global suit une liste declaree', () => 
       args: { where: { id: 'u1' }, create: {}, update: {} },
     },
     { model: 'User', operation: 'findMany', args: {} },
+    // Plus d'inscription publique (MDS-17) : un compte naît d'une invitation, jamais sans contexte.
+    {
+      model: 'User',
+      operation: 'create',
+      args: { data: { email: 'a@b.c', password: 'h', salt: 's' } },
+    },
     { model: 'AccessLink', operation: 'deleteMany', args: {} },
     {
       model: 'AccessLink',

@@ -59,13 +59,6 @@ export type AuthState = {
   user: User | null
 }
 
-export type RegisterInput = {
-  email: string
-  firstName?: string
-  lastName?: string
-  password: string
-}
-
 export type LoginInput = {
   email: string
   password: string

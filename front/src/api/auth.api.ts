@@ -1,10 +1,6 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
-import type {
-  ConsumeAccessLinkInput,
-  RegisterInput,
-  User,
-} from '../types/auth.ts'
+import type { ConsumeAccessLinkInput, User } from '../types/auth.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export const AuthApi = {
@@ -61,31 +57,6 @@ export const AuthApi = {
     })
     if (!response.ok) {
       handleHttpError(response, {}, 'Erreur lors de la mise à jour du cookie')
-    }
-    return response
-  },
-
-  register: async (registerInput: RegisterInput): Promise<Response> => {
-    const response = await fetch(`${apiUrl}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(registerInput),
-    })
-    if (!response.ok) {
-      handleHttpError(
-        response,
-        {
-          400: {
-            title: 'Informations invalides',
-            message: 'Certains champs sont incorrects ou manquants',
-          },
-          409: {
-            title: 'Compte existant',
-            message: 'Un utilisateur avec cet email existe déjà',
-          },
-        },
-        'Erreur lors de l’inscription',
-      )
     }
     return response
   },

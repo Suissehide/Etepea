@@ -3,28 +3,6 @@ import { z } from 'zod/v4'
 import { meResponseSchema } from './me.schema'
 import { passwordSchema } from './password.schema'
 
-export const userSchema = z.object({
-  email: z.email({
-    error: (issue) =>
-      issue.input === undefined ? 'Email is required' : 'Email is not valid',
-  }),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-})
-
-export const registerSchema = userSchema
-  .pick({
-    email: true,
-    firstName: true,
-    lastName: true,
-  })
-  .extend({
-    password: passwordSchema,
-  })
-export const registerResponseSchema = userSchema.extend({
-  id: z.string(),
-})
-
 export const signInSchema = z.object({
   email: z.email({
     error: (issue) =>
@@ -35,7 +13,6 @@ export const signInSchema = z.object({
 export const signInResponseSchema = meResponseSchema
 
 export type SignInInput = z.infer<typeof signInSchema>
-export type CreateUserInput = z.infer<typeof registerSchema>
 
 // Le jeton passe dans le CORPS d'un POST, jamais dans une URL (spec §6.1) : cette forme est ce
 // qui l'exige — il n'existe aucun paramètre d'URL ni de query pour ce champ.

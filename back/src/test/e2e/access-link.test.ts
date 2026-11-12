@@ -177,4 +177,16 @@ describe('POST /auth/access-link/consume', () => {
     })
     expect(liensUtilisables.length).toBeGreaterThan(1)
   })
+
+  it('ne propose plus d inscription publique : un compte nait d une invitation (MDS-17)', async () => {
+    const res = await testApp.app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: 'libre@example.com', password: NEW_PASSWORD },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(
+      await testDb.user.count({ where: { email: 'libre@example.com' } }),
+    ).toBe(0)
+  })
 })

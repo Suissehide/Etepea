@@ -4,8 +4,6 @@ import type { Config } from '../types/application/config'
 import type { IocContainer } from '../types/application/ioc'
 import type {
   AuthDomainInterface,
-  CreateUserInput,
-  RegisterResponse,
   SignInResponse,
   SignOutResponse,
 } from '../types/domain/auth.domain.interface'
@@ -153,13 +151,6 @@ class AuthDomain implements AuthDomainInterface {
       accessToken,
       refreshToken,
       me: toMeResponse(user, grants, new Date()),
-    }
-  }
-
-  async register(createUserInput: CreateUserInput): Promise<RegisterResponse> {
-    await this.userRepository.create(createUserInput)
-    return {
-      success: true,
     }
   }
 

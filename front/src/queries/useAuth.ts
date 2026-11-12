@@ -4,11 +4,7 @@ import { useRouter } from '@tanstack/react-router'
 import { AuthApi } from '../api/auth.api.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useAuthStore } from '../store/useAuthStore.ts'
-import type {
-  ConsumeAccessLinkInput,
-  LoginInput,
-  RegisterInput,
-} from '../types/auth.ts'
+import type { ConsumeAccessLinkInput, LoginInput } from '../types/auth.ts'
 
 // * QUERIES
 
@@ -146,25 +142,3 @@ export const useForgotPassword = () =>
     mutationFn: (email: string) => AuthApi.forgotPassword(email),
     retry: 0,
   })
-
-export const useRegister = () => {
-  const {
-    mutate: registerMutation,
-    isPending,
-    error,
-    isError,
-  } = useMutation({
-    mutationFn: async (registerInput: RegisterInput) => {
-      return await AuthApi.register(registerInput)
-    },
-    retry: 0,
-  })
-
-  useDataFetching({
-    isPending,
-    isError,
-    error,
-  })
-
-  return { registerMutation, isPending, error }
-}
