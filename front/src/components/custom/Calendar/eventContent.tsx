@@ -662,7 +662,7 @@ function PlacesLibres({
   inscrits: number
   capacity?: number | null
   isRowLayout: boolean
-  /** Laisse la place du badge de conflit, posé dans le coin bas droit. */
+  /** Se range à gauche du badge de conflit, posé dans le coin bas droit. */
   conflit?: boolean
   /** Créneau supprimé gardé pour ses rendez-vous : plus aucune place à prendre. */
   supprime?: boolean
@@ -674,11 +674,11 @@ function PlacesLibres({
         'z-10 pointer-events-none inline-flex min-w-0 items-center gap-0.5 whitespace-nowrap rounded-sm px-1 text-[0.6rem] font-semibold leading-[14px] text-white',
         isRowLayout
           ? 'relative ml-auto shrink-[0.001] self-center'
-          : 'absolute bottom-0.5 left-0.5',
+          : 'absolute bottom-0.5',
         !isRowLayout &&
           (conflit
-            ? 'max-w-[calc(100%-1.375rem)]'
-            : 'max-w-[calc(100%-0.25rem)]'),
+            ? 'right-[1.125rem] max-w-[calc(100%-1.375rem)]'
+            : 'right-0.5 max-w-[calc(100%-0.25rem)]'),
         libres != null && libres > 0 ? 'bg-destructive' : 'bg-black/40',
       )}
     >
