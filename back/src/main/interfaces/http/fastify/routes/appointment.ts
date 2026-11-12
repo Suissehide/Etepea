@@ -21,7 +21,9 @@ import {
 import {
   type SetConvocationSentBody,
   type SetConvocationSentParams,
+  type SetPresenceStatusBody,
   setConvocationSentSchema,
+  setPresenceStatusSchema,
 } from '../schemas/appointmentPatient.schema'
 
 const appointmentRouter: FastifyPluginAsync = (fastify) => {
@@ -148,6 +150,30 @@ const appointmentRouter: FastifyPluginAsync = (fastify) => {
         appointmentID,
         appointmentPatientID,
         request.body.convocationSent,
+        request.user.userID,
+      )
+      reply.code(204).send()
+    },
+  )
+
+  fastify.patch<{
+    Params: SetConvocationSentParams
+    Body: SetPresenceStatusBody
+  }>(
+    '/:appointmentID/patients/:appointmentPatientID/status',
+    {
+      schema: {
+        ...setPresenceStatusSchema,
+        response: { 204: z.null() },
+      },
+      config: { permission: 'appointment:write' },
+    },
+    async (request, reply) => {
+      const { appointmentID, appointmentPatientID } = request.params
+      await appointmentDomain.setPresenceStatus(
+        appointmentID,
+        appointmentPatientID,
+        request.body.status ?? null,
         request.user.userID,
       )
       reply.code(204).send()

@@ -464,6 +464,8 @@ class PathwayRepository implements PathwayRepositoryInterface {
           patientMap.set(patientId, patientEntry)
         }
         patientEntry.appointments.push({
+          appointmentId: appointment.id,
+          appointmentPatientId: ap.id,
           date: appointment.startDate,
           status: ap.status,
         })

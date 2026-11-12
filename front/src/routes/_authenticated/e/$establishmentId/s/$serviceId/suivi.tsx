@@ -23,8 +23,15 @@ import {
   PopoverRoot,
   PopoverTrigger,
 } from '@/components/ui/popover.tsx'
+import { Select } from '@/components/ui/select.tsx'
 import { hexToRGBA } from '@/libs/color.ts'
-import { type SuiviDay, type SuiviMark, suiviDays } from '@/libs/suiviDay.ts'
+import {
+  nextStatus,
+  type SuiviDay,
+  type SuiviMark,
+  suiviDays,
+} from '@/libs/suiviDay.ts'
+import { usePresenceStatusMutation } from '@/queries/useAppointment.ts'
 import { usePathwayTrackingQuery } from '@/queries/usePathway.ts'
 
 export const Route = createFileRoute(
@@ -60,7 +67,7 @@ function SuiviMarkIcon({ mark, color }: { mark: SuiviMark; color: string }) {
     <span
       className="w-2 h-2 rounded-full inline-block border"
       style={{
-        borderColor: color,
+        borderColor: mark === 'pending' ? 'var(--color-foreground)' : color,
         backgroundColor: mark === 'present' ? color : 'transparent',
       }}
     />
@@ -172,6 +179,9 @@ function SuiviPage() {
   const { establishmentId, serviceId } = Route.useParams()
   const [date, setDate] = useState<Dayjs>(dayjs.utc())
   const containerRef = useRef<HTMLDivElement>(null)
+  const [patientFilter, setPatientFilter] = useState('')
+  const [pathwayFilter, setPathwayFilter] = useState('')
+  const { mutate: setPresence } = usePresenceStatusMutation()
 
   const { trackingPathways, isPending } = usePathwayTrackingQuery(
     date.year(),
@@ -189,11 +199,46 @@ function SuiviPage() {
       ? dayjs.utc().date()
       : null
 
+  const { patientOptions, pathwayOptions } = useMemo(() => {
+    const patients = new Map<string, string>()
+    const templates = new Map<string, { label: string; color: string }>()
+    for (const pathway of trackingPathways ?? []) {
+      if (pathway.template) {
+        templates.set(pathway.template.id, {
+          label: pathway.template.name,
+          color: pathway.template.color,
+        })
+      }
+      for (const p of pathway.patients) {
+        patients.set(p.id, `${p.lastName} ${p.firstName}`)
+      }
+    }
+    const byLabel = (a: { label: string }, b: { label: string }) =>
+      a.label.localeCompare(b.label)
+    return {
+      patientOptions: [...patients]
+        .map(([value, label]) => ({ value, label }))
+        .sort(byLabel),
+      pathwayOptions: [...templates]
+        .map(([value, t]) => ({ value, ...t }))
+        .sort(byLabel),
+    }
+  }, [trackingPathways])
+
   const rows = useMemo<SuiviRow[]>(() => {
     if (!trackingPathways) {
       return []
     }
     return trackingPathways.flatMap((pathway) => {
+      if (pathwayFilter && pathway.template?.id !== pathwayFilter) {
+        return []
+      }
+      const patients = patientFilter
+        ? pathway.patients.filter((p) => p.id === patientFilter)
+        : pathway.patients
+      if (patients.length === 0) {
+        return []
+      }
       const color = pathway.template?.color ?? '#6366f1'
       const name = pathway.template?.name ?? 'Parcours sans modèle'
 
@@ -209,7 +254,7 @@ function SuiviPage() {
         days: new Map(),
       }
 
-      const patientRows: SuiviRow[] = pathway.patients.map((patient) => ({
+      const patientRows: SuiviRow[] = patients.map((patient) => ({
         id: `${pathway.id}-${patient.id}`,
         type: 'patient',
         patientId: patient.id,
@@ -222,7 +267,7 @@ function SuiviPage() {
 
       return [groupRow, ...patientRows]
     })
-  }, [trackingPathways])
+  }, [trackingPathways, patientFilter, pathwayFilter])
 
   const columns = useMemo<ColumnDef<Features, SuiviRow, unknown>[]>(
     () => [
@@ -253,20 +298,28 @@ function SuiviPage() {
             return null
           }
           return (
-            <span
-              className="flex"
-              title={`${day.count} rendez-vous : ${MARK_LABEL[day.mark].toLowerCase()}`}
+            <button
+              type="button"
+              className="flex p-1.5 cursor-pointer rounded hover:bg-foreground/10"
+              title={`${day.count} rendez-vous : ${MARK_LABEL[day.mark].toLowerCase()} (cliquer pour changer)`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setPresence({
+                  appointments: day.appointments,
+                  status: nextStatus(day.mark),
+                })
+              }}
             >
               <SuiviMarkIcon
                 mark={day.mark}
                 color={row.original.pathwayColor}
               />
-            </span>
+            </button>
           )
         },
       })),
     ],
-    [days],
+    [days, setPresence],
   )
 
   const table = useTable({
@@ -292,6 +345,34 @@ function SuiviPage() {
       <div className="flex-1 min-h-0 bg-background rounded-lg flex flex-col w-full gap-4 overflow-hidden">
         <div className="px-6 mt-6 min-h-9 flex justify-between items-center gap-3">
           <h1 className="text-text-dark text-xl font-semibold">Suivi</h1>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="w-56">
+              <label htmlFor="filtre-patient" className="sr-only">
+                Patient
+              </label>
+              <Select
+                id="filtre-patient"
+                searchable
+                placeholder="Tous les patients"
+                options={patientOptions}
+                value={patientFilter}
+                onValueChange={setPatientFilter}
+              />
+            </div>
+            <div className="w-56">
+              <label htmlFor="filtre-parcours" className="sr-only">
+                Parcours
+              </label>
+              <Select
+                id="filtre-parcours"
+                placeholder="Tous les parcours"
+                options={pathwayOptions}
+                value={pathwayFilter}
+                onValueChange={setPathwayFilter}
+              />
+            </div>
+          </div>
 
           <div className="flex items-center gap-1">
             <PopoverRoot>
@@ -341,6 +422,10 @@ function SuiviPage() {
           ) : !trackingPathways || trackingPathways.length === 0 ? (
             <div className="text-center text-text-light text-sm">
               Aucun parcours ce mois-ci.
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="text-center text-text-light text-sm">
+              Aucun résultat pour ces filtres.
             </div>
           ) : (
             <div

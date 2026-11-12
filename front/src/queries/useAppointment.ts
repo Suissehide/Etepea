@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { AppointmentApi } from '../api/appointment.api.ts'
-import { APPOINTMENT, SLOT } from '../constants/process.constant.ts'
+import { APPOINTMENT, PATHWAY, SLOT } from '../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import {
@@ -222,5 +222,41 @@ export const useConvocationSentMutation = () => {
     },
     onSettled: () =>
       queryClient.invalidateQueries({ queryKey: [SLOT.GET_ALL] }),
+  })
+}
+
+// Pointage depuis le Suivi : tous les rendez-vous du jour passent au même état.
+export const usePresenceStatusMutation = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: ({
+      appointments,
+      status,
+    }: {
+      appointments: { appointmentId: string; appointmentPatientId: string }[]
+      status: 'yes' | 'no' | null
+    }) =>
+      Promise.all(
+        appointments.map((a) =>
+          AppointmentApi.setPresenceStatus({
+            appointmentID: a.appointmentId,
+            appointmentPatientID: a.appointmentPatientId,
+            status,
+          }),
+        ),
+      ),
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors du pointage',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: [PATHWAY.GET_TRACKING] })
+      await queryClient.invalidateQueries({ queryKey: [SLOT.GET_ALL] })
+    },
   })
 }

@@ -201,6 +201,29 @@ class AppointmentDomain implements AppointmentDomainInterface {
     })
   }
 
+  async setPresenceStatus(
+    appointmentID: string,
+    appointmentPatientID: string,
+    status: 'yes' | 'no' | null,
+    userID: string,
+  ): Promise<void> {
+    await this.appointmentRepository.setPresenceStatus(
+      appointmentID,
+      appointmentPatientID,
+      status,
+    )
+    this.appEventBus.emit('appointment.updated', {
+      userID,
+      appointmentId: appointmentID,
+      detail:
+        status === 'yes'
+          ? 'présent'
+          : status === 'no'
+            ? 'absent'
+            : 'non pointé',
+    })
+  }
+
   async delete(
     appointmentID: string,
     userID: string,

@@ -4,7 +4,11 @@ import type { TrackingAppointment } from '../types/pathway.ts'
 
 export type SuiviMark = 'absent' | 'present' | 'pending'
 
-export type SuiviDay = { mark: SuiviMark; count: number }
+export type SuiviDay = {
+  mark: SuiviMark
+  count: number
+  appointments: TrackingAppointment[]
+}
 
 const markOf = (status: string | null): SuiviMark =>
   status === 'no' ? 'absent' : status === 'yes' ? 'present' : 'pending'
@@ -26,7 +30,17 @@ export const suiviDays = (
           ? current.mark
           : mark,
       count: (current?.count ?? 0) + 1,
+      appointments: [...(current?.appointments ?? []), apt],
     })
   }
   return days
 }
+
+const NEXT_STATUS: Record<SuiviMark, 'yes' | 'no' | null> = {
+  pending: 'yes',
+  present: 'no',
+  absent: null,
+}
+
+// Un clic fait tourner l'état : non pointé → présent → absent → non pointé.
+export const nextStatus = (mark: SuiviMark) => NEXT_STATUS[mark]

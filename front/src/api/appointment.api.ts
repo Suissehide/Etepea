@@ -104,6 +104,32 @@ export const AppointmentApi = {
     }
   },
 
+  setPresenceStatus: async ({
+    appointmentID,
+    appointmentPatientID,
+    status,
+  }: {
+    appointmentID: string
+    appointmentPatientID: string
+    status: 'yes' | 'no' | null
+  }): Promise<void> => {
+    const response = await fetchWithAuth(
+      `${tenantApiUrl()}/appointment/${appointmentID}/patients/${appointmentPatientID}/status`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      },
+    )
+    if (!response.ok) {
+      handleHttpError(
+        response,
+        {},
+        'Impossible de modifier la présence du patient',
+      )
+    }
+  },
+
   delete: async (appointmentID: string): Promise<void> => {
     const response = await fetchWithAuth(
       `${tenantApiUrl()}/appointment/${appointmentID}?action=deleteAppointment`,

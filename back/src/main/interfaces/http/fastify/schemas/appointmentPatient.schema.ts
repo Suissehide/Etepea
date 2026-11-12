@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 
 import { cuid } from './id.schema'
-import { appointmentPatientSchema } from './index'
+import { appointmentPatientSchema, appointmentStatusSchema } from './index'
 import { patientResponseSchema } from './patient.schema'
 
 export const appointmentPatientResponseSchema = appointmentPatientSchema.extend(
@@ -52,6 +52,11 @@ export const setConvocationSentSchema = {
   body: z.object({ convocationSent: z.boolean() }),
 }
 
+export const setPresenceStatusSchema = {
+  params: setConvocationSentSchema.params,
+  body: z.object({ status: appointmentStatusSchema }),
+}
+
 export type AppointmentPatientInput = z.infer<typeof appointmentPatientSchema>
 export type GetAppointmentPatientByIdParams = z.infer<
   typeof getAppointmentPatientByIdParamsSchema
@@ -77,3 +82,4 @@ export type SetConvocationSentParams = z.infer<
 export type SetConvocationSentBody = z.infer<
   typeof setConvocationSentSchema.body
 >
+export type SetPresenceStatusBody = z.infer<typeof setPresenceStatusSchema.body>

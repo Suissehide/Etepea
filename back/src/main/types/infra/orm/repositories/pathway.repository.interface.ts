@@ -40,6 +40,8 @@ export type RegeneratePathwaysResultRepo = {
 }
 
 export type TrackingAppointmentRepo = {
+  appointmentId: string
+  appointmentPatientId: string
   date: Date
   status: string | null
 }

@@ -116,6 +116,25 @@ describe('journal d activite : le detail de chaque ligne', () => {
     expect((await ligne('appointment.updated'))?.detail).toBe(
       'Dupont Marie — 14/10/2026 à 14:00 — Atelier nutrition — convocation envoyée',
     )
+
+    const pointage = await t.app.inject({
+      method: 'PATCH',
+      url: tenantUrl(
+        establishmentId,
+        serviceId,
+        `/appointment/${rdv.id}/patients/${participant.id}/status`,
+      ),
+      cookies,
+      payload: { status: 'no' },
+    })
+    expect(pointage.statusCode).toBe(204)
+    expect(
+      (
+        await testDb.appointmentPatient.findUnique({
+          where: { id: participant.id },
+        })
+      )?.status,
+    ).toBe('no')
   })
 
   it('le sert au journal du service', async () => {

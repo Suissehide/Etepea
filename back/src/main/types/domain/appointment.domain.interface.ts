@@ -47,6 +47,12 @@ export interface AppointmentDomainInterface {
     convocationSent: boolean,
     userID: string,
   ) => Promise<void>
+  setPresenceStatus: (
+    appointmentID: string,
+    appointmentPatientID: string,
+    status: 'yes' | 'no' | null,
+    userID: string,
+  ) => Promise<void>
   delete: (
     appointmentID: string,
     userID: string,

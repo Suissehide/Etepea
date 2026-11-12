@@ -74,6 +74,8 @@ export const trackingQuerySchema = z.object({
 })
 
 const trackingAppointmentSchema = z.object({
+  appointmentId: cuid(),
+  appointmentPatientId: cuid(),
   date: z.coerce.date(),
   status: z.string().nullable(),
 })

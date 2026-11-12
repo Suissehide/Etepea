@@ -339,6 +339,30 @@ class AppointmentRepository implements AppointmentRepositoryInterface {
     }
   }
 
+  async setPresenceStatus(
+    appointmentID: string,
+    appointmentPatientID: string,
+    status: 'yes' | 'no' | null,
+  ): Promise<void> {
+    try {
+      await this.prisma.appointmentPatient.update({
+        where: {
+          id_serviceId: {
+            id: appointmentPatientID,
+            serviceId: this.scope.serviceId,
+          },
+          appointmentId: appointmentID,
+        },
+        data: { status },
+      })
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'AppointmentPatient',
+        error: err,
+      })
+    }
+  }
+
   async delete(appointmentID: string): Promise<AppointmentEntityRepo> {
     try {
       return await this.prisma.appointment.delete({

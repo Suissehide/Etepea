@@ -36,6 +36,8 @@ export type RegeneratePathwaysResult = {
 }
 
 export type TrackingAppointment = {
+  appointmentId: string
+  appointmentPatientId: string
   date: string
   status: string | null
 }
