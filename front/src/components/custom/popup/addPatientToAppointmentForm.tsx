@@ -108,7 +108,7 @@ export default function AddPatientToAppointmentForm({
               </p>
             )}
 
-            {selectedIDs.length === 0 && (
+            {selectedIDs.length === 0 && row.appointmentId && (
               <p className="text-xs text-destructive">
                 Aucun patient sélectionné : valider supprimera le rendez-vous.
               </p>
@@ -138,7 +138,9 @@ export default function AddPatientToAppointmentForm({
             isLoading={isPending}
           >
             <Check className="w-4 h-4" />
-            {selectedIDs.length === 0 ? 'Supprimer le rendez-vous' : 'Valider'}
+            {selectedIDs.length === 0 && row.appointmentId
+              ? 'Supprimer le rendez-vous'
+              : 'Valider'}
           </Button>
         </PopupFooter>
       </PopupContent>

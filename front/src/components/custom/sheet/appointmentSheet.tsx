@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   APPOINTMENT_ACCOMPANYING_OPTIONS,
   APPOINTMENT_STATUS_OPTIONS,
-  appointmentTypeLabel,
+  APPOINTMENT_TYPE_OPTIONS,
 } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { formatDuration, thematicLabelByID } from '../../../libs/utils.ts'
@@ -22,7 +22,9 @@ import {
   useAppointmentByIDQuery,
   useAppointmentMutations,
 } from '../../../queries/useAppointment.ts'
+import { useLocationQueries } from '../../../queries/useLocation.ts'
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
+import { useSlotMutations } from '../../../queries/useSlot.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
 import type { UpdateAppointmentParams } from '../../../types/appointment.ts'
 import type { Pathway } from '../../../types/pathway.ts'
@@ -84,7 +86,16 @@ export default function AppointmentSheet({
     },
   )
   const { updateAppointment, deleteAppointment } = useAppointmentMutations()
+  const { updateSlot } = useSlotMutations()
   const { thematics } = useThematicQueries()
+  const { locations } = useLocationQueries()
+  const locationOptions = useMemo(
+    () =>
+      [...(locations ?? [])]
+        .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+        .map((l) => ({ value: l.id, label: l.name })),
+    [locations],
+  )
   const patients = usePatientQueries().patients
 
   const [selectedPatients, setSelectedPatients] = useState<string[]>([])
@@ -100,6 +111,8 @@ export default function AppointmentSheet({
     defaultValues: {
       thematicId: '',
       motif: '',
+      type: '',
+      locationID: '',
       appointmentPatients: [
         {
           accompanying: '',
@@ -124,6 +137,22 @@ export default function AppointmentSheet({
       }
 
       updateAppointment.mutate(updateAppointmentData)
+      // Type et salle appartiennent au créneau : les changer ici les change pour tout le créneau.
+      const slotTemplate = appointment.slot?.slotTemplate
+      if (
+        slotTemplate &&
+        (value.type !== (slotTemplate.type ?? '') ||
+          value.locationID !== (slotTemplate.locationID ?? ''))
+      ) {
+        updateSlot.mutate({
+          id: appointment.slot.id,
+          slotTemplate: {
+            id: slotTemplate.id,
+            type: value.type || null,
+            locationID: value.locationID || null,
+          },
+        })
+      }
       setOpen('')
     },
   })
@@ -164,6 +193,8 @@ export default function AppointmentSheet({
               {
                 thematicId: data.thematicId ?? '',
                 motif: data.motif ?? '',
+                type: data.slot?.slotTemplate?.type ?? '',
+                locationID: data.slot?.slotTemplate?.locationID ?? '',
                 appointmentPatients:
                   data.appointmentPatients?.map((ap) => ({
                     id: ap.id ?? '',
@@ -302,15 +333,15 @@ export default function AppointmentSheet({
                 )}
               </form.AppField>
 
-              <FormField>
-                <Label>Type</Label>
-                <Input
-                  value={appointmentTypeLabel(
-                    appointment?.slot?.slotTemplate?.type,
-                  )}
-                  disabled
-                />
-              </FormField>
+              <form.AppField name="type">
+                {(field) => (
+                  <field.Select
+                    options={APPOINTMENT_TYPE_OPTIONS}
+                    label="Type"
+                    placeholder="Non renseigné"
+                  />
+                )}
+              </form.AppField>
 
               {/* Le motif porte sur le rendez-vous d'un seul patient : il n'a
               de sens que sur un créneau individuel. */}
@@ -320,16 +351,15 @@ export default function AppointmentSheet({
                 </form.AppField>
               )}
 
-              <FormField>
-                <Label>Salle</Label>
-                <Input
-                  value={
-                    appointment?.slot?.slotTemplate?.location?.name ??
-                    'Aucune salle associée'
-                  }
-                  disabled
-                />
-              </FormField>
+              <form.AppField name="locationID">
+                {(field) => (
+                  <field.Select
+                    options={locationOptions}
+                    label="Salle"
+                    placeholder="Aucune salle associée"
+                  />
+                )}
+              </form.AppField>
 
               <div className="mt-2 w-full border-t border-border"></div>
 

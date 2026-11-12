@@ -189,10 +189,17 @@ function Agenda() {
     rows
       .flatMap((row) => [row, ...(row.subRows ?? [])])
       .find((row) => row.id === addPatientTargetId) ?? null
-  const newAppointment = getNewAppointmentProps(
-    addPatientTarget,
-    slots?.find((slot) => slot.id === addPatientTarget?.slotId),
+  const addPatientSlot = slots?.find(
+    (slot) => slot.id === addPatientTarget?.slotId,
   )
+  // Collectif : le « + » ouvre directement ses patients, le rendez-vous se crée à la validation.
+  const editPatients =
+    !!addPatientTarget &&
+    !addPatientTarget.isIndividual &&
+    (!!addPatientTarget.appointmentId || addPatientTarget.patients.length === 0)
+  const newAppointment = editPatients
+    ? null
+    : getNewAppointmentProps(addPatientTarget, addPatientSlot)
 
   const columns = useMemo(
     () =>
@@ -291,7 +298,7 @@ function Agenda() {
           soignants={openedRow?.soignants}
         />
 
-        {addPatientTarget?.appointmentId && !addPatientTarget.isIndividual && (
+        {editPatients && addPatientTarget && (
           <AddPatientToAppointmentForm
             open
             setOpen={(open) => {
@@ -300,13 +307,29 @@ function Agenda() {
               }
             }}
             row={addPatientTarget}
-            isPending={updateAppointment.isPending}
+            isPending={
+              updateAppointment.isPending || createAppointment.isPending
+            }
             onConfirm={(params) => {
-              updateAppointment.mutate(params)
+              if (addPatientTarget.appointmentId) {
+                updateAppointment.mutate(params)
+              } else if (addPatientSlot) {
+                createAppointment.mutate({
+                  startDate: addPatientSlot.startDate,
+                  endDate: addPatientSlot.endDate,
+                  slotID: addPatientSlot.id,
+                  thematicId: '',
+                  patientIDs: params.appointmentPatients.map(
+                    (p) => p.patientID,
+                  ),
+                })
+              }
               setAddPatientTargetId(null)
             }}
             onRequestDelete={() => {
-              setDeleteTarget(addPatientTarget)
+              if (addPatientTarget.appointmentId) {
+                setDeleteTarget(addPatientTarget)
+              }
               setAddPatientTargetId(null)
             }}
           />
