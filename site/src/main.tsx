@@ -13,14 +13,13 @@ const page: Page =
 document.documentElement.lang = lang;
 document.title = pageTitle(lang, page);
 
-const umamiId = import.meta.env.VITE_UMAMI_WEBSITE_ID;
-if (umamiId) {
-  const script = document.createElement("script");
-  script.defer = true;
-  script.src = "https://umami.qwetle.fr/script.js";
-  script.dataset.websiteId = umamiId;
-  document.head.append(script);
-}
+// Mesure d'audience Umami : le script ignore tout autre domaine que la production.
+const umami = document.createElement("script");
+umami.defer = true;
+umami.src = "https://umami.qwetle.fr/script.js";
+umami.dataset.websiteId = "3f45cd25-d36e-4cc5-ad7e-58bc6dbcd6b3";
+umami.dataset.domains = "etepea.fr,www.etepea.fr";
+document.head.append(umami);
 
 const root = document.getElementById("root") as HTMLElement;
 const app = (
