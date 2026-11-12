@@ -336,7 +336,7 @@ function SuiviPage() {
       ]}
     >
       <div className="flex-1 min-h-0 bg-background rounded-lg flex flex-col w-full gap-4 overflow-hidden">
-        <div className="px-6 mt-6 min-h-9 flex justify-between items-center gap-3">
+        <div className="px-6 mt-6 min-h-9 flex justify-between items-center gap-2">
           <h1 className="text-text-dark text-xl font-semibold">Suivi</h1>
 
           <div className="flex items-center gap-2 ml-auto">
@@ -369,7 +369,7 @@ function SuiviPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <PopoverRoot>
               <PopoverTrigger asChild>
                 <Button
