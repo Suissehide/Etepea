@@ -145,9 +145,10 @@ function logoCells(): Cell[] {
   return cells;
 }
 
+// Bandeau large : les semaines se suivent de gauche à droite. Bloc haut : en diagonale.
 const EYES = {
-  cycle: new Vector3(6, 12, 9),
-  logo: new Vector3(7, 7.5, 9),
+  cycle: { wide: new Vector3(12, 8.5, 5.5), tall: new Vector3(6, 12, 9) },
+  logo: { wide: new Vector3(7, 7.5, 9), tall: new Vector3(7, 7.5, 9) },
 };
 
 const ease = (p: number) => 1 - (1 - Math.min(1, Math.max(0, p))) ** 3;
@@ -216,12 +217,9 @@ export function mount(
   scene.add(mesh);
 
   const camera = new OrthographicCamera();
-  camera.position.copy(EYES[variant]);
-  camera.lookAt(0, 0, 0);
-  camera.updateMatrixWorld();
 
   // Emprise de toute la scène vue par la caméra : sert à ne jamais rien couper.
-  const box = { minX: 1e9, maxX: -1e9, minY: 1e9, maxY: -1e9 };
+  const box = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
   const corner = new Vector3();
   const extend = (x: number, y: number, z: number) => {
     corner.set(x, y, z).applyMatrix4(camera.matrixWorldInverse);
@@ -230,19 +228,27 @@ export function mount(
     box.minY = Math.min(box.minY, corner.y);
     box.maxY = Math.max(box.maxY, corner.y);
   };
-  for (const cell of cells) {
-    for (const dx of [-0.5, 0.5]) {
-      for (const dz of [-0.5, 0.5]) {
-        const x = cell.x + dx * cell.sx;
-        const z = cell.z + dz * cell.sz;
-        extend(x, cell.y, z);
-        extend(x, cell.y + cell.h + (cell.lifts ? LIFT : 0), z);
+  let wide: boolean | undefined;
+  const aim = (nowWide: boolean) => {
+    wide = nowWide;
+    camera.position.copy(EYES[variant][nowWide ? "wide" : "tall"]);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    Object.assign(box, { minX: 1e9, maxX: -1e9, minY: 1e9, maxY: -1e9 });
+    for (const cell of cells) {
+      for (const dx of [-0.5, 0.5]) {
+        for (const dz of [-0.5, 0.5]) {
+          const x = cell.x + dx * cell.sx;
+          const z = cell.z + dz * cell.sz;
+          extend(x, cell.y, z);
+          extend(x, cell.y + cell.h + (cell.lifts ? LIFT : 0), z);
+        }
       }
     }
-  }
-  for (const tag of tags) {
-    extend(tag.at.x, tag.at.y, tag.at.z);
-  }
+    for (const tag of tags) {
+      extend(tag.at.x, tag.at.y, tag.at.z);
+    }
+  };
   // Le logo pivote : on lui laisse de la marge.
   const slack = variant === "logo" ? 1.25 : 1;
   const padX = tags.length ? 44 : 12;
@@ -254,6 +260,9 @@ export function mount(
       return;
     }
     renderer.setSize(w, h, false);
+    if (wide !== w > h * 1.5) {
+      aim(w > h * 1.5);
+    }
     const perPixel =
       Math.max(
         (box.maxX - box.minX) / Math.max(1, w - 2 * padX),
@@ -324,7 +333,10 @@ export function mount(
       );
       const top = ((1 - projected.y) / 2) * host.clientHeight;
       tag.el.style.transform = `translate(${left}px, ${top}px) translate(-50%, -50%)`;
-      tag.el.style.opacity = slide > 0.95 && (still || t > 0.9) ? "1" : "0";
+      // Sur un petit écran, les jours se chevaucheraient : seuls les cycles restent.
+      const fits = tag.week !== 0 || host.clientWidth >= 520;
+      tag.el.style.opacity =
+        fits && slide > 0.95 && (still || t > 0.9) ? "1" : "0";
     }
   }
 

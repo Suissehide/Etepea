@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import {
   CONTACT_EMAIL,
   CONTENT,
@@ -183,36 +183,35 @@ function Hero({ t }: { t: Copy }) {
   const h = t.hero;
   return (
     <section className="relative overflow-hidden">
-      <div className={`${WRAP} relative z-10 pt-14 lg:pt-24`}>
-        <div className="lg:max-w-[34rem]">
-          <h1 className="text-[clamp(2.5rem,5.2vw,4.4rem)] leading-[1.04] font-medium tracking-[-0.035em] text-balance">
-            {h.title}
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-mute md:text-xl lg:max-w-[27rem]">
-            {h.lead}
-          </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a href="#demo" className={BTN_DARK}>
-              {h.primary}
-            </a>
-            <a href="#plateforme" className={BTN_LIGHT}>
-              {h.secondary}
-            </a>
-          </div>
-          <p className="mt-6 text-sm text-mute">{h.note}</p>
-        </div>
+      <div className={`${WRAP} relative z-10 pt-14 lg:pt-20`}>
+        <h1 className="max-w-4xl text-[clamp(2.5rem,6vw,5rem)] leading-[1.02] font-medium tracking-[-0.035em] text-balance">
+          {h.title}
+        </h1>
       </div>
       <Trame
         variant="cycle"
         label={h.sceneAlt}
         labels={h.scene}
-        className="h-[26rem] w-full lg:absolute lg:-top-12 lg:-right-10 lg:h-[50rem] lg:w-[62%]"
+        className="-mt-4 h-72 w-full sm:h-96 lg:-mt-24 lg:h-[36rem]"
       />
+      <div
+        className={`${WRAP} relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between`}
+      >
+        <p className="max-w-xl text-lg text-mute md:text-xl">{h.lead}</p>
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          <a href="#demo" className={BTN_DARK}>
+            {h.primary}
+          </a>
+          <a href="#plateforme" className={BTN_LIGHT}>
+            {h.secondary}
+          </a>
+        </div>
+      </div>
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
         <Screen
           src={h.screen}
           alt={h.screenAlt}
-          className="rounded-b-none [mask-image:linear-gradient(#000_55%,transparent)] lg:mt-20"
+          className="mt-14 rounded-b-none [mask-image:linear-gradient(#000_55%,transparent)] lg:mt-20"
           ratio="aspect-[16/8]"
           eager
         />
@@ -253,13 +252,35 @@ function Manual({ t }: { t: Copy }) {
 function Platform({ t }: { t: Copy }) {
   const p = t.platform;
   const [active, setActive] = useState(0);
+  const tabs = useRef<HTMLDivElement>(null);
+  const [bar, setBar] = useState({ left: 0, width: 0 });
+
+  // Le trait bleu glisse sous l'onglet actif et suit les changements de largeur.
+  useEffect(() => {
+    const list = tabs.current;
+    if (!list) {
+      return;
+    }
+    const place = () => {
+      const tab = list.children[active] as HTMLElement;
+      setBar({ left: tab.offsetLeft, width: tab.offsetWidth });
+    };
+    place();
+    const watcher = new ResizeObserver(place);
+    watcher.observe(list);
+    return () => watcher.disconnect();
+  }, [active]);
+
+  const SLIDE =
+    "transition-[opacity,translate] duration-500 motion-reduce:transition-none";
   return (
     <section id="plateforme" className={`${SECTION} overflow-hidden`}>
       <div className={WRAP}>
         <h2 className={`${H2} max-w-3xl`}>{p.title}</h2>
         <div
+          ref={tabs}
           role="tablist"
-          className="mt-10 flex flex-wrap gap-x-9 gap-y-2 border-b border-line"
+          className="relative mt-10 flex gap-x-9 overflow-x-auto border-b border-line"
         >
           {p.features.map((f, i) => (
             <button
@@ -270,43 +291,55 @@ function Platform({ t }: { t: Copy }) {
               aria-selected={i === active}
               aria-controls={`panel-${i}`}
               onClick={() => setActive(i)}
-              className={`-mb-px border-b-2 pb-3 text-lg font-medium ${i === active ? "border-brand text-ink" : "border-transparent text-mute hover:text-ink"}`}
+              className={`pb-3 text-lg font-medium whitespace-nowrap ${i === active ? "text-ink" : "text-mute hover:text-ink"}`}
             >
               {f.name}
             </button>
           ))}
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 h-0.5 bg-brand transition-[left,width] duration-500 motion-reduce:transition-none"
+            style={bar}
+          />
         </div>
-        {p.features.map((f, i) => (
-          <article
-            key={f.name}
-            role="tabpanel"
-            id={`panel-${i}`}
-            aria-labelledby={`tab-${i}`}
-            hidden={i !== active}
-            className="mt-12 grid items-center gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-14"
-          >
-            <div>
-              <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
-                {f.title}
-              </h3>
-              <p className="mt-3 text-lg text-mute">{f.text}</p>
-              <ul className="mt-6 flex flex-col gap-3">
-                {f.points.map((point) => (
-                  <li key={point} className="flex items-baseline gap-3">
-                    <Cube />
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Screen
-              src={f.screen}
-              alt={f.title}
-              focus={f.focus}
-              className="lg:w-[125%]"
-            />
-          </article>
-        ))}
+        <div className="mt-12 grid">
+          {p.features.map((f, i) => {
+            const on = i === active;
+            return (
+              <article
+                key={f.name}
+                role="tabpanel"
+                id={`panel-${i}`}
+                aria-labelledby={`tab-${i}`}
+                inert={!on}
+                className="col-start-1 row-start-1 grid items-center gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-14"
+              >
+                <div
+                  className={`${SLIDE} ${on ? "delay-150" : "translate-y-3 opacity-0"}`}
+                >
+                  <h3 className="text-2xl font-medium tracking-tight md:text-3xl">
+                    {f.title}
+                  </h3>
+                  <p className="mt-3 text-lg text-mute">{f.text}</p>
+                  <ul className="mt-6 flex flex-col gap-3">
+                    {f.points.map((point) => (
+                      <li key={point} className="flex items-baseline gap-3">
+                        <Cube />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Screen
+                  src={f.screen}
+                  alt={f.title}
+                  focus={f.focus}
+                  className={`lg:w-[125%] ${SLIDE} ${on ? "" : "translate-x-10 opacity-0"}`}
+                />
+              </article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

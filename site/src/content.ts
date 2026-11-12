@@ -43,7 +43,6 @@ const fr = {
     lead: "Etepea est le logiciel de gestion des programmes d'ETP pour les établissements de santé. Il remplace les tableurs de planning et les feuilles de présence, puis prépare vos indicateurs ARS à partir de ce que l'équipe saisit déjà.",
     primary: "Demander une démo",
     secondary: "Voir la plateforme",
-    note: "Pour les services de réadaptation, les UTEP et toute équipe qui porte un programme d'ETP.",
     screen: SCREENS.planning,
     screenAlt: "Planning d'un programme d'ETP dans Etepea",
     sceneAlt:
@@ -312,7 +311,6 @@ const en: typeof fr = {
     lead: "Etepea is the management software for therapeutic patient education programs in healthcare facilities. It replaces planning spreadsheets and attendance sheets, then prepares your regulatory indicators from what the team already records.",
     primary: "Book a demo",
     secondary: "See the platform",
-    note: "For rehabilitation departments, patient education units and any team running a program.",
     screen: SCREENS.planning,
     screenAlt: "Planning of a patient education program in Etepea",
     sceneAlt: "Animation: a three-week cycle of sessions, then its repetition",
