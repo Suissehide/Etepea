@@ -39,7 +39,7 @@ const fr = {
   },
   hero: {
     title:
-      "Vos programmes d'éducation thérapeutique, pilotés cycle après cycle.",
+      "Vos programmes d'éducation thérapeutique, pilotés cycle après cycle",
     lead: "Etepea est le logiciel de gestion des programmes d'ETP pour les établissements de santé. Il remplace les tableurs de planning et les feuilles de présence, puis prépare vos indicateurs ARS à partir de ce que l'équipe saisit déjà.",
     primary: "Demander une démo",
     secondary: "Voir la plateforme",
@@ -53,7 +53,7 @@ const fr = {
     },
   },
   manual: {
-    title: "Ce que vos équipes arrêtent de faire à la main.",
+    title: "Ce que vos équipes arrêtent de faire à la main",
     before: "Aujourd'hui",
     after: "Avec Etepea",
     rows: [
@@ -76,7 +76,7 @@ const fr = {
     ],
   },
   platform: {
-    title: "Les écrans que l'équipe ouvre chaque jour.",
+    title: "Les écrans que l'équipe ouvre chaque jour",
     features: [
       {
         name: "Planning",
@@ -129,7 +129,7 @@ const fr = {
     ],
   },
   steering: {
-    title: "Vos indicateurs se préparent pendant que l'équipe travaille.",
+    title: "Vos indicateurs se préparent pendant que l'équipe travaille",
     text: "Chaque séance planifiée, chaque présence pointée et chaque diagnostic éducatif alimentent les indicateurs du service. Au moment du rapport d'activité, l'essentiel est déjà là.",
     items: [
       [
@@ -147,28 +147,44 @@ const fr = {
     ],
   },
   stakeholders: {
-    title: "Ce que chacun y gagne.",
+    title: "Ce que chacun y gagne",
     items: [
-      [
-        "Direction",
-        "Une activité d'ETP enfin lisible et des indicateurs prêts pour le rapport à l'ARS.",
-      ],
-      [
-        "Cadres et coordination",
-        "Un planning qui se répète seul, des conflits de salle signalés et moins de temps passé à recopier.",
-      ],
-      [
-        "Soignants et secrétariat",
-        "L'agenda du jour, les présences en un clic et le dossier éducatif au même endroit.",
-      ],
-      [
-        "DSI et DPO",
-        "Des données cloisonnées par service, des comptes sur invitation et un journal des accès aux dossiers.",
-      ],
+      {
+        who: "Direction",
+        gains: [
+          "Une activité d'ETP enfin lisible",
+          "Des indicateurs prêts pour le rapport à l'ARS",
+          "Des accès tracés et des données cloisonnées",
+        ],
+      },
+      {
+        who: "Cadres et coordination",
+        gains: [
+          "Un planning qui se répète seul d'un cycle à l'autre",
+          "Les conflits de salle signalés avant la séance",
+          "Moins de temps passé à recopier et à compter",
+        ],
+      },
+      {
+        who: "Soignants et secrétariat",
+        gains: [
+          "L'agenda du jour avec les patients attendus",
+          "Une présence pointée en un clic",
+          "Le dossier éducatif au même endroit",
+        ],
+      },
+      {
+        who: "DSI et DPO",
+        gains: [
+          "Des données cloisonnées par établissement et par service",
+          "Des comptes ouverts sur invitation, chacun avec son rôle",
+          "Un journal des accès aux dossiers et un journal d'activité",
+        ],
+      },
     ],
   },
   security: {
-    title: "Des données de santé, traitées comme telles.",
+    title: "Des données de santé, traitées comme telles",
     cards: [
       [
         "Chaque service chez soi",
@@ -189,7 +205,7 @@ const fr = {
     ],
   },
   onboarding: {
-    title: "De la démonstration au premier cycle.",
+    title: "De la démonstration au premier cycle",
     step: "Étape",
     steps: [
       [
@@ -211,7 +227,7 @@ const fr = {
     ],
   },
   demo: {
-    title: "Voyez Etepea tourner sur vos propres parcours.",
+    title: "Voyez Etepea tourner sur vos propres parcours",
     text: "Une démonstration de trente minutes. Dites-nous qui vous êtes et nous revenons vers vous pour fixer un créneau.",
     sceneAlt: "Animation : le logo Etepea assemblé en cubes",
     fields: {
@@ -307,7 +323,7 @@ const en: typeof fr = {
     cta: "Book a demo",
   },
   hero: {
-    title: "Your patient education programs, run cycle after cycle.",
+    title: "Your patient education programs, run cycle after cycle",
     lead: "Etepea is the management software for therapeutic patient education programs in healthcare facilities. It replaces planning spreadsheets and attendance sheets, then prepares your regulatory indicators from what the team already records.",
     primary: "Book a demo",
     secondary: "See the platform",
@@ -320,7 +336,7 @@ const en: typeof fr = {
     },
   },
   manual: {
-    title: "What your teams stop doing by hand.",
+    title: "What your teams stop doing by hand",
     before: "Today",
     after: "With Etepea",
     rows: [
@@ -343,7 +359,7 @@ const en: typeof fr = {
     ],
   },
   platform: {
-    title: "The screens the team opens every day.",
+    title: "The screens the team opens every day",
     features: [
       {
         name: "Planning",
@@ -396,7 +412,7 @@ const en: typeof fr = {
     ],
   },
   steering: {
-    title: "Your indicators get ready while the team works.",
+    title: "Your indicators get ready while the team works",
     text: "Every planned session, every recorded attendance and every educational assessment feeds the department's indicators. When the activity report is due, most of it is already there.",
     items: [
       [
@@ -414,28 +430,44 @@ const en: typeof fr = {
     ],
   },
   stakeholders: {
-    title: "What everyone gets out of it.",
+    title: "What everyone gets out of it",
     items: [
-      [
-        "Management",
-        "Patient education activity you can finally read and indicators ready for the regulator's report.",
-      ],
-      [
-        "Nurse managers and coordinators",
-        "A schedule that repeats by itself, room conflicts flagged and less time spent copying.",
-      ],
-      [
-        "Practitioners and front desk",
-        "Today's agenda, attendance in one click and the educational record in one place.",
-      ],
-      [
-        "IT and data protection",
-        "Data isolated per department, accounts by invitation and a log of every record access.",
-      ],
+      {
+        who: "Management",
+        gains: [
+          "Patient education activity you can finally read",
+          "Indicators ready for the regulator's report",
+          "Traced access and isolated data",
+        ],
+      },
+      {
+        who: "Nurse managers and coordinators",
+        gains: [
+          "A schedule that repeats by itself from one cycle to the next",
+          "Room conflicts flagged before the session",
+          "Less time spent copying and counting",
+        ],
+      },
+      {
+        who: "Practitioners and front desk",
+        gains: [
+          "Today's agenda with the expected patients",
+          "Attendance recorded in one click",
+          "The educational record in one place",
+        ],
+      },
+      {
+        who: "IT and data protection",
+        gains: [
+          "Data isolated per facility and per department",
+          "Accounts opened by invitation, each with its role",
+          "A record access log and an activity log",
+        ],
+      },
     ],
   },
   security: {
-    title: "Health data, handled as such.",
+    title: "Health data, handled as such",
     cards: [
       [
         "Every department on its own",
@@ -456,7 +488,7 @@ const en: typeof fr = {
     ],
   },
   onboarding: {
-    title: "From the demo to the first cycle.",
+    title: "From the demo to the first cycle",
     step: "Step",
     steps: [
       [
@@ -478,7 +510,7 @@ const en: typeof fr = {
     ],
   },
   demo: {
-    title: "See Etepea running on your own pathways.",
+    title: "See Etepea running on your own pathways",
     text: "A thirty-minute demo. Tell us who you are and we will get back to you to set a time.",
     sceneAlt: "Animation: the Etepea logo assembled from cubes",
     fields: {

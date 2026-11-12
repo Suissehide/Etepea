@@ -1,4 +1,10 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   CONTACT_EMAIL,
   CONTENT,
@@ -19,6 +25,8 @@ const BTN_DARK = `${BTN} bg-ink text-white hover:-translate-y-0.5 hover:bg-brand
 const BTN_LIGHT = `${BTN} border border-line bg-white hover:border-ink`;
 const WRAP = "mx-auto w-full max-w-6xl px-4 sm:px-6";
 const SECTION = "py-20 md:py-28";
+// Contenu décalé à droite du fil.
+const RAIL = `${WRAP} pl-10 sm:pl-14 lg:pl-20`;
 
 export default function App({ lang, page }: { lang: Lang; page: Page }) {
   const t = CONTENT[lang];
@@ -30,13 +38,20 @@ export default function App({ lang, page }: { lang: Lang; page: Page }) {
         {page === "home" ? (
           <>
             <Hero t={t} />
-            <Manual t={t} />
-            <Platform t={t} />
-            <Steering t={t} />
-            <Stakeholders t={t} />
-            <Security t={t} />
-            <Onboarding t={t} />
-            <Demo t={t} lang={lang} />
+            <div className="relative overflow-x-clip">
+              {/* Le fil qui relie toutes les sections, de la capture au formulaire. */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-4 w-px bg-[linear-gradient(transparent,var(--color-line)_7rem,var(--color-line)_calc(100%-7rem),transparent)] sm:left-[max(1.5rem,calc(50%-34.5rem))]"
+              />
+              <Manual t={t} />
+              <Platform t={t} />
+              <Steering t={t} />
+              <Stakeholders t={t} />
+              <Security t={t} />
+              <Onboarding t={t} />
+              <Demo t={t} lang={lang} />
+            </div>
           </>
         ) : (
           <Legal t={t} lang={lang} page={page} />
@@ -220,12 +235,31 @@ function Hero({ t }: { t: Copy }) {
   );
 }
 
+// Titre de section, avec son cube posé sur le fil.
+function Title({
+  className,
+  children,
+}: {
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <h2 className={`relative ${className}`}>
+      <span
+        aria-hidden="true"
+        className="absolute top-[0.42em] -left-[calc(1.5rem+5px)] size-2.5 rounded-[3px] bg-ink sm:-left-[calc(2rem+5px)] lg:-left-[calc(3.5rem+5px)]"
+      />
+      {children}
+    </h2>
+  );
+}
+
 function Manual({ t }: { t: Copy }) {
   const m = t.manual;
   return (
     <section className={SECTION}>
-      <div className={WRAP}>
-        <h2 className={`${H2} max-w-3xl`}>{m.title}</h2>
+      <div className={RAIL}>
+        <Title className={`${H2} max-w-3xl`}>{m.title}</Title>
         <div className="mt-12 hidden grid-cols-2 gap-x-12 text-sm text-mute md:grid">
           <p>{m.before}</p>
           <p>{m.after}</p>
@@ -275,8 +309,8 @@ function Platform({ t }: { t: Copy }) {
     "transition-[opacity,translate] duration-500 motion-reduce:transition-none";
   return (
     <section id="plateforme" className={`${SECTION} overflow-hidden`}>
-      <div className={WRAP}>
-        <h2 className={`${H2} max-w-3xl`}>{p.title}</h2>
+      <div className={RAIL}>
+        <Title className={`${H2} max-w-3xl`}>{p.title}</Title>
         <div
           ref={tabs}
           role="tablist"
@@ -349,9 +383,9 @@ function Steering({ t }: { t: Copy }) {
   const s = t.steering;
   return (
     <section id="pilotage" className={SECTION}>
-      <div className={`${WRAP} grid gap-12 lg:grid-cols-2 lg:gap-20`}>
+      <div className={`${RAIL} grid gap-12 lg:grid-cols-2 lg:gap-20`}>
         <div>
-          <h2 className={H2}>{s.title}</h2>
+          <Title className={H2}>{s.title}</Title>
           <p className="mt-6 max-w-lg text-lg text-mute">{s.text}</p>
         </div>
         <dl>
@@ -375,18 +409,67 @@ function Steering({ t }: { t: Copy }) {
 
 function Stakeholders({ t }: { t: Copy }) {
   const s = t.stakeholders;
+  const [active, setActive] = useState(0);
   return (
-    <section className="border-t border-line py-20 md:py-28">
-      <div className={WRAP}>
-        <h2 className={H2}>{s.title}</h2>
-        <ul className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-          {s.items.map(([who, text]) => (
-            <li key={who} className="border-t border-ink pt-6">
-              <h3 className="text-xl font-medium tracking-tight">{who}</h3>
-              <p className="mt-3 text-mute">{text}</p>
-            </li>
-          ))}
-        </ul>
+    <section id="equipes" className={SECTION}>
+      <div
+        className={`${RAIL} grid items-end gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]`}
+      >
+        <div>
+          <Title className={H2}>{s.title}</Title>
+          <div
+            role="tablist"
+            aria-orientation="vertical"
+            className="mt-10 flex flex-col items-start"
+          >
+            {s.items.map(({ who }, i) => (
+              <button
+                key={who}
+                type="button"
+                role="tab"
+                id={`who-${i}`}
+                aria-selected={i === active}
+                aria-controls={`gains-${i}`}
+                onClick={() => setActive(i)}
+                onMouseEnter={() => setActive(i)}
+                onFocus={() => setActive(i)}
+                className={`flex items-center gap-4 py-1.5 text-left text-2xl font-medium tracking-tight md:text-[2rem] ${i === active ? "text-ink" : "text-ink/30"}`}
+              >
+                <Cube
+                  className={`bg-brand transition-[scale] duration-300 ${i === active ? "" : "scale-0"}`}
+                />
+                {who}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid">
+          {s.items.map(({ who, gains }, i) => {
+            const on = i === active;
+            return (
+              <div
+                key={who}
+                role="tabpanel"
+                id={`gains-${i}`}
+                aria-labelledby={`who-${i}`}
+                inert={!on}
+                className="col-start-1 row-start-1 self-end"
+              >
+                <ul className="flex flex-col gap-5 lg:pb-2">
+                  {gains.map((gain, k) => (
+                    <li
+                      key={gain}
+                      style={{ transitionDelay: on ? `${k * 80}ms` : "0ms" }}
+                      className={`text-xl leading-snug text-balance transition-[opacity,translate] duration-500 motion-reduce:transition-none md:text-2xl ${on ? "" : "translate-x-8 opacity-0"}`}
+                    >
+                      {gain}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -396,8 +479,8 @@ function Onboarding({ t }: { t: Copy }) {
   const j = t.onboarding;
   return (
     <section id="mise-en-place" className={SECTION}>
-      <div className={WRAP}>
-        <h2 className={`${H2} max-w-3xl`}>{j.title}</h2>
+      <div className={RAIL}>
+        <Title className={`${H2} max-w-3xl`}>{j.title}</Title>
         <ol className="mt-14 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {j.steps.map(([name, text], i) => (
             <li key={name}>
@@ -429,9 +512,11 @@ function Onboarding({ t }: { t: Copy }) {
 function Security({ t }: { t: Copy }) {
   const s = t.security;
   return (
-    <section id="securite" className={`${SECTION} border-t border-line`}>
-      <div className={`${WRAP} grid gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20`}>
-        <h2 className={`${H2} lg:sticky lg:top-28 lg:self-start`}>{s.title}</h2>
+    <section id="securite" className={SECTION}>
+      <div className={`${RAIL} grid gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20`}>
+        <Title className={`${H2} lg:sticky lg:top-28 lg:self-start`}>
+          {s.title}
+        </Title>
         <dl className="grid gap-x-10 sm:grid-cols-2">
           {s.cards.map(([title, text]) => (
             <div key={title} className="border-t border-ink/15 py-7">
@@ -506,10 +591,10 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
   };
 
   return (
-    <section id="demo" className={`${SECTION} bg-tint`}>
-      <div className={`${WRAP} grid gap-12 md:grid-cols-2 md:gap-20`}>
+    <section id="demo" className={SECTION}>
+      <div className={`${RAIL} grid gap-12 md:grid-cols-2 md:gap-20`}>
         <div>
-          <h2 className={H2}>{d.title}</h2>
+          <Title className={H2}>{d.title}</Title>
           <p className="mt-6 max-w-md text-lg text-mute">{d.text}</p>
           <Trame
             variant="logo"
@@ -520,7 +605,7 @@ function Demo({ t, lang }: { t: Copy; lang: Lang }) {
         {state === "sent" ? (
           <p
             role="status"
-            className="flex items-center gap-3 self-start rounded-3xl bg-white p-8 text-lg"
+            className="flex items-center gap-3 self-start rounded-3xl bg-tint p-8 text-lg"
           >
             <Cube />
             {d.sent}
