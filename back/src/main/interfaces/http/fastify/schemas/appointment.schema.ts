@@ -5,6 +5,8 @@ import { cuid } from './id.schema'
 import {
   appointmentPatientSchema,
   appointmentSchema,
+  slotSchema,
+  slotTemplateSchema,
   thematicIdInputSchema,
 } from './index'
 import { planningConflictsSchema } from './planningConflict.schema'
@@ -12,6 +14,17 @@ import { planningConflictsSchema } from './planningConflict.schema'
 export const appointmentResponseSchema = appointmentSchema.extend({
   id: cuid(),
   appointmentPatients: z.array(appointmentPatientResponseSchema),
+  // Ids du créneau et de son modèle : la fiche RDV y modifie type et salle.
+  slot: slotSchema
+    .extend({
+      id: cuid(),
+      slotTemplate: slotTemplateSchema
+        .extend({ id: cuid() })
+        .optional()
+        .nullable(),
+    })
+    .optional()
+    .nullable(),
 })
 
 export const appointmentsResponseSchema = z.array(appointmentResponseSchema)
