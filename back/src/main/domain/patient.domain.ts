@@ -64,6 +64,7 @@ const formatDate = (value: Date | string | null | undefined): string =>
 
 type TemplateFlags = { id: string; mainTag: string; optional: boolean }
 type PrincipalSpan = { start?: Date; end?: Date }
+type SlotDuration = (slot: SlotWithTemplateAndAppointmentsRepo) => number
 // Les deux boucles d'inscription (processEnrollments, enrollInSlot) attrapent toute erreur
 // levee par un depot pour la transformer en echec partiel plutot qu'en 500 : la reponse
 // (`failedEnrollments[].reason`, affichee a l'ecran par front/src/queries/usePatient.tsx) et le
@@ -498,16 +499,24 @@ class PatientDomain implements PatientDomainInterface {
     )
   }
 
+  // Durée saisie, sinon celle de la thématique choisie, sinon celle de la thématique de chaque créneau.
   private async resolveDuration(
     enrollment: PathwayEnrollmentInput,
-  ): Promise<number> {
-    if (enrollment.thematicID && !enrollment.duration) {
+  ): Promise<SlotDuration> {
+    if (enrollment.duration) {
+      const { duration } = enrollment
+      return () => duration
+    }
+    if (enrollment.thematicID) {
       const thematic = await this.thematicRepository.findByID(
         enrollment.thematicID,
       )
-      return thematic.duration ?? 30
+      return () => thematic.duration ?? 30
     }
-    return enrollment.duration ?? 30
+    const durations = new Map(
+      (await this.allThematics()).map((t) => [t.id, t.duration]),
+    )
+    return (slot) => durations.get(slot.slotTemplate.thematicId ?? '') ?? 30
   }
 
   // `thematicID` finit en Appointment.thematicId (référence simple, sans
@@ -527,7 +536,7 @@ class PatientDomain implements PatientDomainInterface {
     pathways: PathwayWithSlotsRepo[],
     enrollment: PathwayEnrollmentInput,
     patientAppointments: AppointmentPatientWithAppointmentDomain[],
-    thematicDuration: number,
+    thematicDuration: SlotDuration,
     firstAppointmentOnly: boolean,
     startDate: Date,
   ): PathwayWithSlotsRepo | undefined {
@@ -563,13 +572,17 @@ class PatientDomain implements PatientDomainInterface {
     )
   }
 
-  private async internalThematicIDs(): Promise<Set<string>> {
+  private async allThematics() {
     const [active, archived] = await Promise.all([
       this.thematicRepository.findAll(false),
       this.thematicRepository.findAll(true),
     ])
+    return [...active, ...archived]
+  }
+
+  private async internalThematicIDs(): Promise<Set<string>> {
     return new Set(
-      [...active, ...archived].filter((t) => t.internal).map((t) => t.id),
+      (await this.allThematics()).filter((t) => t.internal).map((t) => t.id),
     )
   }
 
@@ -587,7 +600,7 @@ class PatientDomain implements PatientDomainInterface {
   ): Promise<
     | {
         pathway: PathwayWithSlotsRepo
-        thematicDuration: number
+        thematicDuration: SlotDuration
         firstAppointmentOnly: boolean
       }
     | { failure: EnrollmentResult['failedEnrollments'][number] }
@@ -1138,7 +1151,7 @@ class PatientDomain implements PatientDomainInterface {
     timeOfDay: TimeOfDay,
     patientAppointments: AppointmentPatientWithAppointmentDomain[],
     maxCapacity = 1,
-    appointmentDuration = 30,
+    appointmentDuration: SlotDuration,
   ): boolean {
     const slotStart = dayjs(slot.startDate)
     const slotEnd = dayjs(slot.endDate)
@@ -1158,7 +1171,7 @@ class PatientDomain implements PatientDomainInterface {
         slotStart.toDate(),
         slotEnd.toDate(),
         this.busyIntervals(slot, patientAppointments),
-        appointmentDuration,
+        appointmentDuration(slot),
       )
       return nextSlot !== null
     }
@@ -1196,7 +1209,7 @@ class PatientDomain implements PatientDomainInterface {
     timeOfDay: TimeOfDay,
     patientAppointments: AppointmentPatientWithAppointmentDomain[],
     maxCapacity = 1,
-    appointmentDuration = 30,
+    appointmentDuration: SlotDuration,
   ): boolean {
     return slots.every((slot) =>
       this.isSlotAvailable(
@@ -1218,7 +1231,7 @@ class PatientDomain implements PatientDomainInterface {
     options: {
       motif?: string | null
       thematicId?: string | null
-      appointmentDuration: number
+      appointmentDuration: SlotDuration
       firstAppointmentOnly: boolean
     },
   ): Promise<EnrollmentAppointment[]> {
@@ -1246,7 +1259,7 @@ class PatientDomain implements PatientDomainInterface {
         slot.startDate,
         slot.endDate,
         this.busyIntervals(slot, patient.appointmentPatients),
-        appointmentDuration,
+        appointmentDuration(slot),
       )
       if (!nextSlot) {
         return firstAppointmentOnly
@@ -1322,8 +1335,8 @@ class PatientDomain implements PatientDomainInterface {
     patient: PatientWithAppointmentsDomain,
     pathway: PathwayWithSlotsRepo,
     pathwayTemplate: PathwayEnrollmentInput,
-    thematicId?: string,
-    appointmentDuration = 30,
+    thematicId: string | undefined,
+    appointmentDuration: SlotDuration,
     firstAppointmentOnly = false,
     enrollmentDate?: Date,
   ): Promise<EnrollmentAppointment[]> {
