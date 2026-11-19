@@ -36,7 +36,8 @@ export type SlotDTORepo = SlotEntityRepo & {
 // autre service passerait donc sans aucun contrôle. L'unique voie légitime
 // pour rattacher un créneau à un parcours est le `connect` composite interne
 // à PathwayRepository — l'invariant est ainsi vrai par construction, sans
-// vérification applicative à maintenir.
+// vérification applicative à maintenir. Seule autre voie : la copie d'un
+// créneau (`copiedFromSlotID`), dont le parcours est relu dans le service courant.
 export type SlotCreateEntityRepo = Omit<
   Prisma.SlotUncheckedCreateInput,
   'appointments' | 'establishmentId' | 'pathwayID' | 'serviceId'
@@ -61,7 +62,10 @@ export type SlotDateRangeRepo = {
 export interface SlotRepositoryInterface {
   findAll: (dateRange?: SlotDateRangeRepo) => Promise<SlotDTORepo[]>
   findByID: (id: string) => Promise<SlotDTORepo>
-  create: (slotCreateParams: SlotCreateEntityRepo) => Promise<SlotDTORepo>
+  create: (
+    slotCreateParams: SlotCreateEntityRepo,
+    copiedFromSlotID?: string,
+  ) => Promise<SlotDTORepo>
   update: (
     slotID: string,
     slotUpdateParams: SlotUpdateEntityRepo,

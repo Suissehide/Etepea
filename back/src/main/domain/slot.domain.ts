@@ -56,11 +56,14 @@ class SlotDomain implements SlotDomainInterface {
     return conflicts.filter((conflict) => conflict.slotIDs.includes(slot.id))
   }
 
-  create(slotCreateParams: SlotCreateEntityDomain): Promise<SlotDTODomain> {
+  create(
+    slotCreateParams: SlotCreateEntityDomain,
+    copiedFromSlotID?: string,
+  ): Promise<SlotDTODomain> {
     const slotInputParams = {
       ...slotCreateParams,
     }
-    return this.slotRepository.create(slotInputParams)
+    return this.slotRepository.create(slotInputParams, copiedFromSlotID)
   }
 
   async update(

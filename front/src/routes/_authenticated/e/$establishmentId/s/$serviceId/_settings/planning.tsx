@@ -48,7 +48,7 @@ import Calendar, {
 import {
   BAR_BUTTON,
   MENU_ITEM,
-  SelectAllShortcut,
+  SelectAllButton,
   SelectionBar,
 } from '@/components/custom/Calendar/selectionBar.tsx'
 import LocationFilter, {
@@ -592,6 +592,7 @@ function Planning() {
   ): CreateSlotParamsWithTemplateData => ({
     startDate: newStartDate,
     endDate: newEndDate,
+    copiedFromSlotID: slot.id,
     slotTemplate: {
       startTime: newStartDate,
       endTime: newEndDate,
@@ -915,6 +916,15 @@ function Planning() {
       onHideAll={handleHideAllPathways}
     />
   )
+  const selectAllButton = (
+    <SelectAllButton
+      events={mergedEvents}
+      hidden={false}
+      selectedIds={selectedSlotIds}
+      onSelectAll={handleSelectAll}
+      onClear={handleClearSelection}
+    />
+  )
   // En édition de modèle, la grille n'affiche ni semaines interdites ni cycle.
   const calendarModeProps = editMode
     ? {
@@ -922,6 +932,7 @@ function Planning() {
         weekAnchorDate: startDate,
         planningCycle: undefined,
         barre: 'minimale' as const,
+        filtresBarre: selectAllButton,
       }
     : {
         forbiddenWeeks: forbiddenWeekList,
@@ -930,6 +941,7 @@ function Planning() {
         barre: 'complete' as const,
         filtresBarre: (
           <>
+            {selectAllButton}
             {pathwayFilter}
             <LocationFilter
               locations={locations ?? []}
@@ -968,11 +980,6 @@ function Planning() {
             Planning
           </h1>
 
-          <SelectAllShortcut
-            events={mergedEvents}
-            disabled={view !== 'calendar'}
-            onSelectAll={handleSelectAll}
-          />
           {!editMode && (
             <>
               <ToggleGroup

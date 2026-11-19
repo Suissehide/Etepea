@@ -41,7 +41,10 @@ export type SlotUpdateEntityDomain = Omit<
 export interface SlotDomainInterface {
   findAll: (dateRange?: SlotDateRangeDomain) => Promise<SlotDTODomain[]>
   findByID: (slotID: string) => Promise<SlotDTODomain>
-  create: (slotCreateParams: SlotCreateEntityDomain) => Promise<SlotDTODomain>
+  create: (
+    slotCreateParams: SlotCreateEntityDomain,
+    copiedFromSlotID?: string,
+  ) => Promise<SlotDTODomain>
   update: (
     slotID: string,
     slotUpdateParams: SlotUpdateEntityDomain,
