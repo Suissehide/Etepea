@@ -26,11 +26,8 @@ const HOUR_HEIGHT = 46
 // bande « pause » de cette hauteur au lieu d'heures vides.
 const GAP_MIN_MINUTES = 60
 const GAP_BAND_HEIGHT = 14
-// Horaire mis en avant (MDS-80) ; plus petit quand la place manque (créneau
-// court ou colonnes partagées).
-const SLOT_TIME_SIZE = 9
-const SLOT_TIME_SIZE_SMALL = 7
-const SLOT_TIME_FULL_MIN_HEIGHT = 30
+// Taille unique, celle qui tient dans une demi-heure avec la thématique.
+const SLOT_TIME_SIZE = 7
 const SLOT_BACKGROUND_ALPHA = 0.14
 // Hauteurs de ligne (police × ~1,2) et marges d'un rendez-vous, pour n'y
 // écrire que ce qui tient : au-delà, react-pdf superpose les lignes.
@@ -216,6 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   slotTime: {
+    fontSize: SLOT_TIME_SIZE,
     fontFamily: 'Helvetica-Bold',
     textAlign: 'center',
   },
@@ -346,13 +344,9 @@ function Hatch() {
 function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
   const top = axis.y(placed.start)
   const height = axis.y(placed.end) - top
-  const timeSize =
-    placed.laneCount === 1 && height >= SLOT_TIME_FULL_MIN_HEIGHT
-      ? SLOT_TIME_SIZE
-      : SLOT_TIME_SIZE_SMALL
   // Au-delà d'une colonne, l'horaire passe sur deux lignes.
   const free =
-    height - SLOT_CHROME - (placed.laneCount > 1 ? 2 : 1) * timeSize * 1.2
+    height - SLOT_CHROME - (placed.laneCount > 1 ? 2 : 1) * SLOT_TIME_SIZE * 1.2
   const location = placed.slot.slotTemplate?.location?.name
   const color = placed.slot.pathway?.template?.color ?? DEFAULT_SLOT_COLOR
   const showLocation =
@@ -388,10 +382,7 @@ function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
         <Text
           style={[
             styles.slotTime,
-            {
-              fontSize: timeSize,
-              color: readableTint(color, SLOT_BACKGROUND_ALPHA),
-            },
+            { color: readableTint(color, SLOT_BACKGROUND_ALPHA) },
           ]}
         >
           {formatTimeRange(placed)}
