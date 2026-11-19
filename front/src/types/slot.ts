@@ -44,7 +44,10 @@ export type SlotQuery = Partial<SlotDateRange> & { patientID?: string }
 
 // Pas de `pathwayID` : le back ne l'accepte pas en entree, le seul
 // rattachement d'un creneau a un parcours se fait cote serveur.
-export type CreateSlotParams = Pick<Slot, 'startDate' | 'endDate'>
+export type CreateSlotParams = Pick<Slot, 'startDate' | 'endDate'> & {
+  // Créneau dupliqué : le back rattache la copie au parcours de l'original.
+  copiedFromSlotID?: string
+}
 export type CreateSlotParamsWithTemplateID = CreateSlotParams & {
   slotTemplateID: string
 }

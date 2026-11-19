@@ -61,6 +61,8 @@ export const createSlotSchemaBase = slotSchema
   })
   .extend({
     soignantIDs: z.array(cuid()).optional(),
+    // Créneau dupliqué : la copie hérite de son parcours.
+    copiedFromSlotID: cuid().optional(),
   })
 
 const withTemplateID = createSlotSchemaBase.extend({
