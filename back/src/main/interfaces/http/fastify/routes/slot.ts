@@ -100,7 +100,12 @@ const slotRouter: FastifyPluginAsync = (fastify) => {
       config: { permission: 'planning:write' },
     },
     async (request, reply) => {
-      let createSlotInput = request.body
+      const { copiedFromSlotID, ...body } = request.body
+      // 404 avant de créer le modèle de créneau, qui resterait orphelin.
+      if (copiedFromSlotID) {
+        await slotDomain.findByID(copiedFromSlotID)
+      }
+      let createSlotInput = body
 
       if (!('slotTemplateID' in createSlotInput)) {
         const { slotTemplate, ...rest } = createSlotInput
@@ -114,7 +119,7 @@ const slotRouter: FastifyPluginAsync = (fastify) => {
         }
       }
 
-      const slot = await slotDomain.create(createSlotInput)
+      const slot = await slotDomain.create(createSlotInput, copiedFromSlotID)
       reply.code(201)
       return { ...slot, conflicts: await slotDomain.conflictsOf(slot) }
     },

@@ -98,10 +98,29 @@ class SlotRepository implements SlotRepositoryInterface {
     }
   }
 
-  async create(slotCreateParams: SlotCreateEntityRepo): Promise<SlotDTORepo> {
+  async create(
+    slotCreateParams: SlotCreateEntityRepo,
+    copiedFromSlotID?: string,
+  ): Promise<SlotDTORepo> {
     try {
+      // Le parcours d'une copie vient de l'original, relu dans le service courant.
+      const original = copiedFromSlotID
+        ? await this.prisma.slot.findUniqueOrThrow({
+            where: {
+              id_serviceId: {
+                id: copiedFromSlotID,
+                serviceId: this.scope.serviceId,
+              },
+            },
+            select: { pathwayID: true },
+          })
+        : null
       const row = await this.prisma.slot.create({
-        data: { ...withoutPathwayID(slotCreateParams), ...this.scope },
+        data: {
+          ...withoutPathwayID(slotCreateParams),
+          ...(original && { pathwayID: original.pathwayID }),
+          ...this.scope,
+        },
         include: slotInclude,
       })
       return flattenSlot(row)

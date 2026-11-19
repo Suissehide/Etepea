@@ -587,6 +587,7 @@ function Planning() {
   ): CreateSlotParamsWithTemplateData => ({
     startDate: newStartDate,
     endDate: newEndDate,
+    copiedFromSlotID: slot.id,
     slotTemplate: {
       startTime: newStartDate,
       endTime: newEndDate,
