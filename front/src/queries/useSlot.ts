@@ -215,8 +215,11 @@ export const useSlotMutations = () => {
         severity: TOAST_SEVERITY.ERROR,
       })
     },
+    // Relire avant la fin du lot ferait revenir les créneaux encore en cours de suppression.
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: [SLOT.GET_ALL] })
+      if (queryClient.isMutating({ mutationKey: [SLOT.DELETE] }) === 1) {
+        await queryClient.invalidateQueries({ queryKey: [SLOT.GET_ALL] })
+      }
     },
   })
 
