@@ -172,32 +172,6 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     textAlign: 'center',
   },
-  legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 2,
-  },
-  legendTitle: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    color: '#475569',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  legendSwatch: {
-    width: 7,
-    height: 7,
-    borderWidth: 1,
-  },
-  legendText: {
-    fontSize: 7,
-    color: '#475569',
-  },
   slotFrame: {
     position: 'absolute',
     padding: 0.75,
@@ -396,48 +370,6 @@ function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
   )
 }
 
-/** Les parcours présents dans le programme, puis « Hors parcours » s'il y en a. */
-export function legendItems(slots: Slot[]) {
-  const byId = new Map<string, { name: string; color: string }>()
-  let withoutPathway = false
-  for (const slot of slots) {
-    const template = slot.pathway?.template
-    if (template?.color) {
-      byId.set(template.name, { name: template.name, color: template.color })
-    } else {
-      withoutPathway = true
-    }
-  }
-  const items = [...byId.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, 'fr'),
-  )
-  return withoutPathway
-    ? [...items, { name: 'Hors parcours', color: DEFAULT_SLOT_COLOR }]
-    : items
-}
-
-function Legend({ items }: { items: { name: string; color: string }[] }) {
-  return (
-    <View style={styles.legend} wrap={false}>
-      <Text style={styles.legendTitle}>Couleur = parcours</Text>
-      {items.map((item) => (
-        <View key={item.name} style={styles.legendItem}>
-          <View
-            style={[
-              styles.legendSwatch,
-              {
-                backgroundColor: hexToRGBA(item.color, SLOT_BACKGROUND_ALPHA),
-                borderColor: item.color,
-              },
-            ]}
-          />
-          <Text style={styles.legendText}>{item.name}</Text>
-        </View>
-      ))}
-    </View>
-  )
-}
-
 function NoticeBlock({ notice }: { notice: NoticeData }) {
   return (
     <View style={styles.noticeBlock} wrap={false}>
@@ -504,7 +436,6 @@ export default function CalendarPages({
           />
         )
       })}
-      <Legend items={legendItems(upcomingSlots)} />
     </Page>
   )
 }
