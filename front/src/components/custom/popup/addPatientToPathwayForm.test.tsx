@@ -233,22 +233,22 @@ describe('AddPatientToPathwayForm', () => {
     expect(enrolled?.[0].startDate).toBeUndefined()
   })
 
-  it("l'interrupteur des optionnels part avec l'aperçu et l'inscription", async () => {
+  it("l'interrupteur des optionnels, coché par défaut, part avec l'aperçu et l'inscription", async () => {
     await renderForm()
     await addPathway('RI')
     await addPathway('STRESS', 'optionnel')
     await screen.findByText('Départ le 07/12/2026')
-    expect(previewWithin).toBe(false)
+    expect(previewWithin).toBe(true)
 
     await userEvent.click(
       screen.getByRole('switch', {
         name: 'Rendez-vous compris dans la durée du parcours principal',
       }),
     )
-    await waitFor(() => expect(previewWithin).toBe(true))
+    await waitFor(() => expect(previewWithin).toBe(false))
     await userEvent.click(
       screen.getByRole('button', { name: 'Inscrire à 1 parcours' }),
     )
-    await waitFor(() => expect(enrolledWithin).toBe(true))
+    await waitFor(() => expect(enrolledWithin).toBe(false))
   })
 })

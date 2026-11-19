@@ -73,7 +73,7 @@ export function usePathwaySelector(patientID?: string) {
     null,
   )
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-  const [withinPrincipal, setWithinPrincipal] = useState(false)
+  const [withinPrincipal, setWithinPrincipal] = useState(true)
 
   const templateOf = useCallback(
     (tag: string) => (pathwayTemplates ?? []).find((t) => t.mainTag === tag),
@@ -206,7 +206,7 @@ export function usePathwaySelector(patientID?: string) {
     setAddedPathways([])
     setExpandedPathwayId(null)
     setDraggedIndex(null)
-    setWithinPrincipal(false)
+    setWithinPrincipal(true)
   }, [])
 
   return {
