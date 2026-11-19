@@ -303,3 +303,28 @@ describe('liste des patients, filtre des erreurs', () => {
     expect(await screen.findByText('1 résultat')).toBeInTheDocument()
   })
 })
+
+describe('liste des patients, recherche mémorisée', () => {
+  it('retrouve la recherche sauvée et sauve la nouvelle', async () => {
+    localStorage.clear()
+    localStorage.setItem(
+      'patient/filters/s1',
+      JSON.stringify({ search: 'alp' }),
+    )
+    monterAvecEchecPuisSucces()
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Réessayer' }),
+    )
+
+    expect(await screen.findByText('1 résultat')).toBeInTheDocument()
+    const champ = screen.getByPlaceholderText('Nom, prénom...')
+    expect(champ).toHaveValue('alp')
+
+    await userEvent.clear(champ)
+    await userEvent.type(champ, 'bet')
+
+    expect(
+      JSON.parse(localStorage.getItem('patient/filters/s1') ?? '{}'),
+    ).toMatchObject({ search: 'bet' })
+  })
+})

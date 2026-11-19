@@ -77,12 +77,16 @@ function PatientList() {
     refetch: refetchCategories,
   } = useServiceFieldCategoriesQuery()
   const canReadClinical = useCan('clinical:read')
-  const [searchTerm, setSearchTerm] = useState('')
   const [storedFilters] = useState(() =>
-    safeParse<{ status?: string; tags?: string[]; errorsOnly?: boolean }>(
-      localStorage.getItem(filtersStorageKey(serviceId)),
-      {},
-    ),
+    safeParse<{
+      status?: string
+      tags?: string[]
+      errorsOnly?: boolean
+      search?: string
+    }>(localStorage.getItem(filtersStorageKey(serviceId)), {}),
+  )
+  const [searchTerm, setSearchTerm] = useState(
+    typeof storedFilters.search === 'string' ? storedFilters.search : '',
   )
   const [selectedTags, setSelectedTags] = useState<string[]>(
     Array.isArray(storedFilters.tags) ? storedFilters.tags : [],
@@ -102,9 +106,14 @@ function PatientList() {
   useEffect(() => {
     localStorage.setItem(
       filtersStorageKey(serviceId),
-      JSON.stringify({ status, tags: selectedTags, errorsOnly }),
+      JSON.stringify({
+        status,
+        tags: selectedTags,
+        errorsOnly,
+        search: searchTerm,
+      }),
     )
-  }, [serviceId, status, selectedTags, errorsOnly])
+  }, [serviceId, status, selectedTags, errorsOnly, searchTerm])
 
   const handleRedirectPatient = useCallback(
     async (patientID: string) => {
