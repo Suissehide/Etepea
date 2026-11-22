@@ -18,7 +18,8 @@ function SoignantFilterSection({
 }: SoignantFilterSectionProps) {
   useSoignantQueries()
 
-  const soignants = useSoignantStore((state) => state.soignants)
+  const tous = useSoignantStore((state) => state.soignants)
+  const soignants = tous.filter((s) => !s.hidden)
   const toggleSoignant = useSoignantStore((state) => state.toggleSoignant)
   const selectAllSoignants = useSoignantStore(
     (state) => state.selectAllSoignants,
@@ -26,7 +27,7 @@ function SoignantFilterSection({
   const unselectSoignant = useSoignantStore((state) => state.unselectSoignant)
   const selectedSoignantIDs = useSoignantStore(
     (state) => state.selectedSoignantIDs,
-  )
+  ).filter((id) => soignants.some((s) => s.id === id))
 
   return (
     <>
@@ -46,7 +47,7 @@ function SoignantFilterSection({
             ) : (
               <button
                 type="button"
-                onClick={() => selectAllSoignants()}
+                onClick={() => selectAllSoignants(soignants.map((s) => s.id))}
                 className={selectionPillClass}
               >
                 <CheckCheck className="w-3 h-3" />

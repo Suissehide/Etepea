@@ -20,6 +20,7 @@ type SoignantColumnOptions = {
   onRestore: (id: string) => void
   onDeleteForever: (id: string) => void
   onToggleActive: (id: string, inactive: boolean) => void
+  onToggleHidden: (id: string, hidden: boolean) => void
   // Les archives se consultent dans la meme table : seules les actions
   // changent, un archive ne se reedite pas.
   archived: boolean
@@ -37,6 +38,7 @@ export const getSoignantColumns = ({
   onRestore,
   onDeleteForever,
   onToggleActive,
+  onToggleHidden,
   archived,
   thematics,
   thematicOptions,
@@ -90,6 +92,27 @@ export const getSoignantColumns = ({
               soignant.inactive
                 ? 'Inactif : absent de l’Agenda, du tableau de bord et des formulaires'
                 : 'Actif'
+            }
+          />
+        )
+      },
+    }),
+    columnHelper.display({
+      id: 'masque',
+      header: 'Masqué',
+      size: 80,
+      cell: ({ row }) => {
+        const soignant = row.original
+        return (
+          <Switch
+            checked={!!soignant.hidden}
+            disabled={!canManage || archived || soignant.inactive}
+            onCheckedChange={(checked) => onToggleHidden(soignant.id, checked)}
+            aria-label={`${soignant.name} masqué`}
+            title={
+              soignant.hidden
+                ? 'Masqué : absent de l’Agenda et du tableau de bord, toujours sélectionnable dans les formulaires'
+                : 'Visible'
             }
           />
         )

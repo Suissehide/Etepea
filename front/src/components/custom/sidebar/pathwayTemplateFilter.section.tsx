@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { hexToRGBA } from '../../../libs/color.ts'
 import { usePathwayTemplateQueries } from '../../../queries/usePathwayTemplate.ts'
 import { useDashboardFilterStore } from '../../../store/useDashboardFilterStore.ts'
+import { NO_PATHWAY_COLOR, NO_PATHWAY_KEY } from '../planning/pathwayFilter.tsx'
 import { selectionPillClass } from './sidebarFilter.styles.ts'
 
 interface PathwayTemplateFilterSectionProps {
@@ -33,6 +34,10 @@ function PathwayTemplateFilterSection({
   )
 
   const templates = pathwayTemplates ?? []
+  const items = [
+    { id: NO_PATHWAY_KEY, name: 'Hors parcours', color: NO_PATHWAY_COLOR },
+    ...templates,
+  ]
 
   return (
     <>
@@ -53,7 +58,7 @@ function PathwayTemplateFilterSection({
               <button
                 type="button"
                 onClick={() =>
-                  selectAllPathwayTemplates(templates.map((t) => t.id))
+                  selectAllPathwayTemplates(items.map((t) => t.id))
                 }
                 className={selectionPillClass}
               >
@@ -71,7 +76,7 @@ function PathwayTemplateFilterSection({
         </div>
       ) : (
         <ul className="mx-2 px-2 py-2 bg-sidebar flex-1 flex flex-col min-h-0 overflow-y-auto rounded-lg [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {templates.map((pathwayTemplate) => {
+          {items.map((pathwayTemplate) => {
             const isSelected = selectedPathwayTemplateIDs.includes(
               pathwayTemplate.id,
             )

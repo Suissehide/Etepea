@@ -85,8 +85,10 @@ function filterSlotsByPathwayTemplates(slots: Slot[], templateIDs: string[]) {
   }
   return slots.filter((slot) => {
     const templateID =
-      slot.pathway?.template?.id ?? slot.pathway?.pathwayTemplateID
-    return !!templateID && templateIDs.includes(templateID)
+      slot.pathway?.template?.id ??
+      slot.pathway?.pathwayTemplateID ??
+      NO_PATHWAY_KEY
+    return templateIDs.includes(templateID)
   })
 }
 
@@ -109,8 +111,13 @@ function Dashboard() {
 
   const queryClient = useQueryClient()
   const [openEventId, setOpenEventId] = useState('')
-  const selectedIDs = useSoignantStore((state) => state.selectedSoignantIDs)
+  const selection = useSoignantStore((state) => state.selectedSoignantIDs)
   const soignants = useSoignantStore((state) => state.soignants)
+  // Un soignant masqué reste dans la sélection mémorisée mais ne filtre plus rien.
+  const selectedIDs = useMemo(
+    () => selection.filter((id) => !soignants.find((s) => s.id === id)?.hidden),
+    [selection, soignants],
+  )
   const unselectSoignant = useSoignantStore((state) => state.unselectSoignant)
   const savedDate = usePlanningStore((state) => state.viewStart)
   const selectedSoignants = soignants.filter((s) => selectedIDs.includes(s.id))
@@ -126,14 +133,15 @@ function Dashboard() {
   // pour qu'effacer la sélection reste possible.
   const preselected = useRef(false)
   useEffect(() => {
-    if (preselected.current || !mySoignantId) {
+    if (preselected.current || !mySoignantId || soignants.length === 0) {
       return
     }
     preselected.current = true
-    if (selectedIDs.length === 0) {
+    const masque = soignants.find((s) => s.id === mySoignantId)?.hidden
+    if (selectedIDs.length === 0 && !masque) {
       toggleSoignant(mySoignantId)
     }
-  }, [mySoignantId, selectedIDs.length, toggleSoignant])
+  }, [mySoignantId, selectedIDs.length, toggleSoignant, soignants])
 
   const mode = useDashboardFilterStore((state) => state.mode)
   const selectedPathwayTemplateIDs = useDashboardFilterStore(
@@ -204,12 +212,11 @@ function Dashboard() {
     }
     if (mode === 'pathway' && selectedPathwayTemplateIDs.length > 0) {
       return {
-        initialExcludedPathwayIds: new Set([
-          NO_PATHWAY_KEY,
-          ...(pathwayTemplates ?? [])
-            .filter((t) => !selectedPathwayTemplateIDs.includes(t.id))
-            .map((t) => t.id),
-        ]),
+        initialExcludedPathwayIds: new Set(
+          [NO_PATHWAY_KEY, ...(pathwayTemplates ?? []).map((t) => t.id)].filter(
+            (id) => !selectedPathwayTemplateIDs.includes(id),
+          ),
+        ),
       }
     }
     return {}
@@ -353,7 +360,12 @@ function Dashboard() {
       Icon: CalendarRange,
     },
     pathway: {
-      labels: selectedPathwayTemplates.map((t) => t.name),
+      labels: [
+        ...(selectedPathwayTemplateIDs.includes(NO_PATHWAY_KEY)
+          ? ['Hors parcours']
+          : []),
+        ...selectedPathwayTemplates.map((t) => t.name),
+      ],
       emptyLabel: 'Sélectionnez un parcours',
       clearSelection: unselectPathwayTemplates,
       Icon: RouteIcon,

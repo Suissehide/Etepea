@@ -343,6 +343,8 @@ model Soignant {
   archivedAt DateTime?
   // MDS-76 : décoché « Actif », retiré de l'Agenda, du tableau de bord et des formulaires.
   inactive   Boolean   @default(false)
+  // Masqué : absent de l'Agenda et des filtres du tableau de bord, mais toujours sélectionnable.
+  hidden     Boolean   @default(false)
 
   slotTemplateLinks  SlotTemplateSoignant[]
   thematicLinks      SoignantThematic[]

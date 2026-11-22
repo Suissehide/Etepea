@@ -1,4 +1,5 @@
 import { useStore } from '@tanstack/react-form'
+import { useNavigate } from '@tanstack/react-router'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   ArrowLeft,
@@ -34,6 +35,7 @@ import { usePathwayTemplateQueries } from '../../../queries/usePathwayTemplate.t
 import { usePatientQueries } from '../../../queries/usePatient.tsx'
 import { useSlotsInRangeQuery } from '../../../queries/useSlot.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
+import { useAuthStore } from '../../../store/useAuthStore.ts'
 import type { Appointment } from '../../../types/appointment.ts'
 import type { Slot } from '../../../types/slot.ts'
 import { Button } from '../../ui/button.tsx'
@@ -1031,6 +1033,7 @@ function AddPatientToSlotContent({
   } | null>(null)
 
   const { toast } = useToast()
+  const navigate = useNavigate()
   const { createAppointment, updateAppointment } = useAppointmentMutations()
 
   // Seuls les créneaux à venir à partir de la date de recherche sont proposés.
@@ -1228,8 +1231,21 @@ function AddPatientToSlotContent({
     }
 
     const booked = () => {
-      onBooked?.(dayjs.utc(selected.slot.startDate).startOf('day'))
+      const day = dayjs.utc(selected.slot.startDate).startOf('day')
       onClose()
+      if (onBooked) {
+        onBooked(day)
+        return
+      }
+      const { establishmentId, serviceId } =
+        useAuthStore.getState().context ?? {}
+      if (establishmentId && serviceId) {
+        navigate({
+          to: '/e/$establishmentId/s/$serviceId/agenda',
+          params: { establishmentId, serviceId },
+          search: { date: day.format('YYYY-MM-DD') },
+        })
+      }
     }
 
     if (selected.joinableAppointmentID) {

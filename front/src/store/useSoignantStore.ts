@@ -16,7 +16,7 @@ interface SoignantActions {
   clearSoignants: () => void
 
   toggleSoignant: (id: string) => void
-  selectAllSoignants: () => void
+  selectAllSoignants: (ids: string[]) => void
   unselectSoignant: () => void
 
   reset: () => void
@@ -62,10 +62,7 @@ export const useSoignantStore = create<SoignantState & SoignantActions>()(
               )
             : [...state.selectedSoignantIDs, id],
         })),
-      selectAllSoignants: () =>
-        set((state) => ({
-          selectedSoignantIDs: state.soignants.map((s) => s.id),
-        })),
+      selectAllSoignants: (ids) => set({ selectedSoignantIDs: ids }),
       unselectSoignant: () => set({ selectedSoignantIDs: [] }),
 
       // Appelee au changement de contexte. `soignants` est un miroir en
