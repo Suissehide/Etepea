@@ -111,8 +111,13 @@ function Dashboard() {
 
   const queryClient = useQueryClient()
   const [openEventId, setOpenEventId] = useState('')
-  const selectedIDs = useSoignantStore((state) => state.selectedSoignantIDs)
+  const selection = useSoignantStore((state) => state.selectedSoignantIDs)
   const soignants = useSoignantStore((state) => state.soignants)
+  // Un soignant masqué reste dans la sélection mémorisée mais ne filtre plus rien.
+  const selectedIDs = useMemo(
+    () => selection.filter((id) => !soignants.find((s) => s.id === id)?.hidden),
+    [selection, soignants],
+  )
   const unselectSoignant = useSoignantStore((state) => state.unselectSoignant)
   const savedDate = usePlanningStore((state) => state.viewStart)
   const selectedSoignants = soignants.filter((s) => selectedIDs.includes(s.id))

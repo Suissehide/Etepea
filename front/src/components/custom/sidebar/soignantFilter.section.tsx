@@ -27,7 +27,7 @@ function SoignantFilterSection({
   const unselectSoignant = useSoignantStore((state) => state.unselectSoignant)
   const selectedSoignantIDs = useSoignantStore(
     (state) => state.selectedSoignantIDs,
-  )
+  ).filter((id) => soignants.some((s) => s.id === id))
 
   return (
     <>
