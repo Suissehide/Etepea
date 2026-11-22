@@ -36,6 +36,7 @@ import { usePatientQueries } from '../../../queries/usePatient.tsx'
 import { useSlotsInRangeQuery } from '../../../queries/useSlot.ts'
 import { useThematicQueries } from '../../../queries/useThematic.ts'
 import { useAuthStore } from '../../../store/useAuthStore.ts'
+import { useSoignantStore } from '../../../store/useSoignantStore.ts'
 import type { Appointment } from '../../../types/appointment.ts'
 import type { Slot } from '../../../types/slot.ts'
 import { Button } from '../../ui/button.tsx'
@@ -1232,6 +1233,16 @@ function AddPatientToSlotContent({
 
     const booked = () => {
       const day = dayjs.utc(selected.slot.startDate).startOf('day')
+      // Le filtre de soignants de l'agenda masquerait le rendez-vous : on y ajoute ceux du créneau.
+      const { selectedSoignantIDs, selectAllSoignants } =
+        useSoignantStore.getState()
+      if (selectedSoignantIDs.length > 0) {
+        const slotSoignantIDs =
+          selected.slot.slotTemplate?.soignants?.map((s) => s.id) ?? []
+        selectAllSoignants([
+          ...new Set([...selectedSoignantIDs, ...slotSoignantIDs]),
+        ])
+      }
       onClose()
       if (onBooked) {
         onBooked(day)
