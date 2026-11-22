@@ -700,7 +700,54 @@ describe('PatientDomain – parcours prérequis', () => {
 
     expect(created).toHaveLength(1)
     expect(result.failedEnrollments).toHaveLength(1)
-    expect(result.failedEnrollments[0]?.reason).toMatch(/prérequis/)
+    expect(result.failedEnrollments[0]?.reason).toMatch(/précédents/)
+  })
+})
+
+describe('PatientDomain – même parcours ajouté deux fois', () => {
+  it('place le second exemplaire après la fin du premier', async () => {
+    const { domain, created } = buildDomain()
+
+    const result = await domain.enrollExistingPatientInPathways(
+      {
+        patientID: 'patient-1',
+        startDate: monday(0),
+        pathways: [
+          { tag: 'INDIV', timeOfDay: 'ALL_DAY', duration: 30 },
+          { tag: 'INDIV', timeOfDay: 'ALL_DAY', duration: 30 },
+        ],
+      },
+      'user-1',
+    )
+
+    expect(result.failedEnrollments).toEqual([])
+    expect(created.map((a) => a.slotID)).toEqual([
+      'slot-indiv-mon',
+      'slot-indiv-tue',
+    ])
+  })
+
+  it('l aperçu part lui aussi après le premier exemplaire', async () => {
+    const { domain, container } = buildDomain()
+    const at = (date: number, hour: number) => new Date(2026, 11, date, hour)
+    const cycle = (id: string, date: number) => ({
+      ...buildPathway(id, at(date, 10), [
+        buildSlot(`${id}-0`, at(date, 10), at(date, 11), false, {}),
+      ]),
+      templateID: 'tpl-group',
+    })
+    container.pathwayRepository.findByTemplateTagWithFutureSlots.mockResolvedValue(
+      [cycle('pw-a', 3), cycle('pw-b', 10)],
+    )
+
+    const from = at(1, 0)
+    const [first, second] = await domain.previewEnrollments([
+      { tag: 'GROUPE', timeOfDay: 'ALL_DAY', startDate: from },
+      { tag: 'GROUPE', timeOfDay: 'ALL_DAY', startDate: from },
+    ])
+
+    expect(first?.startDate).toEqual(at(3, 10))
+    expect(second?.startDate).toEqual(at(10, 10))
   })
 })
 

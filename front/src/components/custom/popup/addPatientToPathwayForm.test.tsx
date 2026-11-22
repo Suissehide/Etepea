@@ -145,7 +145,7 @@ afterEach(() => {
 })
 
 describe('AddPatientToPathwayForm', () => {
-  it('ajoute le parcours choisi sans autre clic, et le retire des options', async () => {
+  it('ajoute le parcours choisi sans autre clic, et permet de le rajouter', async () => {
     await renderForm()
     await addPathway('RI')
 
@@ -154,15 +154,15 @@ describe('AddPatientToPathwayForm', () => {
     await userEvent.click(
       screen.getByRole('button', { name: /Ajouter un parcours principal…/ }),
     )
-    expect(
-      screen.queryByRole('button', { name: /^RI/ }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^RI/ })).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /^STRESS/ }),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^PSY/ })).toHaveTextContent(
       'Individuel',
     )
+    await userEvent.click(screen.getByRole('button', { name: /^RI/ }))
+    expect(rows()).toHaveLength(2)
   })
 
   it('affiche le départ ou le blocage de chaque parcours et n inscrit que les planifiables', async () => {

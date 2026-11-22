@@ -85,9 +85,8 @@ export function usePathwaySelector(patientID?: string) {
     [pathwayTemplates],
   )
 
-  const tagOptions = allTags
-    .filter((tag) => !addedPathways.some((p) => p.tag === tag))
-    .map((tag) => {
+  // Un même parcours peut être ajouté plusieurs fois : chaque exemplaire part après le précédent.
+  const tagOptions = allTags.map((tag) => {
       const template = templateOf(tag)
       return {
         value: tag,
@@ -588,7 +587,7 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
               ? 'Ajouter un parcours optionnel…'
               : 'Ajouter un parcours principal…'
           }
-          emptyMessage="Tous les parcours sont ajoutés"
+          emptyMessage="Aucun parcours"
           value=""
           options={options}
           onValueChange={(tag) => tag && handleAddTags([tag])}

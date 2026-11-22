@@ -665,7 +665,10 @@ class PatientDomain implements PatientDomainInterface {
       }
     }
 
-    const prerequisiteIDs = matchingTemplate?.prerequisiteIDs ?? []
+    // Le parcours lui-même compte : un même parcours ajouté deux fois part après le précédent.
+    const prerequisiteIDs = matchingTemplate
+      ? [...matchingTemplate.prerequisiteIDs, matchingTemplate.id]
+      : []
     const recordedEnd =
       patientID && prerequisiteIDs.length
         ? await this.appointmentRepository.findLastEndDateForPatient(
@@ -688,7 +691,7 @@ class PatientDomain implements PatientDomainInterface {
       return {
         failure: {
           slotTemplate: { id: enrollment.tag, name: enrollment.tag },
-          reason: `Aucun parcours "${enrollment.tag}" ne commence après la fin des parcours prérequis (${dayjs(notBefore).format('DD/MM/YYYY HH:mm')})`,
+          reason: `Aucun parcours "${enrollment.tag}" ne commence après la fin des parcours précédents (${dayjs(notBefore).format('DD/MM/YYYY HH:mm')})`,
         },
       }
     }
