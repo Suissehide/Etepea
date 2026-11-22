@@ -85,8 +85,10 @@ function filterSlotsByPathwayTemplates(slots: Slot[], templateIDs: string[]) {
   }
   return slots.filter((slot) => {
     const templateID =
-      slot.pathway?.template?.id ?? slot.pathway?.pathwayTemplateID
-    return !!templateID && templateIDs.includes(templateID)
+      slot.pathway?.template?.id ??
+      slot.pathway?.pathwayTemplateID ??
+      NO_PATHWAY_KEY
+    return templateIDs.includes(templateID)
   })
 }
 
@@ -205,12 +207,11 @@ function Dashboard() {
     }
     if (mode === 'pathway' && selectedPathwayTemplateIDs.length > 0) {
       return {
-        initialExcludedPathwayIds: new Set([
-          NO_PATHWAY_KEY,
-          ...(pathwayTemplates ?? [])
-            .filter((t) => !selectedPathwayTemplateIDs.includes(t.id))
-            .map((t) => t.id),
-        ]),
+        initialExcludedPathwayIds: new Set(
+          [NO_PATHWAY_KEY, ...(pathwayTemplates ?? []).map((t) => t.id)].filter(
+            (id) => !selectedPathwayTemplateIDs.includes(id),
+          ),
+        ),
       }
     }
     return {}
@@ -354,7 +355,12 @@ function Dashboard() {
       Icon: CalendarRange,
     },
     pathway: {
-      labels: selectedPathwayTemplates.map((t) => t.name),
+      labels: [
+        ...(selectedPathwayTemplateIDs.includes(NO_PATHWAY_KEY)
+          ? ['Hors parcours']
+          : []),
+        ...selectedPathwayTemplates.map((t) => t.name),
+      ],
       emptyLabel: 'Sélectionnez un parcours',
       clearSelection: unselectPathwayTemplates,
       Icon: RouteIcon,
