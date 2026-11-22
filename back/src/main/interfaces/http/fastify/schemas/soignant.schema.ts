@@ -18,6 +18,7 @@ export const soignantResponseSchema = z.object({
 // Le drapeau n'est exposé que par les routes du référentiel, pas dans les créneaux.
 export const soignantDetailResponseSchema = soignantResponseSchema.extend({
   inactive: z.boolean(),
+  hidden: z.boolean(),
 })
 
 export const soignantsResponseSchema = z.array(soignantDetailResponseSchema)
@@ -41,6 +42,7 @@ export const updateSoignantByIdSchema = {
   body: soignantSchema.partial().extend({
     archived: z.boolean().optional(),
     inactive: z.boolean().optional(),
+    hidden: z.boolean().optional(),
   }),
 }
 

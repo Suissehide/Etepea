@@ -75,6 +75,7 @@ function SoignantSettings() {
         onDeleteForever: (id) => setPurgeTargetId(id),
         onToggleActive: (id, inactive) =>
           updateSoignant.mutate({ id, inactive }),
+        onToggleHidden: (id, hidden) => updateSoignant.mutate({ id, hidden }),
         archived: showArchived,
         thematics: thematics ?? [],
         thematicOptions,

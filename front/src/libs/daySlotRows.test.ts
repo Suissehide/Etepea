@@ -161,6 +161,14 @@ describe('groupDaySlotRowsBySoignant', () => {
     ])
   })
 
+  it('un soignant masqué perd son tableau comme un inactif', () => {
+    const masque = { ...diet, inactive: false, hidden: true }
+    expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, masque]))).toEqual([
+      ['kine', ['kine', 'partage']],
+      [null, ['diet', 'personne']],
+    ])
+  })
+
   it('sans drapeau, chaque soignant garde son tableau', () => {
     const visible = { ...diet, inactive: false }
     expect(ids(groupDaySlotRowsBySoignant(rows, [], [kine, visible]))).toEqual([

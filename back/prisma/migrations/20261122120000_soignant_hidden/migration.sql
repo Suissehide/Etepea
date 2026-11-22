@@ -1,0 +1,1 @@
+ALTER TABLE "Soignant" ADD COLUMN "hidden" BOOLEAN NOT NULL DEFAULT false;

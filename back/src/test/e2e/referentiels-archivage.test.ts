@@ -164,6 +164,24 @@ describe('archivage des salles, soignants et modeles de diagnostic', () => {
     expect(liste.find((s) => s.id === soignant.id)?.inactive).toBe(true)
   })
 
+  it('masquer un soignant le garde dans la liste, drapeau hidden leve', async () => {
+    const soignant = await testDb.soignant.create({
+      data: { name: 'Psychologue', serviceId, establishmentId },
+    })
+    const res = await testApp.app.inject({
+      method: 'PATCH',
+      url: url(`/soignant/${soignant.id}`),
+      cookies,
+      payload: { hidden: true } as never,
+    })
+    expect(res.json()).toMatchObject({ hidden: true, inactive: false })
+    const liste = (await get('/soignant')).json() as {
+      id: string
+      hidden: boolean
+    }[]
+    expect(liste.find((s) => s.id === soignant.id)?.hidden).toBe(true)
+  })
+
   it('archiver un modele de diagnostic laisse les diagnostics remplis le porter', async () => {
     const modele = await testDb.diagnosticEducatifTemplate.create({
       data: {

@@ -126,14 +126,15 @@ function Dashboard() {
   // pour qu'effacer la sélection reste possible.
   const preselected = useRef(false)
   useEffect(() => {
-    if (preselected.current || !mySoignantId) {
+    if (preselected.current || !mySoignantId || soignants.length === 0) {
       return
     }
     preselected.current = true
-    if (selectedIDs.length === 0) {
+    const masque = soignants.find((s) => s.id === mySoignantId)?.hidden
+    if (selectedIDs.length === 0 && !masque) {
       toggleSoignant(mySoignantId)
     }
-  }, [mySoignantId, selectedIDs.length, toggleSoignant])
+  }, [mySoignantId, selectedIDs.length, toggleSoignant, soignants])
 
   const mode = useDashboardFilterStore((state) => state.mode)
   const selectedPathwayTemplateIDs = useDashboardFilterStore(
