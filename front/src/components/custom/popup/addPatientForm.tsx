@@ -66,6 +66,7 @@ function AddPatientForm({ trigger }: AddPatientFormProps) {
         } satisfies CreatePatientParams,
         pathways: pathwayState.enrollments,
         optionalsWithinPrincipal: pathwayState.withinPrincipal,
+        optionalsAllowGaps: pathwayState.allowGaps,
       })
 
       setOpen(false)

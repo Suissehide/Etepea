@@ -177,13 +177,19 @@ export const PatientApi = {
     pathways: PathwayEnrollment[],
     patientID?: string,
     optionalsWithinPrincipal?: boolean,
+    optionalsAllowGaps?: boolean,
   ): Promise<EnrollmentPreview[]> => {
     const response = await fetchWithAuth(
       `${tenantApiUrl()}/patient/enroll/preview`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patientID, pathways, optionalsWithinPrincipal }),
+        body: JSON.stringify({
+          patientID,
+          pathways,
+          optionalsWithinPrincipal,
+          optionalsAllowGaps,
+        }),
       },
     )
     if (!response.ok) {

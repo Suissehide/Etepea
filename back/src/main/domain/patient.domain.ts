@@ -8,7 +8,6 @@ import {
   timeOfDaySchema,
 } from '../interfaces/http/fastify/schemas/patient.schema'
 import type { IocContainer } from '../types/application/ioc'
-import type { AppointmentPatientWithAppointmentDomain } from '../types/domain/appointmentPatient.domain.interface'
 import type { NotificationDispatcherInterface } from '../types/domain/notification-dispatcher.interface'
 import type {
   EnrollExistingPatientInPathwaysInput,
@@ -55,6 +54,7 @@ import type { TenantContextInterface } from '../types/utils/tenant-context'
 import type { AppEventBus } from '../utils/app-event-bus'
 import { hasPermission } from '../utils/permissions'
 import { asValues } from '../utils/service-field-types'
+import { byGapThenDate, gapRank, type Interval } from '../utils/slot-gap'
 
 dayjs.extend(utc)
 
@@ -65,6 +65,8 @@ const formatDate = (value: Date | string | null | undefined): string =>
 type TemplateFlags = { id: string; mainTag: string; optional: boolean }
 type PrincipalSpan = { start?: Date; end?: Date }
 type SlotDuration = (slot: SlotWithTemplateAndAppointmentsRepo) => number
+type PatientAppointments = { appointment: Interval }[]
+const GAP_SEARCH_DAYS = 14
 // Les deux boucles d'inscription (processEnrollments, enrollInSlot) attrapent toute erreur
 // levee par un depot pour la transformer en echec partiel plutot qu'en 500 : la reponse
 // (`failedEnrollments[].reason`, affichee a l'ecran par front/src/queries/usePatient.tsx) et le
@@ -480,6 +482,7 @@ class PatientDomain implements PatientDomainInterface {
       enrollmentData.startDate,
       userID,
       enrollmentData.optionalsWithinPrincipal,
+      enrollmentData.optionalsAllowGaps,
     )
   }
 
@@ -496,6 +499,7 @@ class PatientDomain implements PatientDomainInterface {
       enrollmentData.startDate,
       userID,
       enrollmentData.optionalsWithinPrincipal,
+      enrollmentData.optionalsAllowGaps,
     )
   }
 
@@ -535,7 +539,7 @@ class PatientDomain implements PatientDomainInterface {
   private selectValidPathway(
     pathways: PathwayWithSlotsRepo[],
     enrollment: PathwayEnrollmentInput,
-    patientAppointments: AppointmentPatientWithAppointmentDomain[],
+    patientAppointments: PatientAppointments,
     thematicDuration: SlotDuration,
     firstAppointmentOnly: boolean,
     startDate: Date,
@@ -572,6 +576,101 @@ class PatientDomain implements PatientDomainInterface {
     )
   }
 
+  // Créneau ramené à la tranche qu'occupera le rendez-vous, avec son rang.
+  private placed(
+    slot: SlotWithTemplateAndAppointmentsRepo,
+    patientAppointments: PatientAppointments,
+    duration: SlotDuration,
+  ) {
+    const appointments = patientAppointments.map((ap) => ap.appointment)
+    const windows = slot.slotTemplate.isIndividual
+      ? this.freeWindows(
+          slot.startDate,
+          slot.endDate,
+          this.busyIntervals(slot, patientAppointments),
+          duration(slot),
+        )
+      : [{ startDate: slot.startDate, endDate: slot.endDate }]
+    const [best] = windows
+      .map((w) => ({ ...w, rank: gapRank(w, appointments) }))
+      .sort(byGapThenDate)
+    return { ...slot, rank: 3 as number, ...best }
+  }
+
+  private selectPathway(
+    optional: boolean,
+    allowGaps: boolean,
+    bounded: boolean,
+    ...choice: Parameters<PatientDomain['selectValidPathway']>
+  ) {
+    return optional && !allowGaps
+      ? this.selectWithoutGap(...choice, bounded)
+      : this.selectValidPathway(...choice)
+  }
+
+  // Parcours réduit au choix qui ne laisse pas de trou ; 'gap' s'il ne reste que des trous.
+  private selectWithoutGap(
+    pathways: PathwayWithSlotsRepo[],
+    enrollment: PathwayEnrollmentInput,
+    patientAppointments: PatientAppointments,
+    thematicDuration: SlotDuration,
+    firstAppointmentOnly: boolean,
+    startDate: Date,
+    bounded: boolean,
+  ): PathwayWithSlotsRepo | 'gap' | undefined {
+    const startOfDay = new Date(startDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const available = (slot: SlotWithTemplateAndAppointmentsRepo) =>
+      this.isSlotAvailable(
+        slot,
+        enrollment.timeOfDay,
+        patientAppointments,
+        1,
+        thematicDuration,
+      )
+    const place = (slot: SlotWithTemplateAndAppointmentsRepo) =>
+      this.placed(slot, patientAppointments, thematicDuration)
+    const candidates = pathways.flatMap((pathway) => {
+      if (firstAppointmentOnly) {
+        return pathway.slots
+          .filter((s) => new Date(s.startDate) >= startOfDay && available(s))
+          .map(place)
+          .map((slot) => ({
+            pathway: { ...pathway, slots: [slot] },
+            rank: slot.rank,
+            startDate: slot.startDate,
+            endDate: slot.endDate,
+          }))
+      }
+      if (!pathway.slots.every(available)) {
+        return []
+      }
+      const slots = pathway.slots.map(place)
+      const first = slots.reduce((a, b) => (a.startDate < b.startDate ? a : b))
+      return [
+        {
+          pathway: { ...pathway, slots },
+          // Le pire créneau du cycle donne son rang au cycle.
+          rank: Math.max(...slots.map((s) => s.rank)),
+          startDate: first.startDate,
+          endDate: first.endDate,
+        },
+      ]
+    })
+    // ponytail: fenêtre fixe de 14 jours sans fin de parcours principal ; réglage par service si besoin.
+    const limit = bounded
+      ? Number.POSITIVE_INFINITY
+      : Math.min(...candidates.map((c) => new Date(c.startDate).getTime())) +
+        GAP_SEARCH_DAYS * 24 * 60 * 60 * 1000
+    const [best] = candidates
+      .filter((c) => new Date(c.startDate).getTime() <= limit)
+      .sort(byGapThenDate)
+    if (!best) {
+      return undefined
+    }
+    return best.rank === 3 ? 'gap' : best.pathway
+  }
+
   private async allThematics() {
     const [active, archived] = await Promise.all([
       this.thematicRepository.findAll(false),
@@ -590,11 +689,13 @@ class PatientDomain implements PatientDomainInterface {
   // `patientID` absent : patient pas encore créé, donc sans prérequis ni rendez-vous.
   private async findPathwayForTag(
     patientID: string | null,
-    patientAppointments: AppointmentPatientWithAppointmentDomain[],
+    patientAppointments: PatientAppointments,
     enrollment: PathwayEnrollmentInput,
     startDate: Date,
     // Optionnel borné : tous ses rendez-vous doivent finir avant cette date.
     notAfter: Date | null,
+    // Optionnel : faux, un créneau qui laisse un trou dans la journée est refusé.
+    allowGaps: boolean,
     // Aperçu : motif non exigé, et fins simulées des prérequis de la même demande (par templateID).
     preview?: { prerequisiteEnds: Map<string, Date> },
   ): Promise<
@@ -709,7 +810,10 @@ class PatientDomain implements PatientDomainInterface {
       }
     }
 
-    const validPathway = this.selectValidPathway(
+    const validPathway = this.selectPathway(
+      this.isOptional(enrollment, allTemplates),
+      allowGaps,
+      notAfter !== null,
       eligiblePathways,
       enrollment,
       patientAppointments,
@@ -717,6 +821,15 @@ class PatientDomain implements PatientDomainInterface {
       firstAppointmentOnly,
       startDate,
     )
+
+    if (validPathway === 'gap') {
+      return {
+        failure: {
+          slotTemplate: { id: enrollment.tag, name: enrollment.tag },
+          reason: `Échec d'inscription à traiter à la main : aucun créneau sans trou pour "${enrollment.tag}"`,
+        },
+      }
+    }
 
     if (!validPathway) {
       return {
@@ -737,6 +850,7 @@ class PatientDomain implements PatientDomainInterface {
     enrollment: PathwayEnrollmentInput,
     startDate: Date,
     notAfter: Date | null,
+    allowGaps: boolean,
   ): Promise<{
     enrollment?: EnrollmentResult['enrollments'][number]
     failure?: EnrollmentResult['failedEnrollments'][number]
@@ -747,6 +861,7 @@ class PatientDomain implements PatientDomainInterface {
       enrollment,
       startDate,
       notAfter,
+      allowGaps,
     )
     if ('failure' in found) {
       return { failure: found.failure }
@@ -774,9 +889,13 @@ class PatientDomain implements PatientDomainInterface {
     pathways: PathwayEnrollmentInput[],
     patientID?: string,
     optionalsWithinPrincipal = false,
+    optionalsAllowGaps = false,
   ): Promise<EnrollmentPreview[]> {
-    const appointments = patientID
-      ? (await this.patientRepository.findByID(patientID)).appointmentPatients
+    const appointments: PatientAppointments = patientID
+      ? [
+          ...(await this.patientRepository.findByID(patientID))
+            .appointmentPatients,
+        ]
       : []
     const templates = await this.pathwayTemplateRepository.findAll()
     const prerequisiteEnds = new Map<string, Date>()
@@ -806,6 +925,7 @@ class PatientDomain implements PatientDomainInterface {
         appointments,
         prerequisiteEnds,
         notAfter,
+        optionalsAllowGaps,
       )
       span = this.principalSpanAfter(enrollment, templates, span, [
         { startDate: preview.startDate, endDate: end },
@@ -899,9 +1019,10 @@ class PatientDomain implements PatientDomainInterface {
   private async previewEnrollment(
     enrollment: PathwayEnrollmentInput & { startDate: Date },
     patientID: string | null,
-    appointments: AppointmentPatientWithAppointmentDomain[],
+    appointments: PatientAppointments,
     prerequisiteEnds: Map<string, Date>,
     notAfter: Date | null,
+    allowGaps: boolean,
   ): Promise<{ preview: EnrollmentPreview; end?: Date }> {
     const found = await this.findPathwayForTag(
       patientID,
@@ -909,6 +1030,7 @@ class PatientDomain implements PatientDomainInterface {
       enrollment,
       enrollment.startDate,
       notAfter,
+      allowGaps,
       { prerequisiteEnds },
     ).catch((error) => {
       const { reason, logLine } = describeEnrollmentFailure(
@@ -948,6 +1070,8 @@ class PatientDomain implements PatientDomainInterface {
             )),
       )
     const taken = found.firstAppointmentOnly ? slots.slice(0, 1) : slots
+    // Les parcours suivants de la demande voient ces rendez-vous simulés.
+    appointments.push(...taken.map((appointment) => ({ appointment })))
     // ponytail: fin du créneau, pas du rendez-vous ; un créneau individuel peut finir un peu plus tard.
     const end = Math.max(
       ...taken.map((slot) => new Date(slot.endDate).getTime()),
@@ -1038,6 +1162,7 @@ class PatientDomain implements PatientDomainInterface {
     defaultStartDate: Date | undefined,
     userID: string,
     optionalsWithinPrincipal = false,
+    optionalsAllowGaps = false,
   ): Promise<EnrollmentResult> {
     // Point de passage unique de l'inscription en parcours (enrollPatientInPathways et
     // enrollExistingPatientInPathways y mènent toutes deux) : c'est donc ici, et nulle part
@@ -1084,6 +1209,7 @@ class PatientDomain implements PatientDomainInterface {
           enrollment,
           startDate,
           notAfter,
+          optionalsAllowGaps,
         )
         if (outcome.enrollment) {
           span = this.principalSpanAfter(
@@ -1152,7 +1278,7 @@ class PatientDomain implements PatientDomainInterface {
   private isSlotAvailable(
     slot: SlotWithTemplateAndAppointmentsRepo,
     timeOfDay: TimeOfDay,
-    patientAppointments: AppointmentPatientWithAppointmentDomain[],
+    patientAppointments: PatientAppointments,
     maxCapacity = 1,
     appointmentDuration: SlotDuration,
   ): boolean {
@@ -1210,7 +1336,7 @@ class PatientDomain implements PatientDomainInterface {
   private isPathwayAvailable(
     slots: SlotWithTemplateAndAppointmentsRepo[],
     timeOfDay: TimeOfDay,
-    patientAppointments: AppointmentPatientWithAppointmentDomain[],
+    patientAppointments: PatientAppointments,
     maxCapacity = 1,
     appointmentDuration: SlotDuration,
   ): boolean {
@@ -1411,7 +1537,7 @@ class PatientDomain implements PatientDomainInterface {
   // (parcours multiples, autres créneaux).
   private busyIntervals(
     slot: SlotWithTemplateAndAppointmentsRepo,
-    patientAppointments: AppointmentPatientWithAppointmentDomain[],
+    patientAppointments: PatientAppointments,
   ): { startDate: Date; endDate: Date }[] {
     return [
       ...slot.appointments,
@@ -1419,13 +1545,14 @@ class PatientDomain implements PatientDomainInterface {
     ]
   }
 
-  // Débuts possibles calés sur des tranches de la durée depuis le début du créneau : pas de trou entre deux rendez-vous.
-  private getNextAvailableAppointment(
+  // Tranches libres calées sur la durée depuis le début du créneau : pas de trou entre deux rendez-vous.
+  private freeWindows(
     slotStart: Date,
     slotEnd: Date,
-    existingAppointments: { startDate: Date; endDate: Date }[],
+    existingAppointments: Interval[],
     durationMinutes = 30,
-  ) {
+  ): Interval[] {
+    const windows: Interval[] = []
     const slotEndDayjs = dayjs(slotEnd)
     for (
       let start = dayjs(slotStart);
@@ -1439,10 +1566,16 @@ class PatientDomain implements PatientDomainInterface {
           end.isAfter(appointment.startDate),
       )
       if (!collides) {
-        return { startDate: start.toDate(), endDate: end.toDate() }
+        windows.push({ startDate: start.toDate(), endDate: end.toDate() })
       }
     }
-    return null
+    return windows
+  }
+
+  private getNextAvailableAppointment(
+    ...args: Parameters<PatientDomain['freeWindows']>
+  ) {
+    return this.freeWindows(...args)[0] ?? null
   }
 }
 
