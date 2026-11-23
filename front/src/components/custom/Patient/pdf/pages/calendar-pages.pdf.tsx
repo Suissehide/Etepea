@@ -1,6 +1,6 @@
 import { Line, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
 
-import { hexToRGBA, readableTint } from '../../../../../libs/color.ts'
+import { hexToRGBA } from '../../../../../libs/color.ts'
 import {
   buildTimeAxis,
   findGaps,
@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
   slotTime: {
     fontSize: SLOT_TIME_SIZE,
     fontFamily: 'Helvetica-Bold',
+    color: '#000000',
     textAlign: 'center',
   },
   slotThematic: {
@@ -360,12 +361,7 @@ function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
           },
         ]}
       >
-        <Text
-          style={[
-            styles.slotTime,
-            { color: readableTint(color, SLOT_BACKGROUND_ALPHA) },
-          ]}
-        >
+        <Text style={styles.slotTime}>
           {startOnly ? formatMinute(placed.start) : formatTimeRange(placed)}
         </Text>
         <Text style={[styles.slotThematic, { maxLines: thematicLines }]}>
