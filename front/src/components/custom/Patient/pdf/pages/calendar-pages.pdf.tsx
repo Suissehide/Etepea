@@ -318,9 +318,16 @@ function Hatch() {
 function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
   const top = axis.y(placed.start)
   const height = axis.y(placed.end) - top
-  // Au-delà d'une colonne, l'horaire passe sur deux lignes.
+  const timeLine = SLOT_TIME_SIZE * 1.2
+  // Au-delà d'une colonne, l'horaire passe sur deux lignes ; s'il n'y a plus
+  // la place de la thématique, seule l'heure de début reste.
+  const startOnly =
+    placed.laneCount > 1 &&
+    height - SLOT_CHROME < 2 * timeLine + SLOT_THEMATIC_LINE
   const free =
-    height - SLOT_CHROME - (placed.laneCount > 1 ? 2 : 1) * SLOT_TIME_SIZE * 1.2
+    height -
+    SLOT_CHROME -
+    (placed.laneCount > 1 && !startOnly ? 2 : 1) * timeLine
   const location = placed.slot.slotTemplate?.location?.name
   const color = placed.slot.pathway?.template?.color ?? DEFAULT_SLOT_COLOR
   const showLocation =
@@ -359,7 +366,7 @@ function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
             { color: readableTint(color, SLOT_BACKGROUND_ALPHA) },
           ]}
         >
-          {formatTimeRange(placed)}
+          {startOnly ? formatMinute(placed.start) : formatTimeRange(placed)}
         </Text>
         <Text style={[styles.slotThematic, { maxLines: thematicLines }]}>
           {placed.slot.slotTemplate?.thematic ?? ''}
