@@ -9,14 +9,9 @@ import { selectionPillClass } from './sidebarFilter.styles.ts'
 interface SoignantFilterSectionProps {
   /** Titre de la section : texte simple ou sélecteur de mode. */
   title: ReactNode
-  /** Bouton d'ajout facultatif, aligné à droite du titre. */
-  addAction?: ReactNode
 }
 
-function SoignantFilterSection({
-  title,
-  addAction,
-}: SoignantFilterSectionProps) {
+function SoignantFilterSection({ title }: SoignantFilterSectionProps) {
   useSoignantQueries()
 
   const tous = useSoignantStore((state) => state.soignants)
@@ -59,7 +54,6 @@ function SoignantFilterSection({
               </button>
             ))}
         </div>
-        {addAction}
       </div>
       <ul className="mx-2 px-2 py-2 bg-sidebar flex-1 flex flex-col min-h-0 overflow-y-auto rounded-lg [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {soignants.map((soignant) => {
