@@ -27,6 +27,10 @@ export const useLocationQueries = (archived = false) => {
   } = useQuery({
     queryKey: [LOCATION.GET_ALL, archived],
     queryFn: () => LocationApi.getAll(archived),
+    select: (data) =>
+      [...data].sort((a, b) =>
+        a.name.localeCompare(b.name, 'fr', { numeric: true }),
+      ),
     retry: 0,
   })
 

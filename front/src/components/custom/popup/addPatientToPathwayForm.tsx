@@ -33,6 +33,7 @@ export function AddPatientToPathwayForm({
         patientID: patient.id,
         pathways: pathwayState.plannableEnrollments,
         optionalsWithinPrincipal: pathwayState.withinPrincipal,
+        optionalsAllowGaps: pathwayState.allowGaps,
       },
       { onSuccess: () => setOpen(false) },
     )

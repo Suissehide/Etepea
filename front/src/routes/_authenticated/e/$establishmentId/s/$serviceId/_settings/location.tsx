@@ -48,9 +48,9 @@ function LocationSettings() {
 
   const sortedLocations = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
-    return (locations ?? [])
-      .filter((x) => !term || x.name.toLowerCase().includes(term))
-      .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    return (locations ?? []).filter(
+      (x) => !term || x.name.toLowerCase().includes(term),
+    )
   }, [locations, searchTerm])
 
   const columns = useMemo(

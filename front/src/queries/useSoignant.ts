@@ -34,6 +34,10 @@ export const useSoignantQueries = (archived = false) => {
   } = useQuery({
     queryKey: [SOIGNANT.GET_ALL, archived],
     queryFn: getAllSoignants,
+    select: (data) =>
+      [...data].sort((a, b) =>
+        a.name.localeCompare(b.name, 'fr', { numeric: true }),
+      ),
     retry: 0,
   })
 
