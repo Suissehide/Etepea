@@ -15,9 +15,7 @@ import Calendar, {
   type CalendarEvent,
 } from '@/components/custom/Calendar/calendar.tsx'
 import { NO_PATHWAY_KEY } from '@/components/custom/planning/pathwayFilter.tsx'
-import PlanningExportModal, {
-  NO_SOIGNANT_KEY,
-} from '@/components/custom/planning/pdf/planning-export-modal.tsx'
+import PlanningExportModal from '@/components/custom/planning/pdf/planning-export-modal.tsx'
 import AddAppointmentForm from '@/components/custom/popup/addAppointmentForm.tsx'
 import AddPatientForm from '@/components/custom/popup/addPatientForm.tsx'
 import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm.tsx'
@@ -28,6 +26,7 @@ import ToggleVerrouilles, {
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { SLOT } from '@/constants/process.constant.ts'
+import { NO_SOIGNANT_KEY } from '@/constants/soignant.constant.ts'
 import { useCan } from '@/hooks/useCan.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import {
@@ -70,13 +69,23 @@ function formatTitleLabels(labels: string[]) {
   return `${shown} +${labels.length - MAX_TITLE_LABELS}`
 }
 
-function filterSlotsBySoignants(slots: Slot[], soignantIDs: string[]) {
+// « Sans soignant » : aucun soignant du créneau n'est proposé dans le filtre.
+function filterSlotsBySoignants(
+  slots: Slot[],
+  soignantIDs: string[],
+  visibleIDs: string[],
+) {
   if (soignantIDs.length === 0) {
     return []
   }
-  return slots.filter((slot) =>
-    slot.slotTemplate?.soignants?.some((s) => soignantIDs.includes(s.id)),
-  )
+  const sansSoignant = soignantIDs.includes(NO_SOIGNANT_KEY)
+  return slots.filter((slot) => {
+    const ids = slot.slotTemplate?.soignants?.map((s) => s.id) ?? []
+    return (
+      ids.some((id) => soignantIDs.includes(id)) ||
+      (sansSoignant && !ids.some((id) => visibleIDs.includes(id)))
+    )
+  })
 }
 
 function filterSlotsByPathwayTemplates(slots: Slot[], templateIDs: string[]) {
@@ -121,6 +130,10 @@ function Dashboard() {
   const unselectSoignant = useSoignantStore((state) => state.unselectSoignant)
   const savedDate = usePlanningStore((state) => state.viewStart)
   const selectedSoignants = soignants.filter((s) => selectedIDs.includes(s.id))
+  const visibleSoignantIDs = useMemo(
+    () => soignants.filter((s) => !s.hidden).map((s) => s.id),
+    [soignants],
+  )
   const toggleSoignant = useSoignantStore((state) => state.toggleSoignant)
   const { establishmentId, serviceId } = Route.useParams()
   const mySoignantId = useAuthStore(
@@ -203,7 +216,7 @@ function Dashboard() {
     if (mode === 'soignant' && selectedIDs.length > 0) {
       return {
         initialExcludedSoignantIds: new Set([
-          NO_SOIGNANT_KEY,
+          ...(selectedIDs.includes(NO_SOIGNANT_KEY) ? [] : [NO_SOIGNANT_KEY]),
           ...soignants
             .filter((s) => !selectedIDs.includes(s.id))
             .map((s) => s.id),
@@ -232,7 +245,8 @@ function Dashboard() {
           (afficherVerrouilles || !slot.locked),
       )
       const filtered = {
-        soignant: () => filterSlotsBySoignants(visible, selectedIDs),
+        soignant: () =>
+          filterSlotsBySoignants(visible, selectedIDs, visibleSoignantIDs),
         pathway: () =>
           filterSlotsByPathwayTemplates(visible, selectedPathwayTemplateIDs),
         location: () => filterSlotsByLocations(visible, selectedLocationIDs),
@@ -269,6 +283,7 @@ function Dashboard() {
     }
   }, [
     slots,
+    visibleSoignantIDs,
     selectedIDs,
     mode,
     selectedPathwayTemplateIDs,
@@ -354,7 +369,10 @@ function Dashboard() {
     Icon,
   } = {
     soignant: {
-      labels: selectedSoignants.map((s) => s.name),
+      labels: [
+        ...selectedSoignants.map((s) => s.name),
+        ...(selectedIDs.includes(NO_SOIGNANT_KEY) ? ['Sans soignant'] : []),
+      ],
       emptyLabel: 'Sélectionnez un soignant',
       clearSelection: unselectSoignant,
       Icon: CalendarRange,

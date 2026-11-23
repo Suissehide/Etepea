@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { describe, expect, it } from 'vitest'
 
+import { NO_SOIGNANT_KEY } from '../constants/soignant.constant.ts'
 import type { Slot } from '../types/slot.ts'
 import { buildDaySlotRows, groupDaySlotRowsBySoignant } from './utils.ts'
 
@@ -152,13 +153,13 @@ describe('groupDaySlotRowsBySoignant', () => {
     ])
   })
 
-  it('« Sans soignant » reste affiché quand des soignants sont cochés', () => {
+  it('« Sans soignant » n apparaît avec une sélection que s il est coché', () => {
     expect(
       ids(groupDaySlotRowsBySoignant(rows, ['kine', 'diet'], [kine, diet])),
-    ).toEqual([
-      ['kine', ['kine', 'partage']],
-      [null, ['diet', 'personne']],
-    ])
+    ).toEqual([['kine', ['kine', 'partage']]])
+    expect(
+      ids(groupDaySlotRowsBySoignant(rows, [NO_SOIGNANT_KEY], [kine, diet])),
+    ).toEqual([[null, ['diet', 'personne']]])
   })
 
   it('un soignant masqué perd son tableau comme un inactif', () => {

@@ -1,6 +1,7 @@
 import { CheckCheck, Stethoscope, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { NO_SOIGNANT_KEY } from '../../../constants/soignant.constant.ts'
 import { useSoignantQueries } from '../../../queries/useSoignant.ts'
 import { useSoignantStore } from '../../../store/useSoignantStore.ts'
 import { selectionPillClass } from './sidebarFilter.styles.ts'
@@ -19,7 +20,10 @@ function SoignantFilterSection({
   useSoignantQueries()
 
   const tous = useSoignantStore((state) => state.soignants)
-  const soignants = tous.filter((s) => !s.hidden)
+  const soignants = [
+    ...tous.filter((s) => !s.hidden),
+    { id: NO_SOIGNANT_KEY, name: 'Sans soignant' },
+  ]
   const toggleSoignant = useSoignantStore((state) => state.toggleSoignant)
   const selectAllSoignants = useSoignantStore(
     (state) => state.selectAllSoignants,
