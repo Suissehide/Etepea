@@ -27,13 +27,13 @@ const HOUR_HEIGHT = 46
 const GAP_MIN_MINUTES = 60
 const GAP_BAND_HEIGHT = 14
 // Taille unique, celle qui tient dans une demi-heure avec la thématique.
-const SLOT_TIME_SIZE = 7
+const SLOT_TIME_SIZE = 8
 const SLOT_BACKGROUND_ALPHA = 0.14
 // Hauteurs de ligne (police × ~1,2) et marges d'un rendez-vous, pour n'y
 // écrire que ce qui tient : au-delà, react-pdf superpose les lignes.
 const SLOT_THEMATIC_LINE = 8.4
 const SLOT_LOCATION_LINE = 7.2
-const SLOT_CHROME = 6
+const SLOT_CHROME = 4
 const TIME_LABEL_SIZE = 7
 // Meme repli que l'export du planning, pour un creneau hors parcours.
 const DEFAULT_SLOT_COLOR = '#94a3b8'
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   // MDS-80 : contenu centré dans les deux sens, barre de couleur à gauche.
   slotBlock: {
     flexGrow: 1,
-    paddingVertical: 2,
+    paddingVertical: 1,
     paddingHorizontal: 3,
     borderLeftWidth: 3,
     overflow: 'hidden',
