@@ -37,7 +37,12 @@ export const ThematicApi = {
       },
     )
     if (!response.ok) {
-      handleHttpError(response, {}, 'Impossible de créer une thématique')
+      const message = await messageDuServeur(response)
+      handleHttpError(
+        response,
+        message ? { 409: { title: 'Nom déjà pris', message } } : {},
+        'Impossible de créer une thématique',
+      )
     }
     return response.json()
   },
@@ -55,7 +60,12 @@ export const ThematicApi = {
       },
     )
     if (!response.ok) {
-      handleHttpError(response, {}, 'Impossible de modifier la thématique')
+      const message = await messageDuServeur(response)
+      handleHttpError(
+        response,
+        message ? { 409: { title: 'Nom déjà pris', message } } : {},
+        'Impossible de modifier la thématique',
+      )
     }
     return response.json()
   },

@@ -1,6 +1,10 @@
 import Boom from '@hapi/boom'
 
-import type { Soignant, Thematic } from '../../../../generated/client'
+import {
+  Prisma,
+  type Soignant,
+  type Thematic,
+} from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   ThematicCreateEntityRepo,
@@ -11,6 +15,7 @@ import type {
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'
 import type { TenantContextInterface } from '../../../types/utils/tenant-context'
 import { phraseDesReferences } from '../../../utils/references-referentiel'
+import PrismaErrorCodes from '../error-codes-prisma'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 // Les soignants d'une thematique passent par la table de liaison
@@ -82,6 +87,29 @@ class ThematicRepository implements ThematicRepositoryInterface {
     }))
   }
 
+  // Le nom est unique par service, supprimees comprises : sans le dire, l'utilisateur ne sait pas quoi faire.
+  private async nomDejaPris(err: unknown, name?: string): Promise<never> {
+    if (
+      name !== undefined &&
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === PrismaErrorCodes.OPERATION_FAILED_ON_UNIQUE_CONSTRAINT
+    ) {
+      const existante = await this.prisma.thematic.findFirst({
+        where: { ...this.scope, name },
+        select: { archivedAt: true },
+      })
+      throw Boom.conflict(
+        existante?.archivedAt
+          ? `Une thématique supprimée s'appelle déjà « ${name} » : restaurez-la depuis « Supprimées ».`
+          : `Une thématique s'appelle déjà « ${name} ».`,
+      )
+    }
+    throw this.errorHandler.boomErrorFromPrismaError({
+      entityName: 'Thematic',
+      error: err,
+    })
+  }
+
   async create(
     thematicCreateParams: ThematicCreateEntityRepo,
   ): Promise<ThematicWithSoignantsEntityRepo> {
@@ -102,10 +130,7 @@ class ThematicRepository implements ThematicRepositoryInterface {
       })
       return flatten(row)
     } catch (err) {
-      throw this.errorHandler.boomErrorFromPrismaError({
-        entityName: 'Thematic',
-        error: err,
-      })
+      return this.nomDejaPris(err, thematicCreateParams.name)
     }
   }
 
@@ -138,10 +163,7 @@ class ThematicRepository implements ThematicRepositoryInterface {
       })
       return flatten(row)
     } catch (err) {
-      throw this.errorHandler.boomErrorFromPrismaError({
-        entityName: 'Thematic',
-        error: err,
-      })
+      return this.nomDejaPris(err, thematicUpdateParams.name)
     }
   }
   // Suppression DEFINITIVE, reservee aux lignes deja archivees. Le refus de
