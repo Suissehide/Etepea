@@ -20,7 +20,7 @@ export type Appointment = {
 export type CreateAppointmentParams = Pick<
   Appointment,
   'startDate' | 'endDate' | 'thematicId' | 'motif'
-> & { slotID: string; patientIDs: string[] }
+> & { slotID: string; patientIDs: string[]; transmissionNotes?: string }
 
 export type UpdateAppointmentParams = Pick<
   Appointment,

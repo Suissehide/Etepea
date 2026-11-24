@@ -48,6 +48,7 @@ export const createAppointmentSchema = appointmentSchema
     slotID: cuid(),
     patientIDs: z.array(cuid()),
     thematicId: thematicIdInputSchema,
+    transmissionNotes: z.string().optional(),
   })
 
 export const deleteAppointmentByIdParamsSchema = getAppointmentByIdParamsSchema
