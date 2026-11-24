@@ -15,6 +15,7 @@ import { createContext, useContext, useMemo, useState } from 'react'
 
 import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { useCan } from '../../../hooks/useCan.ts'
 import { useToast } from '../../../hooks/useToast.ts'
 import { hexToRGBA } from '../../../libs/color.ts'
 import {
@@ -709,12 +710,16 @@ const resolveLiveJoinTarget = (
  * existant : on conserve sa thématique telle quelle (pas de repli
  * sur celle choisie dans la popup), et toutes ses inscriptions existantes.
  */
-const buildJoinPayload = (target: Appointment, patientID: string) => ({
+const buildJoinPayload = (
+  target: Appointment,
+  patientID: string,
+  transmissionNotes?: string,
+) => ({
   id: target.id,
   thematicId: target.thematicId,
   appointmentPatients: [
     ...buildExistingAppointmentPatients(target),
-    { patientID },
+    { patientID, transmissionNotes },
   ],
 })
 
@@ -1056,6 +1061,7 @@ function AddPatientToSlotContent({
     startTime: dayjs.utc(),
     duration: '',
     motif: '',
+    note: '',
   }))
 
   const form = useAppForm({
@@ -1067,6 +1073,8 @@ function AddPatientToSlotContent({
   const thematicID = useStore(form.store, (state) => state.values.thematicID)
   const startTime = useStore(form.store, (state) => state.values.startTime)
   const motif = useStore(form.store, (state) => state.values.motif)
+  // Le back retire les notes de transmission pour qui n'a pas ce droit.
+  const canWriteClinical = useCan('clinical:write')
 
   const patientOptions = useMemo(
     () =>
@@ -1190,6 +1198,7 @@ function AddPatientToSlotContent({
     )
     form.setFieldValue('duration', defaults.duration)
     form.setFieldValue('motif', '')
+    form.setFieldValue('note', '')
     // Sous-thématique facultative, vide comme dans « Nouveau rendez-vous » du
     // Planning : sans choix, le rendez-vous garde la thématique du créneau.
     form.setFieldValue('subThematicID', '')
@@ -1226,10 +1235,12 @@ function AddPatientToSlotContent({
     subThematicID: string
     duration: string
     motif: string
+    note: string
   }) {
     if (!selected || !value.patientID || isBlocked) {
       return
     }
+    const transmissionNotes = value.note.trim() || undefined
 
     const booked = () => {
       const day = dayjs.utc(selected.slot.startDate).startOf('day')
@@ -1271,9 +1282,12 @@ function AddPatientToSlotContent({
         return
       }
 
-      updateAppointment.mutate(buildJoinPayload(target, value.patientID), {
-        onSuccess: booked,
-      })
+      updateAppointment.mutate(
+        buildJoinPayload(target, value.patientID, transmissionNotes),
+        {
+          onSuccess: booked,
+        },
+      )
       return
     }
 
@@ -1294,6 +1308,7 @@ function AddPatientToSlotContent({
         // champ n'est pas affiché et rien ne doit être enregistré.
         motif: selected.isIndividual ? value.motif.trim() : null,
         patientIDs: [value.patientID],
+        transmissionNotes,
       },
       { onSuccess: booked },
     )
@@ -1475,10 +1490,7 @@ function AddPatientToSlotContent({
                 {(field) => (
                   <FormField>
                     <Label htmlFor="appointment-motif">
-                      Motif <span className="text-red-600">*</span>{' '}
-                      <span className="font-normal text-text-light">
-                        · recopié dans les notes de transmission
-                      </span>
+                      Motif <span className="text-red-600">*</span>
                     </Label>
                     <TextArea
                       id="appointment-motif"
@@ -1496,6 +1508,29 @@ function AddPatientToSlotContent({
 
           {/* Collectif encore vide : seule la sous-thématique reste à choisir. */}
           {areTimeFieldsDisabled && !isJoining && subThematicField}
+
+          {canWriteClinical && (
+            <form.Field name="note">
+              {(field) => (
+                <FormField>
+                  <Label htmlFor="appointment-note">
+                    Note de transmission{' '}
+                    <span className="font-normal text-text-light">
+                      · facultative
+                    </span>
+                  </Label>
+                  <TextArea
+                    id="appointment-note"
+                    value={field.state.value}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      field.handleChange(e.target.value)
+                    }
+                    onBlur={field.handleBlur}
+                  />
+                </FormField>
+              )}
+            </form.Field>
+          )}
         </PopupBody>
       )}
 
