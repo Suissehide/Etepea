@@ -150,9 +150,9 @@ function EnrollmentIssueRow({
   const startDate = dayjs.utc(issue.startDate).format('DD/MM/YYYY')
   return (
     <div className="flex justify-center items-center gap-2 rounded bg-amber-50 border border-amber-200 px-3 py-2">
-      <AlertTriangle className="h-3 w-3 text-amber-500" />
+      <AlertTriangle className="h-3 w-3 text-a-saisir-texte" />
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-amber-700">
+        <span className="text-sm text-a-saisir-texte">
           {issue.reason} à partir du{' '}
           <span className="font-semibold">{startDate}</span>
         </span>
@@ -161,7 +161,7 @@ function EnrollmentIssueRow({
         type="button"
         onClick={() => onDismiss(issue)}
         disabled={loading}
-        className="cursor-pointer flex-shrink-0 rounded p-0.5 text-amber-500 hover:bg-amber-100 hover:text-amber-700 disabled:opacity-40 transition-colors"
+        className="cursor-pointer flex-shrink-0 rounded p-0.5 text-a-saisir-texte/70 hover:bg-amber-100 hover:text-a-saisir-texte disabled:opacity-40 transition-colors"
         aria-label="Ignorer ce problème"
       >
         <X className="h-3.5 w-3.5" />
