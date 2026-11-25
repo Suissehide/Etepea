@@ -1513,12 +1513,7 @@ function AddPatientToSlotContent({
             <form.Field name="note">
               {(field) => (
                 <FormField>
-                  <Label htmlFor="appointment-note">
-                    Note de transmission{' '}
-                    <span className="font-normal text-text-light">
-                      · facultative
-                    </span>
-                  </Label>
+                  <Label htmlFor="appointment-note">Note de transmission</Label>
                   <TextArea
                     id="appointment-note"
                     value={field.state.value}
