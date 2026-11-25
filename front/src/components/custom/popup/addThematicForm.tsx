@@ -1,3 +1,4 @@
+import { useStore } from '@tanstack/react-form'
 import { Check, Plus, X } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
@@ -11,8 +12,13 @@ import {
   type ThematicRole,
 } from '../../../constants/thematic.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { findNameConflict } from '../../../libs/nameConflict.ts'
 import { useSoignantQueries } from '../../../queries/useSoignant.ts'
-import { useThematicMutations } from '../../../queries/useThematic.ts'
+import {
+  useThematicMutations,
+  useThematicQueries,
+} from '../../../queries/useThematic.ts'
+import type { Thematic } from '../../../types/thematic.ts'
 import { Button } from '../../ui/button.tsx'
 import {
   Popup,
@@ -23,16 +29,26 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../../ui/popup.tsx'
+import { NameConflictNotice } from '../form/nameConflictNotice.tsx'
 import { ThematicRoleHelp } from '../thematicRoleHelp.tsx'
 
 interface AddThematicFormProps {
   trigger?: React.ReactNode
+  /** Montre la thématique existante dans la liste quand le nom tapé est déjà pris. */
+  onShowExisting?: (name: string) => void
 }
 
-function AddThematicForm({ trigger }: AddThematicFormProps) {
+const thematicDetails = (thematic: Thematic) => [
+  ...(thematic.duration ? [`${thematic.duration} min`] : []),
+  ...thematic.soignants.map((s) => s.name),
+]
+
+function AddThematicForm({ trigger, onShowExisting }: AddThematicFormProps) {
   const [open, setOpen] = useState(false)
-  const { createThematic } = useThematicMutations()
+  const { createThematic, restoreThematic } = useThematicMutations()
   const { soignants } = useSoignantQueries()
+  const { thematics } = useThematicQueries()
+  const { thematics: archivedThematics } = useThematicQueries(true)
 
   const soignantOptions = useMemo(
     () =>
@@ -76,6 +92,14 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
     }
   }, [open, form])
 
+  const name = useStore(form.store, (state) => state.values.name)
+  const conflict = findNameConflict(name, thematics, archivedThematics)
+  const submit = async () => {
+    if (!conflict) {
+      await form.handleSubmit()
+    }
+  }
+
   return (
     <Popup modal={true} open={open} onOpenChange={setOpen}>
       <PopupTrigger asChild>
@@ -99,7 +123,7 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
             onSubmit={async (e) => {
               e.preventDefault()
               await form.validate('submit')
-              await form.handleSubmit()
+              await submit()
             }}
             className="space-y-4 max-w-md"
           >
@@ -112,6 +136,26 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
             >
               {(field) => <field.Input label="Nom" />}
             </form.AppField>
+
+            <NameConflictNotice
+              conflict={conflict}
+              noun="Une thématique"
+              feminine={true}
+              details={thematicDetails}
+              restoring={restoreThematic.isPending}
+              onRestore={(thematic) =>
+                restoreThematic.mutate(thematic.id, {
+                  onSuccess: () => setOpen(false),
+                })
+              }
+              onShowExisting={
+                onShowExisting &&
+                ((thematic) => {
+                  setOpen(false)
+                  onShowExisting(thematic.name)
+                })
+              }
+            />
 
             <form.AppField name="duration">
               {(field) => (
@@ -171,7 +215,9 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
           <Button
             variant="default"
             isLoading={createThematic.isPending}
-            onClick={() => form.handleSubmit()}
+            disabled={!!conflict}
+            title={conflict ? 'Nom déjà pris' : undefined}
+            onClick={submit}
           >
             <Check className="w-4 h-4" />
             Ajouter

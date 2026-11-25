@@ -98,7 +98,9 @@ function ThematicSettings() {
               feminin
               label="Thématiques à afficher"
             />
-            {canManage && !showArchived && <AddThematicForm />}
+            {canManage && !showArchived && (
+              <AddThematicForm onShowExisting={setSearchTerm} />
+            )}
           </div>
         </div>
 

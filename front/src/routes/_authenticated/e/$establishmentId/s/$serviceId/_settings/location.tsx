@@ -87,7 +87,9 @@ function LocationSettings() {
               feminin
               label="Salles à afficher"
             />
-            {canManage && !showArchived && <AddLocationForm />}
+            {canManage && !showArchived && (
+              <AddLocationForm onShowExisting={setSearchTerm} />
+            )}
           </div>
         </div>
 
