@@ -17,6 +17,7 @@ import { useCallback, useId, useMemo, useState } from 'react'
 import { PatientApi } from '../../api/patient.api.ts'
 import { PATIENT } from '../../constants/process.constant.ts'
 import { SLOT_DURATIONS } from '../../constants/slot.constant.ts'
+import { useCan } from '../../hooks/useCan.ts'
 import { cn, thematicLabel } from '../../libs/utils.ts'
 import { usePathwayTemplateQueries } from '../../queries/usePathwayTemplate.ts'
 import { useThematicQueries } from '../../queries/useThematic.ts'
@@ -74,6 +75,7 @@ export function usePathwaySelector(patientID?: string) {
   )
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [withinPrincipal, setWithinPrincipal] = useState(true)
+  const [allowGaps, setAllowGaps] = useState(false)
 
   const templateOf = useCallback(
     (tag: string) => (pathwayTemplates ?? []).find((t) => t.mainTag === tag),
@@ -87,15 +89,15 @@ export function usePathwaySelector(patientID?: string) {
 
   // Un même parcours peut être ajouté plusieurs fois : chaque exemplaire part après le précédent.
   const tagOptions = allTags.map((tag) => {
-      const template = templateOf(tag)
-      return {
-        value: tag,
-        label: tag,
-        color: template?.color,
-        hint: template?.firstAppointmentOnly ? 'Individuel' : 'Collectif',
-        optional: template?.optional ?? false,
-      }
-    })
+    const template = templateOf(tag)
+    return {
+      value: tag,
+      label: tag,
+      color: template?.color,
+      hint: template?.firstAppointmentOnly ? 'Individuel' : 'Collectif',
+      optional: template?.optional ?? false,
+    }
+  })
 
   const handleAddTags = (tags: string[]) => {
     const newPathways = tags.map((tag) => {
@@ -138,9 +140,15 @@ export function usePathwaySelector(patientID?: string) {
       patientID,
       previewInput,
       withinPrincipal,
+      allowGaps,
     ],
     queryFn: () =>
-      PatientApi.previewEnrollments(previewInput, patientID, withinPrincipal),
+      PatientApi.previewEnrollments(
+        previewInput,
+        patientID,
+        withinPrincipal,
+        allowGaps,
+      ),
     enabled: previewInput.length > 0,
     placeholderData: keepPreviousData,
   })
@@ -223,6 +231,8 @@ export function usePathwaySelector(patientID?: string) {
     draggedIndex,
     withinPrincipal,
     setWithinPrincipal,
+    allowGaps,
+    setAllowGaps,
     handleAddTags,
     toggleExpand,
     updatePathway,
@@ -300,6 +310,8 @@ function PathwayItem({
 }: PathwayItemProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false)
   const blocked = !!preview && !preview.startDate
+  // Le back n'écrit la note que pour qui a ce droit.
+  const canWriteClinical = useCan('clinical:write')
 
   return (
     <li
@@ -440,20 +452,28 @@ function PathwayItem({
         </div>
       )}
 
-      {pathway.motifRequired && (
+      {(pathway.motifRequired || canWriteClinical) && (
         <div className="flex flex-col gap-1 mx-3 mb-3 ml-[68px]">
           <Label htmlFor={`motif-${pathway.id}`} className="text-[13px]">
-            Motif <span className="text-red-600">*</span>{' '}
-            <span className="font-normal text-text-light">
-              · recopié dans les notes de transmission
-            </span>
+            {pathway.motifRequired ? (
+              <>
+                Motif <span className="text-red-600">*</span>{' '}
+                <span className="font-normal text-text-light">
+                  · recopié dans les notes de transmission
+                </span>
+              </>
+            ) : (
+              'Note de transmission'
+            )}
           </Label>
           <Input
             id={`motif-${pathway.id}`}
             type="text"
             value={pathway.motif}
             onChange={(e) => onUpdate({ motif: e.target.value })}
-            placeholder="ex. Anxiété post-infarctus"
+            placeholder={
+              pathway.motifRequired ? 'ex. Anxiété post-infarctus' : undefined
+            }
           />
         </div>
       )}
@@ -528,6 +548,8 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
     draggedIndex,
     withinPrincipal,
     setWithinPrincipal,
+    allowGaps,
+    setAllowGaps,
     handleAddTags,
     toggleExpand,
     updatePathway,
@@ -538,6 +560,7 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
     handleDragEnd,
   } = state
   const withinPrincipalId = useId()
+  const allowGapsId = useId()
 
   const hasOptional =
     tagOptions.some((o) => o.optional) || addedPathways.some((p) => p.optional)
@@ -575,6 +598,19 @@ export function PathwaySelector({ state }: PathwaySelectorProps) {
               onCheckedChange={setWithinPrincipal}
             />
             Rendez-vous compris dans la durée du parcours principal
+          </label>
+        )}
+        {optional && (
+          <label
+            htmlFor={allowGapsId}
+            className="flex items-center gap-2 text-sm text-foreground cursor-pointer"
+          >
+            <Switch
+              id={allowGapsId}
+              checked={allowGaps}
+              onCheckedChange={setAllowGaps}
+            />
+            Prendre le créneau le plus tôt, même avec un trou dans la journée
           </label>
         )}
         <Select

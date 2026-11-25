@@ -180,4 +180,64 @@ describe('archivage d une thematique', () => {
     })
     expect(modification.statusCode).toBe(200)
   })
+
+  // Le nom reste unique par service, archivees comprises : buter dessus sans savoir
+  // qu'une supprimee le porte rendait la thematique « impossible a modifier ».
+  describe('nom deja porte par une thematique supprimee', () => {
+    const creerArchivee = (name: string) =>
+      testDb.thematic.create({
+        data: { name, serviceId, establishmentId, archivedAt: new Date() },
+      })
+    const messageDe = (res: { json: () => unknown }) =>
+      (res.json() as { message: string }).message
+
+    it('renommer vers ce nom rend 409 et dit de restaurer la supprimee', async () => {
+      await creerArchivee('Gestion du stress')
+      const active = await testDb.thematic.create({
+        data: { name: 'Stress', serviceId, establishmentId },
+      })
+
+      const res = await testApp.app.inject({
+        method: 'PATCH',
+        url: url(`/thematic/${active.id}`),
+        cookies,
+        payload: { name: 'Gestion du stress' } as never,
+      })
+
+      expect(res.statusCode).toBe(409)
+      expect(messageDe(res)).toMatch(/supprimée/)
+      expect(messageDe(res)).toMatch(/Gestion du stress/)
+    })
+
+    it('creer sous ce nom rend 409 et dit de restaurer la supprimee', async () => {
+      await creerArchivee('Sommeil')
+
+      const res = await testApp.app.inject({
+        method: 'POST',
+        url: url('/thematic'),
+        cookies,
+        payload: { name: 'Sommeil' } as never,
+      })
+
+      expect(res.statusCode).toBe(409)
+      expect(messageDe(res)).toMatch(/supprimée/)
+    })
+
+    it('un nom pris par une thematique active rend 409 sans parler de suppression', async () => {
+      await testDb.thematic.create({
+        data: { name: 'Tabac', serviceId, establishmentId },
+      })
+
+      const res = await testApp.app.inject({
+        method: 'POST',
+        url: url('/thematic'),
+        cookies,
+        payload: { name: 'Tabac' } as never,
+      })
+
+      expect(res.statusCode).toBe(409)
+      expect(messageDe(res)).toMatch(/Tabac/)
+      expect(messageDe(res)).not.toMatch(/supprimée/)
+    })
+  })
 })

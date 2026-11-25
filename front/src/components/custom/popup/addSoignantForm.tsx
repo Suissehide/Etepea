@@ -1,5 +1,4 @@
 import { Check, Plus, X } from 'lucide-react'
-import type React from 'react'
 import { useEffect, useState } from 'react'
 
 import { useAppForm } from '../../../hooks/formConfig.tsx'
@@ -19,11 +18,7 @@ import {
   PopupTrigger,
 } from '../../ui/popup.tsx'
 
-interface AddSoignantFormProps {
-  trigger?: React.ReactNode
-}
-
-function AddSoignantForm({ trigger }: AddSoignantFormProps) {
+function AddSoignantForm() {
   const [open, setOpen] = useState(false)
   const { createSoignant } = useSoignantMutations()
   const { thematics } = useThematicQueries()
@@ -73,12 +68,10 @@ function AddSoignantForm({ trigger }: AddSoignantFormProps) {
   return (
     <Popup modal={true} open={open} onOpenChange={setOpen}>
       <PopupTrigger asChild>
-        {trigger ?? (
-          <Button variant="default" onClick={() => setOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Nouveau soignant
-          </Button>
-        )}
+        <Button variant="default" onClick={() => setOpen(true)}>
+          <Plus className="w-4 h-4" />
+          Nouveau soignant
+        </Button>
       </PopupTrigger>
 
       <PopupContent>

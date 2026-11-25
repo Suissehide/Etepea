@@ -62,6 +62,8 @@ const json = (body: unknown) => ({
 let enrolled: PathwayEnrollment[] | null = null
 let enrolledWithin: boolean | undefined
 let previewWithin: boolean | undefined
+let enrolledGaps: boolean | undefined
+let previewGaps: boolean | undefined
 
 const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   const url = input.toString()
@@ -75,6 +77,7 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   }
   if (path.endsWith('/patient/enroll/preview')) {
     previewWithin = body.optionalsWithinPrincipal
+    previewGaps = body.optionalsAllowGaps
     return {
       ...json(
         body.pathways.map((p: PathwayEnrollment) => ({
@@ -88,6 +91,7 @@ const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
   if (path.endsWith('/patient/p1/enroll')) {
     enrolled = body.pathways
     enrolledWithin = body.optionalsWithinPrincipal
+    enrolledGaps = body.optionalsAllowGaps
     return {
       ...json({ patient: {}, enrollments: [], failedEnrollments: [] }),
       url,
@@ -250,5 +254,24 @@ describe('AddPatientToPathwayForm', () => {
       screen.getByRole('button', { name: 'Inscrire à 1 parcours' }),
     )
     await waitFor(() => expect(enrolledWithin).toBe(false))
+  })
+
+  it("l'interrupteur du créneau le plus tôt, décoché par défaut, part avec l'aperçu et l'inscription", async () => {
+    await renderForm()
+    await addPathway('RI')
+    await addPathway('STRESS', 'optionnel')
+    await screen.findByText('Départ le 07/12/2026')
+    expect(previewGaps).toBe(false)
+
+    await userEvent.click(
+      screen.getByRole('switch', {
+        name: 'Prendre le créneau le plus tôt, même avec un trou dans la journée',
+      }),
+    )
+    await waitFor(() => expect(previewGaps).toBe(true))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Inscrire à 1 parcours' }),
+    )
+    await waitFor(() => expect(enrolledGaps).toBe(true))
   })
 })

@@ -1,6 +1,6 @@
 import { Line, Page, StyleSheet, Svg, Text, View } from '@react-pdf/renderer'
 
-import { hexToRGBA, readableTint } from '../../../../../libs/color.ts'
+import { hexToRGBA } from '../../../../../libs/color.ts'
 import {
   buildTimeAxis,
   findGaps,
@@ -27,13 +27,13 @@ const HOUR_HEIGHT = 46
 const GAP_MIN_MINUTES = 60
 const GAP_BAND_HEIGHT = 14
 // Taille unique, celle qui tient dans une demi-heure avec la thématique.
-const SLOT_TIME_SIZE = 7
+const SLOT_TIME_SIZE = 8
 const SLOT_BACKGROUND_ALPHA = 0.14
 // Hauteurs de ligne (police × ~1,2) et marges d'un rendez-vous, pour n'y
 // écrire que ce qui tient : au-delà, react-pdf superpose les lignes.
 const SLOT_THEMATIC_LINE = 8.4
 const SLOT_LOCATION_LINE = 7.2
-const SLOT_CHROME = 6
+const SLOT_CHROME = 4
 const TIME_LABEL_SIZE = 7
 // Meme repli que l'export du planning, pour un creneau hors parcours.
 const DEFAULT_SLOT_COLOR = '#94a3b8'
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   // MDS-80 : contenu centré dans les deux sens, barre de couleur à gauche.
   slotBlock: {
     flexGrow: 1,
-    paddingVertical: 2,
+    paddingVertical: 1,
     paddingHorizontal: 3,
     borderLeftWidth: 3,
     overflow: 'hidden',
@@ -189,6 +189,7 @@ const styles = StyleSheet.create({
   slotTime: {
     fontSize: SLOT_TIME_SIZE,
     fontFamily: 'Helvetica-Bold',
+    color: '#000000',
     textAlign: 'center',
   },
   slotThematic: {
@@ -318,9 +319,16 @@ function Hatch() {
 function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
   const top = axis.y(placed.start)
   const height = axis.y(placed.end) - top
-  // Au-delà d'une colonne, l'horaire passe sur deux lignes.
+  const timeLine = SLOT_TIME_SIZE * 1.2
+  // Au-delà d'une colonne, l'horaire passe sur deux lignes ; s'il n'y a plus
+  // la place de la thématique, seule l'heure de début reste.
+  const startOnly =
+    placed.laneCount > 1 &&
+    height - SLOT_CHROME < 2 * timeLine + SLOT_THEMATIC_LINE
   const free =
-    height - SLOT_CHROME - (placed.laneCount > 1 ? 2 : 1) * SLOT_TIME_SIZE * 1.2
+    height -
+    SLOT_CHROME -
+    (placed.laneCount > 1 && !startOnly ? 2 : 1) * timeLine
   const location = placed.slot.slotTemplate?.location?.name
   const color = placed.slot.pathway?.template?.color ?? DEFAULT_SLOT_COLOR
   const showLocation =
@@ -353,13 +361,8 @@ function SlotFrame({ placed, axis }: { placed: PlacedSlot; axis: TimeAxis }) {
           },
         ]}
       >
-        <Text
-          style={[
-            styles.slotTime,
-            { color: readableTint(color, SLOT_BACKGROUND_ALPHA) },
-          ]}
-        >
-          {formatTimeRange(placed)}
+        <Text style={styles.slotTime}>
+          {startOnly ? formatMinute(placed.start) : formatTimeRange(placed)}
         </Text>
         <Text style={[styles.slotThematic, { maxLines: thematicLines }]}>
           {placed.slot.slotTemplate?.thematic ?? ''}

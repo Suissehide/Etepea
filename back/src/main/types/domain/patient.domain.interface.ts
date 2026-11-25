@@ -57,6 +57,7 @@ export type EnrollPatientInPathwaysInput = {
   startDate?: Date
   pathways: PathwayEnrollmentInput[]
   optionalsWithinPrincipal?: boolean
+  optionalsAllowGaps?: boolean
 }
 
 export type EnrollExistingPatientInPathwaysInput = {
@@ -64,6 +65,7 @@ export type EnrollExistingPatientInPathwaysInput = {
   startDate?: Date
   pathways: PathwayEnrollmentInput[]
   optionalsWithinPrincipal?: boolean
+  optionalsAllowGaps?: boolean
 }
 
 export type EnrollmentPreview = {
@@ -165,6 +167,7 @@ export interface PatientDomainInterface {
     pathways: PathwayEnrollmentInput[],
     patientID?: string,
     optionalsWithinPrincipal?: boolean,
+    optionalsAllowGaps?: boolean,
   ) => Promise<EnrollmentPreview[]>
   countAppointmentsInPathway: (
     patientID: string,

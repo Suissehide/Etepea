@@ -169,3 +169,37 @@ describe('EditThematicSoignantsForm — rôle dans les indicateurs', () => {
     expect(corpsEnvoye(fetchMock)).toEqual({ role: null })
   })
 })
+
+describe('EditThematicSoignantsForm — nom déjà pris', () => {
+  it('un 409 affiche le message du serveur, pas un libellé générique', async () => {
+    const message =
+      'Une thématique supprimée s’appelle déjà « Sommeil » : restaurez-la depuis « Supprimées ».'
+    renderForm(
+      buildFetchMock([
+        {
+          ...routePatch,
+          respond: () => {
+            const reponse = {
+              ok: false,
+              status: 409,
+              json: async () => ({ message }),
+            }
+            return { ...reponse, clone: () => reponse }
+          },
+        },
+      ]),
+    )
+    await ouvrir()
+    await userEvent.clear(screen.getByLabelText('Nom'))
+    await userEvent.type(screen.getByLabelText('Nom'), 'Sommeil')
+    await enregistrer()
+
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts.map((t) => t.message)).toContain(
+        message,
+      )
+    })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nom')).toHaveValue('Sommeil')
+  })
+})

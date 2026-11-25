@@ -188,6 +188,7 @@ export const enrollPatientInPathwaysSchema = z.object({
   pathways: z.array(pathwayEnrollmentSchema).min(1),
   // Les rendez-vous des optionnels doivent finir avant la fin du parcours principal.
   optionalsWithinPrincipal: z.boolean().optional(),
+  optionalsAllowGaps: z.boolean().optional(),
 })
 
 export const enrollExistingPatientInPathwaysSchema = z.object({
@@ -195,12 +196,14 @@ export const enrollExistingPatientInPathwaysSchema = z.object({
   startDate: z.coerce.date().optional(),
   pathways: z.array(pathwayEnrollmentSchema).optional().default([]),
   optionalsWithinPrincipal: z.boolean().optional(),
+  optionalsAllowGaps: z.boolean().optional(),
 })
 
 export const enrollmentPreviewSchema = z.object({
   patientID: cuid().optional(),
   pathways: z.array(pathwayEnrollmentSchema),
   optionalsWithinPrincipal: z.boolean().optional(),
+  optionalsAllowGaps: z.boolean().optional(),
 })
 
 export const enrollmentPreviewResponseSchema = z.array(

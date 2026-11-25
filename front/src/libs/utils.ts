@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { twMerge } from 'tailwind-merge'
 
 import type { CalendarEvent } from '../components/custom/Calendar/calendar.tsx'
+import { NO_SOIGNANT_KEY } from '../constants/soignant.constant.ts'
 import type { Appointment } from '../types/appointment.ts'
 import type { AppointmentPatient } from '../types/appointmentPatient.ts'
 import type { Pathway } from '../types/pathway.ts'
@@ -406,7 +407,7 @@ export const generateDurationOptions = (
 
 // Agenda : un tableau par soignant (un créneau partagé apparaît dans chacun), limité
 // aux soignants cochés s'il y en a. Un soignant inactif (MDS-76) ou masqué compte comme absent :
-// ses créneaux vont dans « Sans soignant », affiché même avec une sélection.
+// ses créneaux vont dans « Sans soignant », affiché sans sélection ou s'il est coché.
 export const groupDaySlotRowsBySoignant = (
   rows: DaySlotRow[],
   selectedSoignantIDs: string[],
@@ -433,7 +434,10 @@ export const groupDaySlotRowsBySoignant = (
       ),
     }))
   const withoutSoignant = rows.filter((row) => visibles(row).length === 0)
-  if (withoutSoignant.length > 0) {
+  const sansSoignantCoche =
+    selectedSoignantIDs.length === 0 ||
+    selectedSoignantIDs.includes(NO_SOIGNANT_KEY)
+  if (sansSoignantCoche && withoutSoignant.length > 0) {
     result.push({ soignant: null, rows: withoutSoignant })
   }
   return result

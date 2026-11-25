@@ -19,6 +19,7 @@ import {
 import { Dialog } from 'radix-ui'
 import { Fragment, useCallback, useMemo, useState } from 'react'
 
+import { NO_SOIGNANT_KEY } from '../../../../constants/soignant.constant.ts'
 import { cn } from '../../../../libs/utils.ts'
 import { useForbiddenWeekQueries } from '../../../../queries/useForbiddenWeek.ts'
 import { usePathwayTemplateQueries } from '../../../../queries/usePathwayTemplate.ts'
@@ -49,7 +50,6 @@ const MIN_WEEK_COUNT = 1
 const DEFAULT_WEEK_COUNT = 4
 /** Au-delà, la génération du PDF se fait sentir : on prévient. */
 const SLOW_EXPORT_WEEKS = 12
-export const NO_SOIGNANT_KEY = '__no_soignant__'
 const NO_SOIGNANT_COLOR = '#94a3b8'
 const WEEKDAYS = [
   ['lun', 'L'],

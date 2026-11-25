@@ -9,10 +9,10 @@ import utc from 'dayjs/plugin/utc'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { NO_SOIGNANT_KEY } from '../../../../constants/soignant.constant.ts'
 import type { Slot } from '../../../../types/slot.ts'
 import PlanningExportModal, {
   isSlotExported,
-  NO_SOIGNANT_KEY,
 } from './planning-export-modal.tsx'
 
 dayjs.extend(utc)

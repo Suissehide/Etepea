@@ -281,6 +281,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
           startDate: request.body.startDate,
           pathways: request.body.pathways,
           optionalsWithinPrincipal: request.body.optionalsWithinPrincipal,
+          optionalsAllowGaps: request.body.optionalsAllowGaps,
         },
         request.user.userID,
       )
@@ -303,6 +304,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
         request.body.pathways,
         request.body.patientID,
         request.body.optionalsWithinPrincipal,
+        request.body.optionalsAllowGaps,
       ),
   )
 
@@ -326,6 +328,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
           startDate: request.body.startDate,
           pathways: request.body.pathways,
           optionalsWithinPrincipal: request.body.optionalsWithinPrincipal,
+          optionalsAllowGaps: request.body.optionalsAllowGaps,
         },
         request.user.userID,
       )

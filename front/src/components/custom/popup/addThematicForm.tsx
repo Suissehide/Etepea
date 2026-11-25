@@ -52,17 +52,21 @@ function AddThematicForm({ trigger }: AddThematicFormProps) {
       soignantIDs: [] as string[],
     },
     onSubmit: ({ value }) => {
-      createThematic.mutate({
-        name: value.name,
-        duration: Number(value.duration),
-        // Une consigne vide vaut « pas de consigne » : null plutot qu'une chaine vide.
-        pdfNotice: value.pdfNotice.trim() || null,
-        role:
-          value.role === NO_THEMATIC_ROLE ? null : (value.role as ThematicRole),
-        internal: value.internal,
-        soignantIDs: value.soignantIDs,
-      })
-      setOpen(false)
+      createThematic.mutate(
+        {
+          name: value.name,
+          duration: Number(value.duration),
+          // Une consigne vide vaut « pas de consigne » : null plutot qu'une chaine vide.
+          pdfNotice: value.pdfNotice.trim() || null,
+          role:
+            value.role === NO_THEMATIC_ROLE
+              ? null
+              : (value.role as ThematicRole),
+          internal: value.internal,
+          soignantIDs: value.soignantIDs,
+        },
+        { onSuccess: () => setOpen(false) },
+      )
     },
   })
 

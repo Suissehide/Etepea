@@ -145,4 +145,90 @@ describe('copie d un creneau', () => {
     expect(res.statusCode).toBe(404)
     expect(await testDb.slot.count()).toBe(avant)
   })
+
+  // Le PDF patient n'affiche « Service fermé » que pour une semaine interdite sans rendez-vous.
+  it('une copie en semaine interdite donne un rendez-vous au patient inscrit', async () => {
+    const scope = { serviceId, establishmentId }
+    const post = (path: string, payload: object) =>
+      testApp.app.inject({
+        method: 'POST',
+        url: tenantUrl(establishmentId, serviceId, path),
+        cookies,
+        payload,
+      })
+    const template = await testDb.pathwayTemplate.create({
+      data: {
+        name: 'Interdite',
+        color: '#f00',
+        mainTag: 'INTERDITE',
+        secondaryTags: [],
+        ...scope,
+      },
+    })
+    const slotTemplate = await testDb.slotTemplate.create({
+      data: {
+        startTime: new Date('2027-06-01T09:00:00Z'),
+        endTime: new Date('2027-06-01T10:00:00Z'),
+        offsetDays: 0,
+        isIndividual: true,
+        color: '#fff',
+        templateID: template.id,
+        ...scope,
+      },
+    })
+    const pathway = await testDb.pathway.create({
+      data: {
+        startDate: new Date('2027-06-01'),
+        templateID: template.id,
+        ...scope,
+      },
+    })
+    const original = await testDb.slot.create({
+      data: {
+        startDate: new Date('2027-06-01T09:00:00Z'),
+        endDate: new Date('2027-06-01T10:00:00Z'),
+        slotTemplateID: slotTemplate.id,
+        pathwayID: pathway.id,
+        ...scope,
+      },
+    })
+    const interdite = await post('/forbidden-week', { date: '2027-06-07' })
+    expect(interdite.statusCode).toBe(201)
+
+    const copie = await post('/slot', {
+      startDate: '2027-06-08T09:00:00.000Z',
+      endDate: '2027-06-08T10:00:00.000Z',
+      copiedFromSlotID: original.id,
+      slotTemplate: {
+        startTime: '2027-06-08T09:00:00.000Z',
+        endTime: '2027-06-08T10:00:00.000Z',
+        offsetDays: 0,
+        color: '#fff',
+        isIndividual: true,
+        capacity: 1,
+        soignantIDs: [],
+      },
+    })
+    expect(copie.statusCode).toBe(201)
+
+    const patientId = (
+      await post('/patient', { firstName: 'Ada', lastName: 'Interdite' })
+    ).json().id as string
+    const inscription = await post(`/patient/${patientId}/enroll`, {
+      patientID: patientId,
+      startDate: '2027-05-01T00:00:00.000Z',
+      pathways: [{ tag: 'INTERDITE', timeOfDay: 'ALL_DAY' }],
+    })
+    expect(inscription.statusCode).toBe(200)
+    expect(inscription.json().failedEnrollments).toEqual([])
+
+    const appointments = await testDb.appointment.findMany({
+      where: { appointmentPatients: { some: { patientId } } },
+      orderBy: { startDate: 'asc' },
+    })
+    expect(appointments.map((a) => a.startDate.toISOString())).toEqual([
+      '2027-06-01T09:00:00.000Z',
+      '2027-06-08T09:00:00.000Z',
+    ])
+  })
 })
