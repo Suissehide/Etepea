@@ -126,6 +126,8 @@ export type DaySlotRow = {
   endDate: string
   thematic: string
   thematicId?: string | null
+  // Celle du rendez-vous quand elle diffère de la thématique du créneau.
+  subThematic?: string
   location: string
   soignants: Soignant[]
   patients: (AppointmentPatient & { appointmentId: string })[]
@@ -156,6 +158,12 @@ const closedReason = (slot: Slot): DaySlotRow['closed'] => {
   return slot.locked ? 'locked' : undefined
 }
 
+const subThematicOf = (slot: Slot, appointment?: Appointment | null) =>
+  appointment?.thematic &&
+  appointment.thematicId !== slot.slotTemplate?.thematicId
+    ? appointment.thematic
+    : undefined
+
 const buildDaySlotRow = (slot: Slot): DaySlotRow => {
   const appointments = slot.appointments ?? []
   // Un créneau supprimé n'accepte plus d'inscription, même s'il reste affiché.
@@ -168,8 +176,9 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
     appointmentId: single?.id ?? null,
     startDate: slot.startDate,
     endDate: slot.endDate,
-    thematic: single?.thematic ?? slot.slotTemplate?.thematic ?? '',
+    thematic: slot.slotTemplate?.thematic ?? single?.thematic ?? '',
     thematicId: single?.thematicId ?? slot.slotTemplate?.thematicId,
+    subThematic: subThematicOf(slot, single),
     location: slot.slotTemplate?.location?.name ?? '',
     soignants: slot.slotTemplate?.soignants ?? [],
     patients: toRowPatients(appointments),
@@ -188,6 +197,7 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
   const empty = {
     thematic: '',
     thematicId: null,
+    subThematic: undefined,
     patients: [],
     type: undefined,
   }
@@ -202,8 +212,8 @@ const buildDaySlotRow = (slot: Slot): DaySlotRow => {
         appointmentId: appointment.id,
         startDate: appointment.startDate,
         endDate: appointment.endDate,
-        thematic: appointment.thematic ?? row.thematic,
         thematicId: appointment.thematicId,
+        subThematic: subThematicOf(slot, appointment),
         patients: toRowPatients([appointment]),
         canBook: false,
       })),

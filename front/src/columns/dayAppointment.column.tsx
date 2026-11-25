@@ -102,7 +102,18 @@ export const getDayAppointmentColumns = ({
             />
           )
         }
-        return <Tronque texte={getValue() || '—'} />
+        const { subThematic } = row.original
+        return (
+          <div className="flex flex-col min-w-0">
+            <Tronque texte={getValue() || '—'} />
+            {subThematic && (
+              <Tronque
+                className="text-xs text-text-light"
+                texte={subThematic}
+              />
+            )}
+          </div>
+        )
       },
     }),
     // Lieu, soignant et places sont ceux du créneau : pas répétés sur ses sous-lignes.

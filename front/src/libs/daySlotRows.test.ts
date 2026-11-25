@@ -25,6 +25,31 @@ const appointment = (id: string, patientID: string) => ({
 })
 
 describe('buildDaySlotRows', () => {
+  it('garde la thématique du créneau et donne à part la sous-thématique du rendez-vous', () => {
+    const template = { soignants: [], thematic: 'ETP', thematicId: 't-etp' }
+    const rdv = (id: string, thematicId: string, thematic: string) => ({
+      ...appointment(id, `p-${id}`),
+      thematicId,
+      thematic,
+    })
+    const [sous, meme] = buildDaySlotRows(
+      [
+        slot('sous', '2026-03-02T09:00:00.000Z', {
+          slotTemplate: template,
+          appointments: [rdv('a1', 't-diab', 'Diabète')],
+        } as unknown as Partial<Slot>),
+        slot('meme', '2026-03-02T10:00:00.000Z', {
+          slotTemplate: template,
+          appointments: [rdv('a2', 't-etp', 'ETP')],
+        } as unknown as Partial<Slot>),
+      ],
+      dayjs.utc('2026-03-02'),
+    )
+
+    expect([sous.thematic, sous.subThematic]).toEqual(['ETP', 'Diabète'])
+    expect([meme.thematic, meme.subThematic]).toEqual(['ETP', undefined])
+  })
+
   it('une ligne par créneau du jour, avec les patients de tous ses rendez-vous', () => {
     const rows = buildDaySlotRows(
       [

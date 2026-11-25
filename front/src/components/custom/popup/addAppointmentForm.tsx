@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-form'
 import dayjs from 'dayjs'
 import { Check, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 
 import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
@@ -260,7 +260,22 @@ function AddAppointmentForm({
               type={slotTypeValue}
               onThematicChange={setSlotThematicId}
               onTypeChange={setSlotType}
-            />
+            >
+              <form.AppField name="thematicId">
+                {(field) => (
+                  <field.Select
+                    options={thematicOptions}
+                    label="Sous-thématique"
+                    disabled={thematicOptions.length === 0}
+                    placeholder={
+                      thematicOptions.length === 0
+                        ? 'Aucune sous-thématique associée'
+                        : ''
+                    }
+                  />
+                )}
+              </form.AppField>
+            </SlotThematicTypeFields>
 
             <FormField>
               <Label>Salle</Label>
@@ -271,21 +286,6 @@ function AddAppointmentForm({
                 disabled
               />
             </FormField>
-
-            <form.AppField name="thematicId">
-              {(field) => (
-                <field.Select
-                  options={thematicOptions}
-                  label="Sous-thématique"
-                  disabled={thematicOptions.length === 0}
-                  placeholder={
-                    thematicOptions.length === 0
-                      ? 'Aucune sous-thématique associée'
-                      : ''
-                  }
-                />
-              )}
-            </form.AppField>
 
             <form.AppField
               name="patientIDs"
@@ -348,6 +348,7 @@ function SlotThematicTypeFields({
   type,
   onThematicChange,
   onTypeChange,
+  children,
 }: {
   slot?: Slot
   thematics: Thematic[]
@@ -356,6 +357,8 @@ function SlotThematicTypeFields({
   type: string
   onThematicChange: (value: string) => void
   onTypeChange: (value: string) => void
+  // La sous-thématique, rendue juste sous la thématique.
+  children: ReactNode
 }) {
   // La thématique actuelle reste proposée, même si aucun soignant du créneau ne la pratique.
   const currentId = slot?.slotTemplate?.thematicId
@@ -390,6 +393,8 @@ function SlotThematicTypeFields({
           onValueChange={onThematicChange}
         />
       </FormField>
+
+      {children}
 
       <FormField>
         <Label>Type</Label>
