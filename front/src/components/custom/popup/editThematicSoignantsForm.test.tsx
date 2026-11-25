@@ -199,5 +199,7 @@ describe('EditThematicSoignantsForm — nom déjà pris', () => {
         message,
       )
     })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nom')).toHaveValue('Sommeil')
   })
 })

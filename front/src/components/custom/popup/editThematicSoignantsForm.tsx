@@ -99,11 +99,14 @@ function EditThematicSoignantsForm({
     onSubmit: ({ value }) => {
       const patch = buildThematicPatch(thematic, value)
 
-      if (Object.keys(patch).length > 0) {
-        updateThematic.mutate({ id: thematic.id, ...patch })
+      if (Object.keys(patch).length === 0) {
+        setOpen(false)
+        return
       }
-
-      setOpen(false)
+      updateThematic.mutate(
+        { id: thematic.id, ...patch },
+        { onSuccess: () => setOpen(false) },
+      )
     },
   })
 
@@ -209,7 +212,11 @@ function EditThematicSoignantsForm({
             <X className="w-4 h-4" />
             Annuler
           </Button>
-          <Button variant="default" onClick={() => form.handleSubmit()}>
+          <Button
+            variant="default"
+            isLoading={updateThematic.isPending}
+            onClick={() => form.handleSubmit()}
+          >
             <Check className="w-4 h-4" />
             Enregistrer
           </Button>

@@ -10,11 +10,7 @@ import {
   snapshotForTenant,
 } from '../hooks/useTenantSwitch.ts'
 import { useToast } from '../hooks/useToast.ts'
-import type {
-  CreateThematicParams,
-  Thematic,
-  UpdateThematicParams,
-} from '../types/thematic.ts'
+import type { Thematic } from '../types/thematic.ts'
 
 // * QUERIES
 
@@ -45,35 +41,17 @@ export const useThematicMutations = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
+  // Creation et modification attendent le serveur : un nom refuse ne doit pas apparaitre puis disparaitre.
   const createThematic = useMutation({
     mutationKey: [THEMATIC.CREATE],
     mutationFn: ThematicApi.create,
-    onMutate: async (newThematic: CreateThematicParams) => {
-      await queryClient.cancelQueries({ queryKey: [THEMATIC.GET_ALL] })
-
-      const previousThematics = snapshotForTenant(queryClient, [
-        THEMATIC.GET_ALL,
-        false,
-      ])
-      queryClient.setQueryData(
-        [THEMATIC.GET_ALL, false],
-        (oldThematics: Thematic[]) => [
-          ...(oldThematics || []),
-          { ...newThematic, id: 'temp', soignants: [] },
-        ],
-      )
-
-      return { previousThematics }
-    },
     onSuccess: () => {
       toast({
         title: 'Thématique créée avec succès',
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
-    onError: (error, __, context) => {
-      restoreForTenant(queryClient, context?.previousThematics)
-
+    onError: (error) => {
       toast({
         title: 'Erreur lors de la création de la thématique',
         message: error.message,
@@ -154,34 +132,13 @@ export const useThematicMutations = () => {
   const updateThematic = useMutation({
     mutationKey: [THEMATIC.UPDATE],
     mutationFn: ThematicApi.update,
-    onMutate: async (updatedThematic: UpdateThematicParams) => {
-      await queryClient.cancelQueries({ queryKey: [THEMATIC.GET_ALL] })
-
-      const previousThematics = snapshotForTenant(queryClient, [
-        THEMATIC.GET_ALL,
-        false,
-      ])
-      queryClient.setQueryData(
-        [THEMATIC.GET_ALL, false],
-        (oldThematics: Thematic[]) =>
-          oldThematics?.map((thematic: Thematic) =>
-            thematic.id === updatedThematic.id
-              ? { ...thematic, ...updatedThematic }
-              : thematic,
-          ),
-      )
-
-      return { previousThematics }
-    },
     onSuccess: () => {
       toast({
         title: 'Thématique modifiée avec succès',
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
-    onError: (error, __, context) => {
-      restoreForTenant(queryClient, context?.previousThematics)
-
+    onError: (error) => {
       toast({
         title: 'Erreur lors de la mise à jour de la thématique',
         message: error.message,
