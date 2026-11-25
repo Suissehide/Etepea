@@ -56,7 +56,8 @@
   /* Indicateurs ARS : reponse manuelle encore a saisir. */
   --a-saisir: #f59e0b;
   --a-saisir-fond: #fffbeb;
-  --a-saisir-texte: #b45309;
+  /* Texte et icônes d'avertissement : ambre 900, lisible même en paragraphe. */
+  --a-saisir-texte: #78350f;
 }
 
 @layer base {

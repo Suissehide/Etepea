@@ -21,7 +21,7 @@ interface NameConflictNoticeProps<T extends Named> {
 // Encart sous le champ Nom quand le nom tapé est déjà pris. Une supprimée se restaure en
 // un clic (le nom ne peut pas servir deux fois) ; une active est signalée en information,
 // pas en faute : on cherchait souvent celle qui existe.
-// Jetons de l'appli, sans variante `dark:` : celle de Tailwind suit le mode sombre du système
+// Couleurs de la maquette (texte « à saisir » / bleu 900), sans variante `dark:` : celle de Tailwind suit le mode sombre du système
 // alors que l'appli reste claire (palette `.dark` dormante), d'où un encart sombre dans une popup claire.
 export function NameConflictNotice<T extends Named>({
   conflict,
@@ -42,7 +42,7 @@ export function NameConflictNotice<T extends Named>({
     return (
       <div
         role="status"
-        className="flex flex-col gap-2.5 rounded-lg border border-a-saisir/40 bg-a-saisir-fond px-3.5 py-3 text-sm text-a-saisir-texte"
+        className="flex flex-col gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-a-saisir-texte"
       >
         <p className="leading-snug">
           {noun} <b>« {item.name} »</b> a été{' '}
@@ -50,19 +50,19 @@ export function NameConflictNotice<T extends Named>({
           fois : {feminine ? 'restaurez-la' : 'restaurez-le'}, ou choisissez un
           autre nom.
         </p>
-        <Chips chips={chips} className="bg-a-saisir/15 text-a-saisir-texte" />
+        <Chips chips={chips} className="bg-amber-100 text-a-saisir-texte" />
         <div className="flex items-center gap-2.5">
           <Button
             type="button"
             size="sm"
             isLoading={restoring}
             onClick={() => onRestore(item)}
-            className="bg-a-saisir-texte text-white hover:bg-a-saisir-texte/85"
+            className="bg-amber-700 text-white hover:bg-amber-700/85"
           >
             <Undo2 className="w-3.5 h-3.5" />
             Restaurer « {item.name} »
           </Button>
-          <span className="text-xs text-a-saisir-texte/80">
+          <span className="text-xs text-a-saisir-texte">
             avec ses réglages d'avant
           </span>
         </div>
@@ -73,21 +73,21 @@ export function NameConflictNotice<T extends Named>({
   return (
     <div
       role="status"
-      className="flex flex-col gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-3.5 py-3 text-sm text-text-dark"
+      className="flex flex-col gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900"
     >
       <p className="leading-snug">
         <b>« {item.name} »</b> existe déjà dans ce service.
         {onShowExisting &&
           ` Vous vouliez peut-être ${feminine ? 'la' : 'le'} modifier ?`}
       </p>
-      <Chips chips={chips} className="bg-primary/10 text-primary" />
+      <Chips chips={chips} className="bg-blue-100 text-blue-800" />
       {onShowExisting && (
         <div className="flex items-center gap-2.5">
           <Button type="button" size="sm" onClick={() => onShowExisting(item)}>
             <Eye className="w-3.5 h-3.5" />
             Voir « {item.name} »
           </Button>
-          <span className="text-xs text-text-light">
+          <span className="text-xs text-blue-800">
             ou choisissez un autre nom
           </span>
         </div>

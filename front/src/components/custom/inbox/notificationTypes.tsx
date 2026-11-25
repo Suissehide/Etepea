@@ -47,7 +47,7 @@ export const NOTIFICATION_TYPES: Record<
   },
   APPOINTMENT_MOVED: {
     icon: CalendarClock,
-    color: '#b45309',
+    color: '#78350f',
     tint: '#fffbeb',
     kind: 'RDV modifié',
     cta: 'Ouvrir le RDV',
