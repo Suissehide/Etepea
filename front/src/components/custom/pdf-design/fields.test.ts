@@ -91,6 +91,16 @@ describe('resolveField', () => {
     )
   })
 
+  it('donne l annee de debut quand le programme chevauche deux annees', () => {
+    const upcomingSlots = [
+      slot('2026-12-07T09:00:00.000Z'),
+      slot('2027-01-22T09:00:00.000Z'),
+    ]
+    expect(resolveField('program.dates', ctx({ upcomingSlots }))).toBe(
+      'Du 07/12/2026 au 22/01/2027',
+    )
+  })
+
   // Review Focus 1 : aucun creneau a venir -> rien, jamais « Du Invalid Date ».
   it('rend une chaine vide quand le patient n a aucun creneau a venir', () => {
     expect(resolveField('program.dates', ctx())).toBe('')

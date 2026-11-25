@@ -35,7 +35,10 @@ const RESOLVERS: Record<PdfFieldKey, (ctx: PdfFieldContext) => string> = {
     if (!duration) {
       return ''
     }
-    return `Du ${duration.startDate.format('DD/MM')} au ${duration.endDate.format('DD/MM/YYYY')}`
+    const { startDate, endDate } = duration
+    const startFormat =
+      startDate.year() === endDate.year() ? 'DD/MM' : 'DD/MM/YYYY'
+    return `Du ${startDate.format(startFormat)} au ${endDate.format('DD/MM/YYYY')}`
   },
 }
 

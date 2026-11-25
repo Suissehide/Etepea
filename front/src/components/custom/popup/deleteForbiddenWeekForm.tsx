@@ -23,9 +23,11 @@ export function DeleteForbiddenWeekForm({
   const monday = dayjs.utc(startOfWeek ?? undefined).isoWeekday(1)
   const sunday = monday.add(6, 'day')
   const from =
-    monday.month() === sunday.month()
-      ? monday.format('D')
-      : monday.format('D MMMM')
+    monday.year() === sunday.year()
+      ? monday.month() === sunday.month()
+        ? monday.format('D')
+        : monday.format('D MMMM')
+      : monday.format('D MMMM YYYY')
 
   return (
     <Popup modal open={open} onOpenChange={setOpen}>
