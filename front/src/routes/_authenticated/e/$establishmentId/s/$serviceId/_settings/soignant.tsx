@@ -114,7 +114,9 @@ function SoignantSettings() {
               onShowDeletedChange={setShowArchived}
               label="Soignants à afficher"
             />
-            {canManage && !showArchived && <AddSoignantForm />}
+            {canManage && !showArchived && (
+              <AddSoignantForm onShowExisting={setSearchTerm} />
+            )}
           </div>
         </div>
 

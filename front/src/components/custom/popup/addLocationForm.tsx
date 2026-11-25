@@ -1,9 +1,14 @@
+import { useStore } from '@tanstack/react-form'
 import { Check, Plus, X } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { useLocationMutations } from '../../../queries/useLocation.ts'
+import { findNameConflict } from '../../../libs/nameConflict.ts'
+import {
+  useLocationMutations,
+  useLocationQueries,
+} from '../../../queries/useLocation.ts'
 import { Button } from '../../ui/button.tsx'
 import {
   Popup,
@@ -14,14 +19,19 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../../ui/popup.tsx'
+import { NameConflictNotice } from '../form/nameConflictNotice.tsx'
 
 interface AddLocationFormProps {
   trigger?: React.ReactNode
+  /** Montre la salle existante dans la liste quand le nom tapé est déjà pris. */
+  onShowExisting?: (name: string) => void
 }
 
-function AddLocationForm({ trigger }: AddLocationFormProps) {
+function AddLocationForm({ trigger, onShowExisting }: AddLocationFormProps) {
   const [open, setOpen] = useState(false)
-  const { createLocation } = useLocationMutations()
+  const { createLocation, restoreLocation } = useLocationMutations()
+  const { locations } = useLocationQueries()
+  const { locations: archivedLocations } = useLocationQueries(true)
 
   const form = useAppForm({
     defaultValues: {
@@ -38,6 +48,14 @@ function AddLocationForm({ trigger }: AddLocationFormProps) {
       form.reset()
     }
   }, [open, form])
+
+  const name = useStore(form.store, (state) => state.values.name)
+  const conflict = findNameConflict(name, locations, archivedLocations)
+  const submit = async () => {
+    if (!conflict) {
+      await form.handleSubmit()
+    }
+  }
 
   return (
     <Popup modal={true} open={open} onOpenChange={setOpen}>
@@ -62,7 +80,7 @@ function AddLocationForm({ trigger }: AddLocationFormProps) {
             onSubmit={async (e) => {
               e.preventDefault()
               await form.validate('submit')
-              await form.handleSubmit()
+              await submit()
             }}
             className="space-y-4 max-w-md"
           >
@@ -75,6 +93,25 @@ function AddLocationForm({ trigger }: AddLocationFormProps) {
             >
               {(field) => <field.Input label="Nom" />}
             </form.AppField>
+
+            <NameConflictNotice
+              conflict={conflict}
+              noun="Une salle"
+              feminine={true}
+              restoring={restoreLocation.isPending}
+              onRestore={(item) =>
+                restoreLocation.mutate(item.id, {
+                  onSuccess: () => setOpen(false),
+                })
+              }
+              onShowExisting={
+                onShowExisting &&
+                ((item) => {
+                  setOpen(false)
+                  onShowExisting(item.name)
+                })
+              }
+            />
           </form>
         </PopupBody>
 
@@ -86,7 +123,9 @@ function AddLocationForm({ trigger }: AddLocationFormProps) {
           <Button
             variant="default"
             isLoading={createLocation.isPending}
-            onClick={() => form.handleSubmit()}
+            disabled={!!conflict}
+            title={conflict ? 'Nom déjà pris' : undefined}
+            onClick={submit}
           >
             <Check className="w-4 h-4" />
             Ajouter

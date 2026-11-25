@@ -1,12 +1,18 @@
+import { useStore } from '@tanstack/react-form'
 import { Check, Plus, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { useSoignantMutations } from '../../../queries/useSoignant.ts'
+import { findNameConflict } from '../../../libs/nameConflict.ts'
+import {
+  useSoignantMutations,
+  useSoignantQueries,
+} from '../../../queries/useSoignant.ts'
 import {
   useThematicMutations,
   useThematicQueries,
 } from '../../../queries/useThematic.ts'
+import type { Soignant } from '../../../types/soignant.ts'
 import { Button } from '../../ui/button.tsx'
 import {
   Popup,
@@ -17,10 +23,24 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../../ui/popup.tsx'
+import { NameConflictNotice } from '../form/nameConflictNotice.tsx'
 
-function AddSoignantForm() {
+interface AddSoignantFormProps {
+  /** Montre le soignant existant dans la liste quand le nom tapé est déjà pris. */
+  onShowExisting?: (name: string) => void
+}
+
+const soignantDetails = (soignant: Soignant) => [
+  ...(soignant.inactive ? ['Inactif'] : []),
+  ...(soignant.hidden ? ['Masqué'] : []),
+]
+
+function AddSoignantForm({ onShowExisting }: AddSoignantFormProps) {
   const [open, setOpen] = useState(false)
-  const { createSoignant } = useSoignantMutations()
+  const { createSoignant, restoreSoignant } = useSoignantMutations()
+  // Les inactifs comptent : leur nom est pris, ils sont seulement masqués des choix.
+  const { allSoignants } = useSoignantQueries()
+  const { soignants: archivedSoignants } = useSoignantQueries(true)
   const { thematics } = useThematicQueries()
   const { updateThematic } = useThematicMutations()
 
@@ -65,6 +85,14 @@ function AddSoignantForm() {
     }
   }, [open, form])
 
+  const name = useStore(form.store, (state) => state.values.name)
+  const conflict = findNameConflict(name, allSoignants, archivedSoignants)
+  const submit = async () => {
+    if (!conflict) {
+      await form.handleSubmit()
+    }
+  }
+
   return (
     <Popup modal={true} open={open} onOpenChange={setOpen}>
       <PopupTrigger asChild>
@@ -86,7 +114,7 @@ function AddSoignantForm() {
             onSubmit={async (e) => {
               e.preventDefault()
               await form.validate('submit')
-              await form.handleSubmit()
+              await submit()
             }}
             className="space-y-4 max-w-md"
           >
@@ -99,6 +127,26 @@ function AddSoignantForm() {
             >
               {(field) => <field.Input label="Nom" />}
             </form.AppField>
+
+            <NameConflictNotice
+              conflict={conflict}
+              noun="Un soignant"
+              feminine={false}
+              details={soignantDetails}
+              restoring={restoreSoignant.isPending}
+              onRestore={(item) =>
+                restoreSoignant.mutate(item.id, {
+                  onSuccess: () => setOpen(false),
+                })
+              }
+              onShowExisting={
+                onShowExisting &&
+                ((item) => {
+                  setOpen(false)
+                  onShowExisting(item.name)
+                })
+              }
+            />
 
             <form.AppField name="thematicIDs">
               {(field) => (
@@ -119,7 +167,9 @@ function AddSoignantForm() {
           </Button>
           <Button
             variant="default"
-            onClick={() => form.handleSubmit()}
+            disabled={!!conflict}
+            title={conflict ? 'Nom déjà pris' : undefined}
+            onClick={submit}
             isLoading={createSoignant.isPending}
           >
             <Check className="w-4 h-4" />
