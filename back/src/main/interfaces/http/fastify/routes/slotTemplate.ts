@@ -70,7 +70,7 @@ const slotTemplateRouter: FastifyPluginAsync = (fastify) => {
           201: slotTemplateResponseSchema,
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request, reply) => {
       const createSlotTemplateInput = request.body
@@ -97,7 +97,7 @@ const slotTemplateRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request) => {
       const { slotTemplateID } = request.params
@@ -123,7 +123,7 @@ const slotTemplateRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request, reply) => {
       const { slotTemplateID } = request.params
