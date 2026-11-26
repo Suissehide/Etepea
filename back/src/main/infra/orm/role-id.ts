@@ -6,17 +6,40 @@ import type { ServiceRole } from '../../utils/permissions'
 // Provisoire : la tâche 4 reçoit `roleId` de l'API et retire ce pont.
 export const roleIdOf = async (
   client: Pick<PrimaTransactionClient, '$queryRaw'>,
-  serviceId: string,
+  {
+    serviceId,
+    establishmentId,
+  }: { serviceId: string; establishmentId: string },
   preset: ServiceRole,
 ): Promise<string> => {
   const rows = await client.$queryRaw<{ id: string }[]>`
     SELECT "id" FROM "ServiceRoleDef"
-    WHERE "serviceId" = ${serviceId} AND "preset" = ${preset}::"ServiceRole"`
+    WHERE "serviceId" = ${serviceId} AND "establishmentId" = ${establishmentId}
+      AND "preset" = ${preset}::"ServiceRole" AND "archivedAt" IS NULL`
   const id = rows[0]?.id
   if (!id) {
     throw new Error(`Rôle ${preset} introuvable pour le service ${serviceId}`)
   }
   return id
+}
+
+// Variante gardée, pour un appelant qui a un service de tenant.
+export const scopedRoleIdOf = async (
+  client: Pick<PrimaTransactionClient, 'serviceRoleDef'>,
+  {
+    serviceId,
+    establishmentId,
+  }: { serviceId: string; establishmentId: string },
+  preset: ServiceRole,
+): Promise<string> => {
+  const role = await client.serviceRoleDef.findFirst({
+    where: { serviceId, establishmentId, preset, archivedAt: null },
+    select: { id: true },
+  })
+  if (!role) {
+    throw new Error(`Rôle ${preset} introuvable pour le service ${serviceId}`)
+  }
+  return role.id
 }
 
 export const createDefaultRoles = async (

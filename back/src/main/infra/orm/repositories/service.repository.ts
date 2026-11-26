@@ -111,7 +111,11 @@ class ServiceRepository implements ServiceRepositoryInterface {
               serviceId: service.id,
               establishmentId,
               role: 'COORDINATEUR',
-              roleId: await roleIdOf(tx, service.id, 'COORDINATEUR'),
+              roleId: await roleIdOf(
+                tx,
+                { serviceId: service.id, establishmentId },
+                'COORDINATEUR',
+              ),
             },
           })
         }

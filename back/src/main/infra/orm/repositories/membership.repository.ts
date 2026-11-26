@@ -11,7 +11,7 @@ import type {
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'
 import type { TenantContextInterface } from '../../../types/utils/tenant-context'
 import type { PostgresPrismaClient } from '../postgres-client'
-import { roleIdOf } from '../role-id'
+import { roleIdOf, scopedRoleIdOf } from '../role-id'
 
 // Famille établissement : EstablishmentMembership porte establishmentId.
 //
@@ -127,7 +127,11 @@ class MembershipRepository implements MembershipRepositoryInterface {
           serviceId,
           establishmentId,
           role,
-          roleId: await roleIdOf(client, serviceId, role),
+          roleId: await scopedRoleIdOf(
+            client,
+            { serviceId, establishmentId },
+            role,
+          ),
           soignantId,
         },
         select: this.serviceMemberSelect,
@@ -148,7 +152,14 @@ class MembershipRepository implements MembershipRepositoryInterface {
     const where = { id: serviceMembershipId, establishmentId, serviceId }
     const { count } = await this.prisma.serviceMembership.updateMany({
       where,
-      data: { role, roleId: await roleIdOf(this.prisma, serviceId, role) },
+      data: {
+        role,
+        roleId: await scopedRoleIdOf(
+          this.prisma,
+          { serviceId, establishmentId },
+          role,
+        ),
+      },
     })
     if (count === 0) {
       return null
@@ -306,7 +317,11 @@ class MembershipRepository implements MembershipRepositoryInterface {
               services.map(async (service) => ({
                 serviceId: service.serviceId,
                 role: service.role,
-                roleId: await roleIdOf(client, service.serviceId, service.role),
+                roleId: await roleIdOf(
+                  client,
+                  { serviceId: service.serviceId, establishmentId },
+                  service.role,
+                ),
                 soignantId: service.soignantId ?? null,
                 establishmentId,
               })),
@@ -370,7 +385,11 @@ class MembershipRepository implements MembershipRepositoryInterface {
                 // `soignantId` absent : le rattachement existant est garde.
                 data: {
                   role: service.role,
-                  roleId: await roleIdOf(tx, service.serviceId, service.role),
+                  roleId: await roleIdOf(
+                    tx,
+                    { serviceId: service.serviceId, establishmentId },
+                    service.role,
+                  ),
                   ...(service.soignantId !== undefined && {
                     soignantId: service.soignantId,
                   }),
@@ -382,7 +401,11 @@ class MembershipRepository implements MembershipRepositoryInterface {
                   establishmentMembershipId: id,
                   serviceId: service.serviceId,
                   role: service.role,
-                  roleId: await roleIdOf(tx, service.serviceId, service.role),
+                  roleId: await roleIdOf(
+                    tx,
+                    { serviceId: service.serviceId, establishmentId },
+                    service.role,
+                  ),
                   soignantId: service.soignantId ?? null,
                   establishmentId,
                 },

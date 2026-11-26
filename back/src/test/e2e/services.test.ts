@@ -108,6 +108,22 @@ describe('routes services', () => {
       soignantId: null,
       affecte: true,
     })
+
+    const roles = await testDb.serviceRoleDef.findMany({
+      where: { serviceId: service.id },
+    })
+    expect(roles.map((r) => r.preset).sort()).toEqual([
+      'COORDINATEUR',
+      'INTERVENANT',
+      'LECTURE',
+      'SECRETARIAT',
+    ])
+    const affectation = await testDb.serviceMembership.findFirstOrThrow({
+      where: { serviceId: service.id },
+    })
+    expect(affectation.roleId).toBe(
+      roles.find((r) => r.preset === 'COORDINATEUR')?.id,
+    )
   })
 
   // Sous un octroi temporaire (spec §4.3),

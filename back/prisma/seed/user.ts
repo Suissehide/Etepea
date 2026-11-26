@@ -101,13 +101,6 @@ export default async function seedUsers(
       u.soignantIndex === null
         ? null
         : (soignantsParService.get(serviceId)?.[u.soignantIndex]?.id ?? null)
-    const roleIds = new Map<string, string>()
-    for (const { service, role } of u.serviceMemberships) {
-      const def = await prisma.serviceRoleDef.findFirstOrThrow({
-        where: { serviceId: service.id, preset: role },
-      })
-      roleIds.set(service.id, def.id)
-    }
     await prisma.establishmentMembership.upsert({
       where: {
         userId_establishmentId: { userId: user.id, establishmentId },
@@ -118,13 +111,19 @@ export default async function seedUsers(
         establishmentId,
         role: u.establishmentRole,
         serviceMemberships: {
-          create: u.serviceMemberships.map(({ service, role }) => ({
-            serviceId: service.id,
-            establishmentId,
-            role,
-            roleId: roleIds.get(service.id) ?? '',
-            soignantId: soignantDans(service.id),
-          })),
+          create: await Promise.all(
+            u.serviceMemberships.map(async ({ service, role }) => ({
+              serviceId: service.id,
+              establishmentId,
+              role,
+              roleId: (
+                await prisma.serviceRoleDef.findFirstOrThrow({
+                  where: { serviceId: service.id, preset: role },
+                })
+              ).id,
+              soignantId: soignantDans(service.id),
+            })),
+          ),
         },
       },
     })
