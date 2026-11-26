@@ -5,6 +5,10 @@ import { authRouter } from './auth'
 import { DEMO_REQUEST_URL, demoRequestRouter } from './demoRequest'
 import { establishmentAdminRoutes } from './establishment-admin.routes'
 import { healthcheckRouter } from './healthcheck'
+import {
+  LEGACY_RDV_URL,
+  legacyAppointmentIngestRouter,
+} from './legacyAppointment'
 import { meRouter } from './me'
 import {
   assertSuperAdminShapedRoute,
@@ -19,7 +23,12 @@ import {
 } from './tenant.routes'
 
 // Routes publiques (sans session) : racine, healthcheck et authentification.
-const PUBLIC_ROUTES = new Set(['/', '/health', DEMO_REQUEST_URL])
+const PUBLIC_ROUTES = new Set([
+  '/',
+  '/health',
+  DEMO_REQUEST_URL,
+  LEGACY_RDV_URL,
+])
 
 const routes: FastifyPluginAsyncZod = async (fastify) => {
   // Toute route de forme multi-tenant doit déclarer sa permission, où qu'elle
@@ -75,6 +84,9 @@ const routes: FastifyPluginAsyncZod = async (fastify) => {
 
   await fastify.register(healthcheckRouter)
   await fastify.register(demoRequestRouter, { prefix: DEMO_REQUEST_URL })
+  await fastify.register(legacyAppointmentIngestRouter, {
+    prefix: LEGACY_RDV_URL,
+  })
   await fastify.register(authRouter, { prefix: '/auth' })
   await fastify.register(meRouter, { prefix: '/me' })
   await fastify.register(tenantRoutes, { prefix: TENANT_PREFIX })

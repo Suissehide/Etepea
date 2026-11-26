@@ -272,3 +272,8 @@ export const INDICATOR_SET = {
 export const ACTIVITY = {
   GET: 'get_activity',
 }
+
+export const LEGACY_APPOINTMENT = {
+  GET_ALL: 'get_all_legacy_appointments',
+  SET_REPORTED: 'set_reported_legacy_appointment',
+}

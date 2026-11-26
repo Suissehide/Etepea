@@ -262,6 +262,15 @@ const AUTORISES = [
       'repository-scope.test.ts',
     appels: 1,
   },
+  {
+    fichier: 'infra/orm/repositories/legacyAppointment.repository.ts',
+    raison:
+      'receive — rendez-vous pousses par l ancienne app (POST /legacy-appointments, jeton ' +
+      'partage, aucune session donc aucun tenant). Service et etablissement viennent de la ' +
+      'config (LEGACY_RDV_*), jamais de la requete, et bornent explicitement les trois ' +
+      'requetes encadrees. Temporaire, disparait avec la fonctionnalite legacy-rdv',
+    appels: 1,
+  },
 ]
 
 // Seul fichier ou le volet B a le droit de trouver un appel : celui qui DEFINIT `enter`, `clear`,

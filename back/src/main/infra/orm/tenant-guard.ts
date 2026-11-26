@@ -42,6 +42,7 @@ export const SERVICE_MODELS: readonly string[] = [
   'PdfAsset',
   'ServiceRoleDef',
   'ServiceRoleHiddenSoignant',
+  'LegacyAppointment',
 ]
 
 // Modèles rattachés à un établissement : portent establishmentId.
@@ -412,6 +413,7 @@ export const MODEL_RELATIONS: Record<string, Record<string, ModelRelation>> = {
   TaskSoignant: { task: one('Task'), soignant: one('Soignant') },
   // `Notification` ne déclare aucune relation dans le schéma.
   Notification: {},
+  LegacyAppointment: {},
   Soignant: {
     slotTemplateLinks: many('SlotTemplateSoignant'),
     thematicLinks: many('SoignantThematic'),

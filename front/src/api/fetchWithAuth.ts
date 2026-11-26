@@ -38,6 +38,8 @@ let isCheckingStaleTenant = false
 // de declencher le rappel sur toute autre route.
 const CHEMINS_404_NORMAUX = [
   /^\/e\/[^/]+\/s\/[^/]+\/patient\/[^/]+\/service-file$/,
+  // Rendez-vous de l'ancienne app : 404 tant que la fonctionnalité est éteinte.
+  /^\/e\/[^/]+\/s\/[^/]+\/legacy-appointments$/,
 ]
 
 export const fetchWithAuth = async (

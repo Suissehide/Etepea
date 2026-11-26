@@ -228,6 +228,8 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
 // entree dit d'ou. Ajouter un ecran de section ici plutot que dans `NAVIGATION` le rendrait
 // introuvable : c'est exactement ce que cette liste doit rester incapable de cacher.
 export const HORS_ONGLETS: Readonly<Partial<Record<RoutePath, string>>> = {
+  '/e/$establishmentId/s/$serviceId/rdv-ancienne-app':
+    "rendez-vous de l'ancienne app, bouton de l'Agenda (temporaire)",
   '/e/$establishmentId/s/$serviceId/patient/$patientID':
     'fiche patient, depuis la liste Patients',
   '/e/$establishmentId/s/$serviceId/patient/$patientID/acces':

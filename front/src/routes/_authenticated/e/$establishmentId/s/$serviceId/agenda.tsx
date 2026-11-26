@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { getDayAppointmentColumns } from '@/columns/dayAppointment.column.tsx'
+import BoutonRdvAncienneApp from '@/components/custom/boutonRdvAncienneApp.tsx'
 import {
   BarreCalendrier,
   type ControleurBarre,
@@ -235,7 +236,12 @@ function Agenda() {
           controller={controleur}
           onChoisirDate={setAnchorEl}
           className="px-0 pb-0 flex-wrap"
-          filtres={<ToggleVerrouilles />}
+          filtres={
+            <>
+              <ToggleVerrouilles />
+              {canCreateAppointment && <BoutonRdvAncienneApp />}
+            </>
+          }
         />
         <div className="-mx-6 border-y border-border bg-surface-douce px-6 py-2.5">
           <WeekDayStrip value={selectedDay} onChange={handleDayChange} />
