@@ -215,4 +215,130 @@ describe('roles de service : liste et attribution par roleId', () => {
       { serviceId: A, roleId: intervenant },
     ])
   })
+
+  describe('role supprime deja tenu', () => {
+    let archive: string
+    let affectationId: string
+    let membershipId: string
+
+    beforeAll(async () => {
+      archive = (
+        await testDb.serviceRoleDef.create({
+          data: {
+            name: 'Ancien tenu',
+            permissions: ['agenda:read'],
+            archivedAt: new Date(),
+            serviceId: A,
+            establishmentId: E,
+          },
+        })
+      ).id
+      const user = await createUser({
+        email: 'ancien@test.fr',
+        memberships: [
+          {
+            establishmentId: E,
+            services: [{ serviceId: A, role: 'LECTURE', roleId: archive }],
+          },
+        ],
+      })
+      const affectation = await testDb.serviceMembership.findFirstOrThrow({
+        where: { serviceId: A, establishmentMembership: { userId: user.id } },
+      })
+      affectationId = affectation.id
+      membershipId = affectation.establishmentMembershipId
+    })
+
+    const patchService = async (roleId: string) =>
+      t.app.inject({
+        method: 'PATCH',
+        url: tenantUrl(E, A, `/membres/${affectationId}`),
+        cookies: coordA,
+        payload: { roleId },
+      })
+
+    it('PATCH /membres/:id refuse (400) un roleId d un autre service, ou un role supprime non tenu', async () => {
+      const autreArchive = await testDb.serviceRoleDef.create({
+        data: {
+          name: 'Autre supprime',
+          permissions: [],
+          archivedAt: new Date(),
+          serviceId: A,
+          establishmentId: E,
+        },
+      })
+      const etranger = await patchService(await roleIdOf(B, 'LECTURE'))
+      const supprime = await patchService(autreArchive.id)
+      expect([etranger.statusCode, supprime.statusCode]).toEqual([400, 400])
+      expect(
+        (
+          await testDb.serviceMembership.findUniqueOrThrow({
+            where: { id: affectationId },
+          })
+        ).roleId,
+      ).toBe(archive)
+    })
+
+    it('PATCH /membres/:id avec le role supprime deja tenu ne refuse rien', async () => {
+      const res = await patchService(archive)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().role).toEqual({ id: archive, name: 'Ancien tenu' })
+    })
+
+    it('l administration modifie ce membre sans toucher a son role supprime, mais refuse (400) d y basculer un autre', async () => {
+      const garde = await t.app.inject({
+        method: 'PATCH',
+        url: adminUrl(E, `/members/${membershipId}`),
+        cookies: admin,
+        payload: { role: 'MEMBER', services: [{ serviceId: A, roleId: archive }] },
+      })
+      expect(garde.statusCode).toBe(200)
+      expect(garde.json().serviceMemberships).toEqual([
+        { serviceId: A, roleId: archive, soignantId: null },
+      ])
+
+      const autreArchive = await testDb.serviceRoleDef.create({
+        data: {
+          name: 'Encore supprime',
+          permissions: [],
+          archivedAt: new Date(),
+          serviceId: A,
+          establishmentId: E,
+        },
+      })
+      const bascule = await t.app.inject({
+        method: 'PATCH',
+        url: adminUrl(E, `/members/${membershipId}`),
+        cookies: admin,
+        payload: { services: [{ serviceId: A, roleId: autreArchive.id }] },
+      })
+      expect(bascule.statusCode).toBe(400)
+    })
+  })
+
+  it('GET /roles est refuse (403) a un role sans members:read', async () => {
+    const agenda = await testDb.serviceRoleDef.create({
+      data: {
+        name: 'Agenda seul',
+        permissions: ['agenda:read'],
+        serviceId: A,
+        establishmentId: E,
+      },
+    })
+    await createUser({
+      email: 'agenda@test.fr',
+      memberships: [
+        {
+          establishmentId: E,
+          services: [{ serviceId: A, role: 'LECTURE', roleId: agenda.id }],
+        },
+      ],
+    })
+    const res = await t.app.inject({
+      method: 'GET',
+      url: tenantUrl(E, A, '/roles'),
+      cookies: await signIn(t.app, 'agenda@test.fr'),
+    })
+    expect(res.statusCode).toBe(403)
+  })
 })

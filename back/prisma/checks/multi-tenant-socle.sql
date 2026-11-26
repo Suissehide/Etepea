@@ -13,7 +13,7 @@ UNION ALL SELECT 'Services (attendu 1)', count(*) FROM "Service"
 UNION ALL SELECT 'PlanningCycle (attendu 0 ou 1)', count(*) FROM "PlanningCycle"
 UNION ALL SELECT 'Appartenances etab (attendu = anciens ADMIN+USER)', count(*) FROM "EstablishmentMembership"
 UNION ALL SELECT 'Appartenances service (attendu = anciens ADMIN+USER)', count(*) FROM "ServiceMembership"
-UNION ALL SELECT 'Coordinateurs (attendu = anciens ADMIN)', count(*) FROM "ServiceMembership" WHERE "role" = 'COORDINATEUR'
+UNION ALL SELECT 'Coordinateurs (attendu = anciens ADMIN)', count(*) FROM "ServiceMembership" sm JOIN "ServiceRoleDef" r ON r."id" = sm."roleId" WHERE r."preset" = 'COORDINATEUR'
 UNION ALL SELECT 'Liens slotTemplate-soignant', count(*) FROM "SlotTemplateSoignant"
 UNION ALL SELECT 'Liens soignant-thematic', count(*) FROM "SoignantThematic";
 

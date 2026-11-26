@@ -44,8 +44,7 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
     }))
   }
 
-  // Lu depuis `Service` (modèle d'établissement) par un filtre de relation : le garde exige le
-  // serviceId du tenant pour lire `ServiceRoleDef`, absent en administration d'établissement.
+  // Filtre de relation depuis `Service` : marche aussi sans service de tenant (administration).
   async findActiveInService(
     roleId: string,
     serviceId: string,

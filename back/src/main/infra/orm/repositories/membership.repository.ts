@@ -74,10 +74,13 @@ class MembershipRepository implements MembershipRepositoryInterface {
             select: { id: true, name: true },
           })
     const nameById = new Map(roles.map((r) => [r.id, r.name]))
-    return rows.map(({ roleId, ...row }) => ({
-      ...row,
-      role: { id: roleId, name: nameById.get(roleId) ?? '' },
-    }))
+    return rows.map(({ roleId, ...row }) => {
+      const name = nameById.get(roleId)
+      if (name === undefined) {
+        throw new Error(`Rôle ${roleId} introuvable dans le service courant`)
+      }
+      return { ...row, role: { id: roleId, name } }
+    })
   }
 
   async #withRole<T extends { roleId: string }>(row: T | null) {

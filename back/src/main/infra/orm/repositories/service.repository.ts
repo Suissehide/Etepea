@@ -14,8 +14,7 @@ import type { PostgresPrismaClient } from '../postgres-client'
 // Famille établissement (ESTABLISHMENT_MODELS, tenant-guard.ts) : `Service` et
 // `ServiceMembership` portent tous deux `establishmentId`, aucun des deux n'exige de service
 // courant — c'est ce qui rend cette classe utilisable depuis l'administration d'établissement
-// (`serviceId` null dans le tenant). Seule exception : les rôles par défaut d'un service créé
-// (`createDefaultRoles`, mode système déclaré).
+// (`serviceId` null dans le tenant), sauf `#createDefaultRoles` (mode système déclaré).
 class ServiceRepository implements ServiceRepositoryInterface {
   private readonly prisma: PostgresPrismaClient
   private readonly errorHandler: ErrorHandlerInterface
@@ -130,9 +129,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
     }
   }
 
-  // Mode système déclaré (runAsSystem-unicite.test.ts) : `ServiceRoleDef` est un modèle de service
-  // et l'administration d'établissement n'a pas de service de tenant. Borné au service qu'on
-  // vient de créer, chaque ligne portant serviceId et establishmentId ; rend l'id du Coordinateur.
+  // Mode système déclaré (runAsSystem-unicite.test.ts), borné au service créé ; rend l'id du Coordinateur.
   async #createDefaultRoles(
     tx: PrimaTransactionClient,
     serviceId: string,

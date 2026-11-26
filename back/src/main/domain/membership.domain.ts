@@ -268,7 +268,9 @@ class MembershipDomain implements MembershipDomainInterface {
     roleId: string,
   ): Promise<ServiceMemberRowDomain> {
     const affectation = await this.assertOtherServiceMember(serviceMembershipId)
-    await this.assertRole(this.tenantContext.scope().serviceId, roleId)
+    if (affectation.role.id !== roleId) {
+      await this.assertRole(this.tenantContext.scope().serviceId, roleId)
+    }
     const updated = await this.membershipRepository.setServiceRole(
       serviceMembershipId,
       roleId,
@@ -296,14 +298,21 @@ class MembershipDomain implements MembershipDomainInterface {
   // écriture, par un `count` filtré. Le rattachement à un soignant n'est plus posé ici : les
   // soignants sont propres à chaque service depuis le 2026-09-29, et le coordinateur le règle
   // depuis son service (`ServiceMemberDomain`).
+  // `held` : affectations déjà en base ; renvoyer le rôle déjà tenu n'est pas l'attribuer.
   private async assertReferences(
     services: ServiceAssignment[] | undefined,
+    held: { serviceId: string; roleId: string }[] = [],
   ): Promise<void> {
     for (const service of services ?? []) {
       if (!(await this.membershipRepository.serviceExists(service.serviceId))) {
         throw Boom.notFound(`Service ${service.serviceId} not found`)
       }
-      await this.assertRole(service.serviceId, service.roleId)
+      const dejaTenu = held.some(
+        (h) => h.serviceId === service.serviceId && h.roleId === service.roleId,
+      )
+      if (!dejaTenu) {
+        await this.assertRole(service.serviceId, service.roleId)
+      }
       if (
         service.soignantId &&
         !(await this.membershipRepository.soignantDuService(
@@ -493,7 +502,7 @@ class MembershipDomain implements MembershipDomainInterface {
       await this.assertNotLastAdmin(membership)
     }
     this.assertNotSelfDemotion(membership, params.role)
-    await this.assertReferences(params.services)
+    await this.assertReferences(params.services, membership.serviceMemberships)
     const updated = await this.membershipRepository.update(id, params)
     this.emit('member.updated', id)
     return updated

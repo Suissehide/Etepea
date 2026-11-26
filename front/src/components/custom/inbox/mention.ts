@@ -34,8 +34,7 @@ export const mentionCandidates = (
     .filter((s) => !excludeSoignantIds.includes(s.id))
     .filter((s) => fold(s.name).includes(fold(query)))
     .map((soignant) => ({ kind: 'soignant', soignant }))
-  // ponytail: plus de filtre par rôle (la réponse ne porte que { id, name }) ; le back refuse
-  // un destinataire sans `tasks:read`. Filtrer sur les permissions du rôle quand l'inbox lira `/roles`.
+  // ponytail: aucun filtre par rôle (le back refuse sans `tasks:read`), à filtrer sur `/roles` en tâche 5.
   const memberMatches: MentionCandidate[] = members
     .filter(
       (x) =>
