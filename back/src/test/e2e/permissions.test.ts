@@ -2,7 +2,7 @@ import type {
   ServicePermission,
   ServiceRole,
 } from '../../main/utils/permissions'
-import { SERVICE_PERMISSIONS } from '../../main/utils/permissions'
+import { DEFAULT_ROLE_PERMISSIONS } from '../../main/utils/permissions'
 import { buildTestApp, type TestApp } from './setup/app'
 import { testDb, truncateAll } from './setup/db'
 import {
@@ -243,7 +243,7 @@ describe('permissions par role de service', () => {
   })
 
   describe.each(roles)('role %s', (role) => {
-    // Dérivé de la matrice plutôt que recopié : si `SERVICE_PERMISSIONS`
+    // Dérivé de la matrice plutôt que recopié : si `DEFAULT_ROLE_PERMISSIONS`
     // change, l'attente suit automatiquement.
     it.each(probes)(
       '$permission -> 403 ssi non detenu',
@@ -258,7 +258,7 @@ describe('permissions par role de service', () => {
           cookies,
           payload: payload as never,
         })
-        if (SERVICE_PERMISSIONS[role].includes(permission)) {
+        if (DEFAULT_ROLE_PERMISSIONS[role].includes(permission)) {
           if (heldStatus === undefined) {
             expect(res.statusCode).not.toBe(403)
           } else {

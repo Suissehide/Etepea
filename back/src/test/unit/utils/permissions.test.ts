@@ -3,14 +3,15 @@ import { join } from 'node:path'
 
 import { EstablishmentRole, ServiceRole } from '../../../generated/enums'
 import {
+  DEFAULT_ROLE_PERMISSIONS,
   ESTABLISHMENT_PERMISSIONS,
   hasPermission,
-  SERVICE_PERMISSIONS,
+  parsePermissions,
 } from '../../../main/utils/permissions'
 
 describe('permissions', () => {
   it('donne toutes les permissions de service au coordinateur', () => {
-    expect(SERVICE_PERMISSIONS.COORDINATEUR).toEqual(
+    expect(DEFAULT_ROLE_PERMISSIONS.COORDINATEUR).toEqual(
       expect.arrayContaining([
         'planning:read',
         'planning:write',
@@ -29,16 +30,16 @@ describe('permissions', () => {
   })
 
   it('reserve les indicateurs ARS au coordinateur', () => {
-    expect(SERVICE_PERMISSIONS.COORDINATEUR).toContain('stats:read')
+    expect(DEFAULT_ROLE_PERMISSIONS.COORDINATEUR).toContain('stats:read')
     for (const role of ['INTERVENANT', 'SECRETARIAT', 'LECTURE'] as const) {
-      expect(SERVICE_PERMISSIONS[role]).not.toContain('stats:read')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain('stats:read')
     }
   })
 
   it('refuse le contenu clinique au secretariat et a la lecture', () => {
-    expect(SERVICE_PERMISSIONS.SECRETARIAT).not.toContain('clinical:read')
-    expect(SERVICE_PERMISSIONS.LECTURE).not.toContain('clinical:read')
-    expect(SERVICE_PERMISSIONS.LECTURE).not.toContain('patient:write')
+    expect(DEFAULT_ROLE_PERMISSIONS.SECRETARIAT).not.toContain('clinical:read')
+    expect(DEFAULT_ROLE_PERMISSIONS.LECTURE).not.toContain('clinical:read')
+    expect(DEFAULT_ROLE_PERMISSIONS.LECTURE).not.toContain('patient:write')
   })
 
   it('accorde les lectures a tous les roles', () => {
@@ -48,11 +49,11 @@ describe('permissions', () => {
       'SECRETARIAT',
       'LECTURE',
     ] as const) {
-      expect(SERVICE_PERMISSIONS[role]).toContain('planning:read')
-      expect(SERVICE_PERMISSIONS[role]).toContain('referentials:read')
-      expect(SERVICE_PERMISSIONS[role]).toContain('patient:read')
-      expect(SERVICE_PERMISSIONS[role]).toContain('notifications:own')
-      expect(SERVICE_PERMISSIONS[role]).toContain('members:read')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('planning:read')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('referentials:read')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('patient:read')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('notifications:own')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('members:read')
     }
   })
 
@@ -62,11 +63,11 @@ describe('permissions', () => {
       'INTERVENANT',
       'SECRETARIAT',
     ] as const) {
-      expect(SERVICE_PERMISSIONS[role]).toContain('tasks:read')
-      expect(SERVICE_PERMISSIONS[role]).toContain('tasks:write')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('tasks:read')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain('tasks:write')
     }
-    expect(SERVICE_PERMISSIONS.LECTURE).not.toContain('tasks:read')
-    expect(SERVICE_PERMISSIONS.LECTURE).not.toContain('tasks:write')
+    expect(DEFAULT_ROLE_PERMISSIONS.LECTURE).not.toContain('tasks:read')
+    expect(DEFAULT_ROLE_PERMISSIONS.LECTURE).not.toContain('tasks:write')
   })
 
   it('reserve la gestion des membres a l administrateur d etablissement', () => {
@@ -80,28 +81,38 @@ describe('permissions', () => {
   // sans service courant l'obtiendrait alors sur une route DE SERVICE), et `members:manage` ne
   // doit jamais s'obtenir par un role de service.
   it('reserve l equipe du service au coordinateur, sans toucher a members:manage', () => {
-    expect(SERVICE_PERMISSIONS.COORDINATEUR).toContain('service-members:manage')
+    expect(DEFAULT_ROLE_PERMISSIONS.COORDINATEUR).toContain(
+      'service-members:manage',
+    )
     for (const role of ['INTERVENANT', 'SECRETARIAT', 'LECTURE'] as const) {
-      expect(SERVICE_PERMISSIONS[role]).not.toContain('service-members:manage')
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain(
+        'service-members:manage',
+      )
     }
     expect(ESTABLISHMENT_PERMISSIONS.ADMIN).not.toContain(
       'service-members:manage',
     )
     expect(
       hasPermission(
-        { serviceRole: 'COORDINATEUR', establishmentRole: 'MEMBER' },
+        {
+          servicePermissions: DEFAULT_ROLE_PERMISSIONS.COORDINATEUR,
+          establishmentRole: 'MEMBER',
+        },
         'service-members:manage',
       ),
     ).toBe(true)
     expect(
       hasPermission(
-        { serviceRole: 'COORDINATEUR', establishmentRole: 'MEMBER' },
+        {
+          servicePermissions: DEFAULT_ROLE_PERMISSIONS.COORDINATEUR,
+          establishmentRole: 'MEMBER',
+        },
         'members:manage',
       ),
     ).toBe(false)
     expect(
       hasPermission(
-        { serviceRole: null, establishmentRole: 'ADMIN' },
+        { servicePermissions: null, establishmentRole: 'ADMIN' },
         'service-members:manage',
       ),
     ).toBe(false)
@@ -109,7 +120,7 @@ describe('permissions', () => {
 
   it('hasPermission route vers le bon niveau', () => {
     const roles = {
-      serviceRole: 'SECRETARIAT',
+      servicePermissions: DEFAULT_ROLE_PERMISSIONS.SECRETARIAT,
       establishmentRole: 'ADMIN',
     } as const
     expect(hasPermission(roles, 'appointment:write')).toBe(true)
@@ -117,7 +128,7 @@ describe('permissions', () => {
     expect(hasPermission(roles, 'members:manage')).toBe(true)
     expect(
       hasPermission(
-        { serviceRole: null, establishmentRole: 'MEMBER' },
+        { servicePermissions: null, establishmentRole: 'MEMBER' },
         'patient:read',
       ),
     ).toBe(false)
@@ -127,7 +138,10 @@ describe('permissions', () => {
     expect(hasPermission(roles, 'activity-log:read')).toBe(true)
     expect(
       hasPermission(
-        { serviceRole: 'COORDINATEUR', establishmentRole: 'MEMBER' },
+        {
+          servicePermissions: DEFAULT_ROLE_PERMISSIONS.COORDINATEUR,
+          establishmentRole: 'MEMBER',
+        },
         'activity-log:read',
       ),
     ).toBe(false)
@@ -147,25 +161,31 @@ describe('permissions', () => {
   it('distingue consultations:read (service) de access-log:read (etablissement)', () => {
     expect(
       hasPermission(
-        { serviceRole: null, establishmentRole: 'ADMIN' },
+        { servicePermissions: null, establishmentRole: 'ADMIN' },
         'access-log:read',
       ),
     ).toBe(true)
     expect(
       hasPermission(
-        { serviceRole: null, establishmentRole: 'ADMIN' },
+        { servicePermissions: null, establishmentRole: 'ADMIN' },
         'consultations:read',
       ),
     ).toBe(false)
     expect(
       hasPermission(
-        { serviceRole: 'COORDINATEUR', establishmentRole: 'MEMBER' },
+        {
+          servicePermissions: DEFAULT_ROLE_PERMISSIONS.COORDINATEUR,
+          establishmentRole: 'MEMBER',
+        },
         'consultations:read',
       ),
     ).toBe(true)
     expect(
       hasPermission(
-        { serviceRole: 'COORDINATEUR', establishmentRole: 'MEMBER' },
+        {
+          servicePermissions: DEFAULT_ROLE_PERMISSIONS.COORDINATEUR,
+          establishmentRole: 'MEMBER',
+        },
         'access-log:read',
       ),
     ).toBe(false)
@@ -178,13 +198,16 @@ describe('permissions', () => {
   it('n accorde jamais establishments:manage par un role d etablissement ou de service', () => {
     expect(
       hasPermission(
-        { serviceRole: null, establishmentRole: 'ADMIN' },
+        { servicePermissions: null, establishmentRole: 'ADMIN' },
         'establishments:manage',
       ),
     ).toBe(false)
     expect(
       hasPermission(
-        { serviceRole: 'COORDINATEUR', establishmentRole: 'ADMIN' },
+        {
+          servicePermissions: DEFAULT_ROLE_PERMISSIONS.COORDINATEUR,
+          establishmentRole: 'ADMIN',
+        },
         'establishments:manage',
       ),
     ).toBe(false)
@@ -195,12 +218,65 @@ describe('permissions', () => {
   // diverger du schema en silence — un role ajoute cote Prisma et oublie ici
   // n'aurait aucune permission sans que rien ne le signale.
   it('couvre exactement les roles des enums Prisma', () => {
-    expect(Object.keys(SERVICE_PERMISSIONS).sort()).toEqual(
+    expect(Object.keys(DEFAULT_ROLE_PERMISSIONS).sort()).toEqual(
       Object.values(ServiceRole).sort(),
     )
     expect(Object.keys(ESTABLISHMENT_PERMISSIONS).sort()).toEqual(
       Object.values(EstablishmentRole).sort(),
     )
+  })
+
+  it('accorde les nouvelles clés là où l’ancienne l’était', () => {
+    for (const k of [
+      'thematics:write',
+      'soignants:write',
+      'locations:write',
+      'diagnostic-templates:write',
+      'pdf-design:write',
+      'patient-form:write',
+      'pathway-templates:write',
+    ] as const)
+      expect(DEFAULT_ROLE_PERMISSIONS.COORDINATEUR).toContain(k)
+    expect(DEFAULT_ROLE_PERMISSIONS.INTERVENANT).toEqual(
+      expect.arrayContaining(['patient:create', 'appointment:create']),
+    )
+    expect(DEFAULT_ROLE_PERMISSIONS.SECRETARIAT).toEqual(
+      expect.arrayContaining(['patient:create', 'appointment:create']),
+    )
+    expect(DEFAULT_ROLE_PERMISSIONS.LECTURE).not.toContain('patient:create')
+  })
+
+  it('ouvre les quatre onglets du quotidien à chaque rôle par défaut', () => {
+    for (const p of Object.values(DEFAULT_ROLE_PERMISSIONS))
+      expect(p).toEqual(
+        expect.arrayContaining([
+          'dashboard:read',
+          'agenda:read',
+          'patients:read',
+          'suivi:read',
+        ]),
+      )
+  })
+
+  it('lit la liste du rôle', () => {
+    const roles = {
+      servicePermissions: ['agenda:read'],
+      establishmentRole: 'MEMBER',
+    } as const
+    expect(hasPermission(roles, 'agenda:read')).toBe(true)
+    expect(hasPermission(roles, 'suivi:read')).toBe(false)
+    expect(
+      hasPermission(
+        { servicePermissions: null, establishmentRole: 'ADMIN' },
+        'roles:manage',
+      ),
+    ).toBe(true)
+  })
+
+  it('ignore une clé inconnue', () => {
+    expect(parsePermissions(['agenda:read', 'patient:fly'])).toEqual([
+      'agenda:read',
+    ])
   })
 
   it('est identique a la copie du front', () => {

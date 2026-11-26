@@ -1,6 +1,10 @@
 import { useAuthStore } from '../store/useAuthStore.ts'
 import type { TenantContext } from '../types/auth.ts'
-import { hasPermission, type Permission } from '../utils/permissions.ts'
+import {
+  hasPermission,
+  type Permission,
+  presetPermissions,
+} from '../utils/permissions.ts'
 
 export const can = (
   context: TenantContext | null,
@@ -9,7 +13,7 @@ export const can = (
   context !== null &&
   hasPermission(
     {
-      serviceRole: context.serviceRole,
+      servicePermissions: presetPermissions(context.serviceRole),
       establishmentRole: context.establishmentRole,
     },
     permission,

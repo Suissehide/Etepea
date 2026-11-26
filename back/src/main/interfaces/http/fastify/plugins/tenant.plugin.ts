@@ -31,7 +31,11 @@ import {
   plannedPatientExportAccess,
 } from '../../../../utils/access-log-routes'
 import { withoutClinicalFields } from '../../../../utils/clinical-fields'
-import { hasPermission, type Permission } from '../../../../utils/permissions'
+import {
+  hasPermission,
+  type Permission,
+  presetPermissions,
+} from '../../../../utils/permissions'
 
 declare module 'fastify' {
   export interface FastifyRequest {
@@ -390,7 +394,15 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
           throw Boom.notFound()
         }
         const { serviceRole, establishmentRole } = request.tenant
-        if (!hasPermission({ serviceRole, establishmentRole }, permission)) {
+        if (
+          !hasPermission(
+            {
+              servicePermissions: presetPermissions(serviceRole),
+              establishmentRole,
+            },
+            permission,
+          )
+        ) {
           throw Boom.forbidden('Insufficient permission')
         }
         return Promise.resolve()
@@ -418,7 +430,13 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
         }
         const { serviceRole, establishmentRole } = request.tenant
         if (
-          hasPermission({ serviceRole, establishmentRole }, 'clinical:read')
+          hasPermission(
+            {
+              servicePermissions: presetPermissions(serviceRole),
+              establishmentRole,
+            },
+            'clinical:read',
+          )
         ) {
           return Promise.resolve(payload)
         }
@@ -442,7 +460,13 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
         }
         const { serviceRole, establishmentRole } = request.tenant
         if (
-          !hasPermission({ serviceRole, establishmentRole }, 'clinical:write')
+          !hasPermission(
+            {
+              servicePermissions: presetPermissions(serviceRole),
+              establishmentRole,
+            },
+            'clinical:write',
+          )
         ) {
           request.body = withoutClinicalFields(request.body)
         }

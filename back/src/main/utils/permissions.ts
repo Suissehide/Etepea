@@ -2,11 +2,12 @@
 // Ce fichier est dupliqué à l'identique dans front/src/utils/permissions.ts ;
 // un test unitaire back vérifie l'égalité des deux copies.
 
-export type ServiceRole =
+export type RolePreset =
   | 'COORDINATEUR'
   | 'INTERVENANT'
   | 'SECRETARIAT'
   | 'LECTURE'
+export type ServiceRole = RolePreset
 export type EstablishmentRole = 'ADMIN' | 'MEMBER'
 
 export type ServicePermission =
@@ -67,6 +68,19 @@ export type ServicePermission =
   // Tableau de bord d'activite du service courant, en chiffres agreges (MDS-40). Accordee a
   // LECTURE : c'est l'ecran de la direction.
   | 'activity:read'
+  | 'pathway-templates:write'
+  | 'thematics:write'
+  | 'soignants:write'
+  | 'locations:write'
+  | 'diagnostic-templates:write'
+  | 'pdf-design:write'
+  | 'patient-form:write'
+  | 'patient:create'
+  | 'appointment:create'
+  | 'dashboard:read'
+  | 'agenda:read'
+  | 'patients:read'
+  | 'suivi:read'
 
 export type EstablishmentPermission =
   | 'services:manage'
@@ -75,6 +89,7 @@ export type EstablishmentPermission =
   | 'activity-log:write'
   | 'access-log:read'
   | 'establishment:rename'
+  | 'roles:manage'
 
 // Portée par le drapeau `User.isSuperAdmin`, jamais par un rôle d'établissement ou de service
 // (habilitations.md, table « Permissions d'établissement et de plateforme » — colonne
@@ -87,7 +102,15 @@ export type Permission =
   | EstablishmentPermission
   | SuperAdminPermission
 
+const DAILY_TABS: readonly ServicePermission[] = [
+  'dashboard:read',
+  'agenda:read',
+  'patients:read',
+  'suivi:read',
+]
+
 const READ_ALL: readonly ServicePermission[] = [
+  ...DAILY_TABS,
   'planning:read',
   'referentials:read',
   'patient:read',
@@ -95,14 +118,30 @@ const READ_ALL: readonly ServicePermission[] = [
   'members:read',
 ]
 
-export const SERVICE_PERMISSIONS: Record<
-  ServiceRole,
+export const DEFAULT_ROLE_NAMES: Record<RolePreset, string> = {
+  COORDINATEUR: 'Coordinateur',
+  INTERVENANT: 'Intervenant',
+  SECRETARIAT: 'Secrétariat',
+  LECTURE: 'Lecture seule',
+}
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<
+  RolePreset,
   readonly ServicePermission[]
 > = {
   COORDINATEUR: [
     ...READ_ALL,
     'planning:write',
     'referentials:write',
+    'pathway-templates:write',
+    'thematics:write',
+    'soignants:write',
+    'locations:write',
+    'diagnostic-templates:write',
+    'pdf-design:write',
+    'patient-form:write',
+    'patient:create',
+    'appointment:create',
     'patient:write',
     'patient:delete',
     'clinical:read',
@@ -120,6 +159,8 @@ export const SERVICE_PERMISSIONS: Record<
   ],
   INTERVENANT: [
     ...READ_ALL,
+    'patient:create',
+    'appointment:create',
     'patient:write',
     'clinical:read',
     'clinical:write',
@@ -130,6 +171,8 @@ export const SERVICE_PERMISSIONS: Record<
   ],
   SECRETARIAT: [
     ...READ_ALL,
+    'patient:create',
+    'appointment:create',
     'patient:write',
     'appointment:write',
     'pdf:export',
@@ -150,17 +193,27 @@ export const ESTABLISHMENT_PERMISSIONS: Record<
     'activity-log:write',
     'access-log:read',
     'establishment:rename',
+    'roles:manage',
   ],
   MEMBER: [],
 }
 
+// Catalogue des clés de service, source de vérité de `isServicePermission` et `parsePermissions`.
+export const SERVICE_PERMISSION_KEYS: readonly ServicePermission[] = [
+  ...new Set(Object.values(DEFAULT_ROLE_PERMISSIONS).flat()),
+]
+export const ALL_SERVICE_PERMISSIONS = SERVICE_PERMISSION_KEYS
+
 const SERVICE_PERMISSION_SET: ReadonlySet<string> = new Set(
-  Object.values(SERVICE_PERMISSIONS).flat(),
+  SERVICE_PERMISSION_KEYS,
 )
 
 export const isServicePermission = (
   permission: Permission,
 ): permission is ServicePermission => SERVICE_PERMISSION_SET.has(permission)
+
+export const parsePermissions = (raw: readonly string[]): ServicePermission[] =>
+  SERVICE_PERMISSION_KEYS.filter((key) => raw.includes(key))
 
 const ESTABLISHMENT_PERMISSION_SET: ReadonlySet<string> = new Set(
   Object.values(ESTABLISHMENT_PERMISSIONS).flat(),
@@ -172,19 +225,22 @@ export const isEstablishmentPermission = (
   ESTABLISHMENT_PERMISSION_SET.has(permission)
 
 export type RoleSet = {
-  serviceRole: ServiceRole | null
+  servicePermissions: readonly ServicePermission[] | null
   establishmentRole: EstablishmentRole | null
 }
+
+// Transitoire : rôle figé vers liste de permissions, tant que les appelants portent un `serviceRole`.
+export const presetPermissions = (
+  role: RolePreset | null,
+): readonly ServicePermission[] | null =>
+  role === null ? null : DEFAULT_ROLE_PERMISSIONS[role]
 
 export const hasPermission = (
   roles: RoleSet,
   permission: Permission,
 ): boolean => {
   if (isServicePermission(permission)) {
-    return (
-      roles.serviceRole !== null &&
-      SERVICE_PERMISSIONS[roles.serviceRole].includes(permission)
-    )
+    return roles.servicePermissions?.includes(permission) ?? false
   }
   if (isEstablishmentPermission(permission)) {
     return (

@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod/v4'
 
-import { hasPermission } from '../../../../utils/permissions'
+import { hasPermission, presetPermissions } from '../../../../utils/permissions'
 import { requireTenant } from '../plugins/tenant.plugin'
 import {
   appointmentsCountResponseSchema,
@@ -93,7 +93,10 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
         { search, pathwayTemplateTags: tags },
         {
           includeClinicalFields: hasPermission(
-            { serviceRole, establishmentRole },
+            {
+              servicePermissions: presetPermissions(serviceRole),
+              establishmentRole,
+            },
             'clinical:read',
           ),
         },
