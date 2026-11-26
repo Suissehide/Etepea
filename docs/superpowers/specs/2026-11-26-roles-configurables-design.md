@@ -35,7 +35,13 @@ model ServiceRoleHiddenSoignant {
 }
 ```
 
-- `ServiceMembership.role` (enum) est remplacé par `ServiceMembership.roleId`.
+- **Les droits se règlent par soignant (métier), pas par compte.** `Soignant.roleId` : chaque
+  soignant du service reçoit un rôle (« Équipe SMCP » pour IDE, Diététicienne, Pharmacienne et
+  Aide-soignante SMCP, par exemple). Un compte rattaché à un soignant
+  (`ServiceMembership.soignantId`, qui existe déjà) en prend le rôle.
+- `ServiceMembership.role` (enum) devient `ServiceMembership.roleId`, utilisé **seulement** pour
+  un compte sans soignant (secrétariat, direction). Rôle effectif = rôle du soignant rattaché,
+  sinon rôle du membre. Un soignant sans rôle ne donne rien de plus que le rôle du membre.
 - Migration : pour chaque service, création de quatre rôles **Coordinateur**, **Intervenant**,
   **Secrétariat**, **Lecture seule**, avec exactement les permissions actuelles (plus les nouvelles
   permissions issues des découpages ci-dessous, accordées là où l'ancienne l'était). Aucun compte
@@ -85,7 +91,8 @@ d'établissement). Liste des rôles ; pour chacun : nom modifiable, cases à coc
 soignants masqués, nombre de membres. Actions : créer, dupliquer, renommer, supprimer (archive).
 Toute modification écrit `role.created|updated|archived` dans le journal d'activité.
 
-L'écran Membres propose les rôles du service au lieu des quatre valeurs fixes.
+L'écran Soignants gagne une colonne « Rôle ». L'écran Membres affiche le rôle effectif et sa
+provenance (« via Kiné 1 ») ; le choix d'un rôle n'y est proposé que pour un compte sans soignant.
 
 ## Traçabilité du planning (cas n°2)
 
@@ -102,7 +109,8 @@ Annuler une modification autre qu'une suppression : hors périmètre.
 
 ## Les cas de Léo, une fois configurés
 
-Réglages faits dans l'écran, pas dans le code. Exemple pour le service concerné :
+Réglages faits dans l'écran, pas dans le code. Trois rôles, chacun attribué aux soignants
+listés :
 
 - **Cadre de santé** : `dashboard:read`, `agenda:read`, `patients:read`, `planning:write`,
   `diagnostic-templates:write`, `patient-form:write`, `stats:write` + lectures ; ni
