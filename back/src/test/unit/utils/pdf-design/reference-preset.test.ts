@@ -70,9 +70,9 @@ describe('preset de reference', () => {
   })
 
   it('ne souligne plus le titre de couverture (MDS-79)', () => {
-    expect(
-      canvas(0).elements.some((e) => e.id === 'cover-underline'),
-    ).toBe(false)
+    expect(canvas(0).elements.some((e) => e.id === 'cover-underline')).toBe(
+      false,
+    )
   })
 
   it('garde le rond colore par le parcours, avec le repli mauve', () => {

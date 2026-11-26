@@ -1,3 +1,4 @@
+import { defaultRolesData } from '../../main/utils/default-roles'
 import { buildTestApp, type TestApp } from './setup/app'
 import { testDb, truncateAll } from './setup/db'
 import {
@@ -563,6 +564,9 @@ describe('routes services', () => {
           establishmentId: etab.id,
           name: 'Service',
         },
+      })
+      await testDb.serviceRoleDef.createMany({
+        data: defaultRolesData(svc.id, etab.id),
       })
       const admin = await createUser({
         email: 'admin-migration-affectation@b.fr',

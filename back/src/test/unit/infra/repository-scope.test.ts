@@ -91,6 +91,10 @@ const buildFakePrisma = (responses: Partial<Record<string, unknown>> = {}) => {
               ? arg(prisma)
               : Promise.all(arg as Promise<unknown>[])
         }
+        // Résolution du rôle d'un preset (role-id.ts) : SQL brut, hors du suivi des appels.
+        if (model === '$queryRaw') {
+          return () => Promise.resolve([{ id: 'role-1' }])
+        }
         return handler(model)
       },
     },
@@ -535,7 +539,12 @@ describe('MembershipRepository (gestion des membres)', () => {
           establishmentId: 'e1',
           serviceMemberships: {
             create: [
-              { serviceId: 'sv1', role: 'LECTURE', establishmentId: 'e1' },
+              {
+                serviceId: 'sv1',
+                role: 'LECTURE',
+                roleId: 'role-1',
+                establishmentId: 'e1',
+              },
             ],
           },
         },
@@ -575,10 +584,14 @@ describe('MembershipRepository (gestion des membres)', () => {
     const prisma: Record<string, unknown> = new Proxy(
       {},
       {
-        get: (_t, model: string) =>
-          model === '$transaction'
+        get: (_t, model: string) => {
+          if (model === '$queryRaw') {
+            return () => Promise.resolve([{ id: 'role-1' }])
+          }
+          return model === '$transaction'
             ? (fn: (client: unknown) => unknown) => fn(prisma)
-            : guarded(model),
+            : guarded(model)
+        },
       },
     )
     const repo = new MembershipRepository(buildContainer(prisma, ctx))

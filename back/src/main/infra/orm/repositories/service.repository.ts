@@ -8,6 +8,7 @@ import type {
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'
 import type { TenantContextInterface } from '../../../types/utils/tenant-context'
 import type { PostgresPrismaClient } from '../postgres-client'
+import { createDefaultRoles, roleIdOf } from '../role-id'
 
 // Famille établissement (ESTABLISHMENT_MODELS, tenant-guard.ts) : `Service` et
 // `ServiceMembership` portent tous deux `establishmentId`, aucun des deux n'exige de service
@@ -99,6 +100,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
         const service = await tx.service.create({
           data: { name, establishmentId },
         })
+        await createDefaultRoles(tx, service.id, establishmentId)
         const membership = await tx.establishmentMembership.findFirst({
           where: { userId: creatorUserId, establishmentId },
         })
@@ -109,6 +111,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
               serviceId: service.id,
               establishmentId,
               role: 'COORDINATEUR',
+              roleId: await roleIdOf(tx, service.id, 'COORDINATEUR'),
             },
           })
         }

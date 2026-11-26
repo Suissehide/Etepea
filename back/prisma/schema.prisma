@@ -73,9 +73,44 @@ model Service {
   indicatorSets       IndicatorSet[]
   pdfDesigns          PdfDesign[]
   pdfAssets           PdfAsset[]
+  roles               ServiceRoleDef[]
 
   @@unique([establishmentId, name])
   @@unique([id, establishmentId])
+}
+
+// Rôle d'un service : nom, droits (clés de service) et preset d'origine (null pour un rôle créé).
+model ServiceRoleDef {
+  id              String       @id @default(cuid())
+  establishmentId String
+  serviceId       String
+  name            String
+  preset          ServiceRole?
+  permissions     String[]
+  archivedAt      DateTime?
+  createdAt       DateTime     @default(now())
+
+  service            Service                     @relation(fields: [serviceId, establishmentId], references: [id, establishmentId])
+  memberships        ServiceMembership[]
+  hiddenSoignants    ServiceRoleHiddenSoignant[]
+  defaultOfSoignants Soignant[]                  @relation("SoignantDefaultRole")
+
+  @@unique([id, serviceId])
+  @@index([serviceId])
+}
+
+// Soignants masqués pour un rôle (cascade des deux côtés).
+model ServiceRoleHiddenSoignant {
+  roleId          String
+  soignantId      String
+  serviceId       String
+  establishmentId String
+
+  role     ServiceRoleDef @relation(fields: [roleId, serviceId], references: [id, serviceId], onDelete: Cascade)
+  soignant Soignant       @relation(fields: [soignantId, serviceId], references: [id, serviceId], onDelete: Cascade)
+
+  @@id([roleId, soignantId])
+  @@index([serviceId])
 }
 
 model EstablishmentMembership {
@@ -103,6 +138,8 @@ model ServiceMembership {
   serviceId                 String
   establishmentId           String
   role                      ServiceRole
+  // Rôle de service en base ; `role` disparaît quand l'API ne parle plus que de `roleId`.
+  roleId                    String
   // Le soignant (un metier du service) que ce membre incarne DANS CE SERVICE — ses taches, par
   // exemple. Reference simple, nullable : la coherence de service (le soignant appartient bien au
   // service de cette affectation) est verifiee par MembershipDomain, comme l'etait celle
@@ -113,8 +150,10 @@ model ServiceMembership {
   establishmentMembership EstablishmentMembership @relation(fields: [establishmentMembershipId], references: [id], onDelete: Cascade)
   service                 Service                 @relation(fields: [serviceId, establishmentId], references: [id, establishmentId])
   soignant                Soignant?               @relation(fields: [soignantId], references: [id], onDelete: Restrict)
+  roleDef                 ServiceRoleDef          @relation(fields: [roleId, serviceId], references: [id, serviceId], onDelete: Restrict)
 
   @@unique([establishmentMembershipId, serviceId])
+  @@index([roleId])
   @@index([serviceId])
   @@index([soignantId])
 }
@@ -350,6 +389,9 @@ model Soignant {
   thematicLinks      SoignantThematic[]
   serviceMemberships ServiceMembership[]
   taskTags           TaskSoignant[]
+  hiddenFromRoles    ServiceRoleHiddenSoignant[]
+  defaultRoleId      String?
+  defaultRole        ServiceRoleDef?             @relation("SoignantDefaultRole", fields: [defaultRoleId, serviceId], references: [id, serviceId], onDelete: Restrict)
 
   @@unique([id, serviceId])
   @@index([serviceId])

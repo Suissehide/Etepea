@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify'
 
 import type { EstablishmentRole, ServiceRole } from '../../../generated/enums'
+import { defaultRolesData } from '../../../main/utils/default-roles'
 import { hashPassword } from '../../../main/utils/hash'
+import type { RolePreset } from '../../../main/utils/permissions'
 import { DEFAULT_CATEGORIES } from '../../../main/utils/service-field-types'
 import { testDb } from './db'
 
@@ -10,10 +12,26 @@ export const DEFAULT_PASSWORD = 'Password123!!'
 export const createEstablishment = (name = 'Etab') =>
   testDb.establishment.create({ data: { name } })
 
-export const createService = (
+// Un service naît avec ses quatre rôles par défaut.
+export const createService = async (
   establishmentId: string,
   name = `Service ${Math.random()}`,
-) => testDb.service.create({ data: { establishmentId, name } })
+) => {
+  const service = await testDb.service.create({
+    data: { establishmentId, name },
+  })
+  await testDb.serviceRoleDef.createMany({
+    data: defaultRolesData(service.id, establishmentId),
+  })
+  return service
+}
+
+export const roleIdOf = async (serviceId: string, preset: RolePreset) =>
+  (
+    await testDb.serviceRoleDef.findFirstOrThrow({
+      where: { serviceId, preset },
+    })
+  ).id
 
 // Les deux catégories à date d'un service, posées en base comme le fait la migration.
 export const createDateCategories = async (
@@ -74,12 +92,15 @@ export const createUser = async (params: {
         establishmentId: m.establishmentId,
         role: m.role ?? 'MEMBER',
         serviceMemberships: {
-          create: (m.services ?? []).map((s) => ({
-            serviceId: s.serviceId,
-            role: s.role,
-            soignantId: s.soignantId ?? null,
-            establishmentId: m.establishmentId,
-          })),
+          create: await Promise.all(
+            (m.services ?? []).map(async (s) => ({
+              serviceId: s.serviceId,
+              role: s.role,
+              roleId: await roleIdOf(s.serviceId, s.role),
+              soignantId: s.soignantId ?? null,
+              establishmentId: m.establishmentId,
+            })),
+          ),
         },
       },
     })

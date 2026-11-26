@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../../src/generated/client'
+import { defaultRolesInput } from '../../src/main/utils/default-roles'
 
 export type SeedTenant = { establishmentId: string; serviceId: string }
 
@@ -12,10 +13,18 @@ export default async function seedTenant(prisma: PrismaClient) {
     data: { name: 'CHU Haut-Lévêque' },
   })
   const serviceA = await prisma.service.create({
-    data: { establishmentId: establishment.id, name: 'Cardiologie' },
+    data: {
+      establishmentId: establishment.id,
+      name: 'Cardiologie',
+      roles: { create: defaultRolesInput() },
+    },
   })
   const serviceB = await prisma.service.create({
-    data: { establishmentId: establishment.id, name: 'Pneumologie' },
+    data: {
+      establishmentId: establishment.id,
+      name: 'Pneumologie',
+      roles: { create: defaultRolesInput() },
+    },
   })
   // Champs nommés plutôt qu'un tableau : avec `noUncheckedIndexedAccess`,
   // déstructurer `services[0]`/`services[1]` les typerait `Service | undefined`

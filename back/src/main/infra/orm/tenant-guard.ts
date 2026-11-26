@@ -40,6 +40,8 @@ export const SERVICE_MODELS: readonly string[] = [
   'IndicatorAnswer',
   'PdfDesign',
   'PdfAsset',
+  'ServiceRoleDef',
+  'ServiceRoleHiddenSoignant',
 ]
 
 // Modèles rattachés à un établissement : portent establishmentId.
@@ -323,6 +325,7 @@ export const MODEL_RELATIONS: Record<string, Record<string, ModelRelation>> = {
     indicatorSets: many('IndicatorSet'),
     pdfDesigns: many('PdfDesign'),
     pdfAssets: many('PdfAsset'),
+    roles: many('ServiceRoleDef'),
   },
   EstablishmentMembership: {
     user: one('User'),
@@ -332,6 +335,17 @@ export const MODEL_RELATIONS: Record<string, Record<string, ModelRelation>> = {
   ServiceMembership: {
     establishmentMembership: one('EstablishmentMembership'),
     service: one('Service'),
+    soignant: one('Soignant'),
+    roleDef: one('ServiceRoleDef'),
+  },
+  ServiceRoleDef: {
+    service: one('Service'),
+    memberships: many('ServiceMembership'),
+    hiddenSoignants: many('ServiceRoleHiddenSoignant'),
+    defaultOfSoignants: many('Soignant'),
+  },
+  ServiceRoleHiddenSoignant: {
+    role: one('ServiceRoleDef'),
     soignant: one('Soignant'),
   },
   // `ActivityLog` ne déclare aucune relation dans le schéma : tout include y est donc refusé.
@@ -402,6 +416,8 @@ export const MODEL_RELATIONS: Record<string, Record<string, ModelRelation>> = {
     thematicLinks: many('SoignantThematic'),
     serviceMemberships: many('ServiceMembership'),
     taskTags: many('TaskSoignant'),
+    hiddenFromRoles: many('ServiceRoleHiddenSoignant'),
+    defaultRole: one('ServiceRoleDef'),
   },
   PdfDesign: {
     service: one('Service'),

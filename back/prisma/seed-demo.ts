@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import type { PrismaClient as Client, Patient } from '../src/generated/client'
 import { PrismaClient } from '../src/generated/client'
 import { combineDateAndTime, toStartOfWeek } from '../src/main/utils/date'
+import { defaultRolesInput } from '../src/main/utils/default-roles'
 import { seedArsIndicatorSet } from './seed/indicators'
 import seedLocations from './seed/location'
 import seedPathwayTemplates from './seed/pathwayTemplate'
@@ -318,6 +319,7 @@ async function main() {
     data: {
       establishmentId: establishment.id,
       name: 'Éducation thérapeutique',
+      roles: { create: defaultRolesInput() },
     },
   })
   const tenant = { establishmentId: establishment.id, serviceId: service.id }
@@ -388,6 +390,9 @@ async function main() {
         ),
       },
     }))
+  const coordinateur = await prisma.serviceRoleDef.findFirstOrThrow({
+    where: { serviceId: service.id, preset: 'COORDINATEUR' },
+  })
   await prisma.establishmentMembership.create({
     data: {
       userId: user.id,
@@ -399,6 +404,7 @@ async function main() {
             serviceId: service.id,
             establishmentId: establishment.id,
             role: 'COORDINATEUR',
+            roleId: coordinateur.id,
           },
         ],
       },

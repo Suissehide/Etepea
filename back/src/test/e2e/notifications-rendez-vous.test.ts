@@ -5,6 +5,7 @@ import {
   createEstablishment,
   createService,
   createUser,
+  roleIdOf,
   signIn,
   tenantUrl,
 } from './setup/fixtures'
@@ -475,6 +476,7 @@ describe('NotificationDispatcher et rendez-vous', () => {
         serviceId: autreService,
         establishmentId: E,
         role: 'INTERVENANT',
+        roleId: await roleIdOf(autreService, 'INTERVENANT'),
       },
     })
     await testDb.user.update({
