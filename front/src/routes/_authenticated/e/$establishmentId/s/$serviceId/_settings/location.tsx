@@ -78,6 +78,7 @@ function LocationSettings() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
               placeholder="Nom de la salle..."
               className="w-72"
             />

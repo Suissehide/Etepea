@@ -272,6 +272,7 @@ function PatientList() {
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      onClear={() => setSearchTerm('')}
                       placeholder="Nom, prénom..."
                       className="w-72 rounded-lg"
                     />

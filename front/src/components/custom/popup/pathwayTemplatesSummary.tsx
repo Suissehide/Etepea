@@ -23,6 +23,7 @@ import type {
   UpdatePathwayTemplateParams,
 } from '../../../types/pathwayTemplate.ts'
 import { Button } from '../../ui/button.tsx'
+import { ClearButton } from '../../ui/clearButton.tsx'
 import { ColorPicker } from '../../ui/colorPicker.tsx'
 import {
   Popup,
@@ -227,6 +228,7 @@ function SummaryContent({
               placeholder="Rechercher un parcours"
               className="flex-1 min-w-0 bg-transparent text-sm outline-none"
             />
+            {query && <ClearButton onClear={() => setQuery('')} />}
           </label>
           <ToggleGroup
             aria-label="Parcours à afficher"

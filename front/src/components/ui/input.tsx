@@ -3,10 +3,13 @@ import { Check } from 'lucide-react'
 import React from 'react'
 
 import { cn } from '../../libs/utils.ts'
+import { ClearButton } from './clearButton.tsx'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   iconLeft?: React.ReactNode
   iconRight?: React.ReactNode
+  /** Affiche une croix qui vide le champ dès qu'il contient du texte. */
+  onClear?: () => void
 }
 interface TextAreaProps
   extends React.InputHTMLAttributes<HTMLTextAreaElement> {}
@@ -18,8 +21,9 @@ export const inputVariants = cva(
 )
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, iconLeft, iconRight, ...props }, ref) => {
-    if (!iconLeft && !iconRight) {
+  ({ className, type, iconLeft, iconRight, onClear, ...props }, ref) => {
+    const showClear = !!onClear && String(props.value ?? '') !== ''
+    if (!iconLeft && !iconRight && !onClear) {
       return (
         <input
           type={type}
@@ -42,13 +46,19 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className={cn(
             inputVariants(),
             iconLeft && 'pl-9',
-            iconRight && 'pr-9',
+            (iconRight || onClear) && 'pr-9',
             className,
           )}
           ref={ref}
           {...props}
         />
-        {iconRight && (
+        {showClear && (
+          <ClearButton
+            onClear={onClear}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2"
+          />
+        )}
+        {iconRight && !showClear && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light pointer-events-none flex items-center">
             {iconRight}
           </span>

@@ -209,6 +209,7 @@ export function JournalActivite({ services }: Props) {
                 placeholder="Rechercher un utilisateur..."
                 value={filters.userSearch}
                 onChange={(e) => set('userSearch')(e.target.value)}
+                onClear={() => set('userSearch')('')}
                 iconLeft={<Search className="h-4 w-4" />}
                 className="w-56"
               />

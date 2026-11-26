@@ -15,6 +15,7 @@ import {
   grouperDestinations,
   useOuvrirDestination,
 } from '@/components/custom/destinations.tsx'
+import { ClearButton } from '@/components/ui/clearButton.tsx'
 import {
   PopoverClose,
   PopoverContent,
@@ -235,6 +236,7 @@ const MenuDesServices = ({
               aria-label="Rechercher un service"
               className="flex-1 min-w-0 bg-transparent outline-none"
             />
+            {recherche && <ClearButton onClear={() => setRecherche('')} />}
           </label>
         )}
         {groupes.length === 0 && (

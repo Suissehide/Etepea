@@ -229,6 +229,7 @@ function SuperAdminAccessLogPage() {
                     placeholder="Nom ou identifiant..."
                     value={filtres.compte}
                     onChange={(e) => set('compte')(e.target.value)}
+                    onClear={() => set('compte')('')}
                     iconLeft={<Search className="h-4 w-4" />}
                     className="w-56"
                   />

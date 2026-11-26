@@ -89,6 +89,7 @@ function ThematicSettings() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
               placeholder="Nom de la thématique..."
               className="w-72"
             />

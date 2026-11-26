@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { Calendar, User, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { ClearButton } from '@/components/ui/clearButton.tsx'
 import {
   type InboxService,
   useInboxMutations,
@@ -289,13 +290,21 @@ export function TaskComposer({
       )}
       {patientSearch !== null && (
         <div className="mt-2 rounded-lg border border-border">
-          <input
-            value={patientSearch}
-            onChange={(e) => setPatientSearch(e.target.value)}
-            placeholder="Rechercher un patient"
-            aria-label="Rechercher un patient"
-            className="w-full h-8 px-3 text-sm outline-none border-b border-muted"
-          />
+          <div className="relative">
+            <input
+              value={patientSearch}
+              onChange={(e) => setPatientSearch(e.target.value)}
+              placeholder="Rechercher un patient"
+              aria-label="Rechercher un patient"
+              className="w-full h-8 pl-3 pr-8 text-sm outline-none border-b border-muted"
+            />
+            {patientSearch && (
+              <ClearButton
+                onClear={() => setPatientSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              />
+            )}
+          </div>
           {matchingPatients.map((p) => (
             <button
               key={p.id}
