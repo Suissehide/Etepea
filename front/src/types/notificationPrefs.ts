@@ -9,6 +9,7 @@ export const NOTIFICATION_PREF_KEYS = [
   'full',
   'mention',
   'due',
+  'planning',
 ] as const
 export type NotificationPrefKey = (typeof NOTIFICATION_PREF_KEYS)[number]
 export type NotificationLevel = 'all' | 'essential' | 'custom'

@@ -24,4 +24,15 @@ export interface NotificationDispatcherInterface {
     appointmentIds: string[],
   ) => void
   slotFilled: (actorId: string, slotId: string) => void
+  planningChanged: (input: {
+    actorId: string
+    activityLogId: string
+    action:
+      | 'planning.created'
+      | 'planning.updated'
+      | 'planning.deleted'
+      | 'planning.restored'
+    entityType: string
+    detail: string | null
+  }) => void
 }

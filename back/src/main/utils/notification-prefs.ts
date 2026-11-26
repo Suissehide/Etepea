@@ -10,6 +10,7 @@ export const NOTIFICATION_PREF_KEYS = [
   'full',
   'mention',
   'due',
+  'planning',
 ] as const
 export type NotificationPrefKey = (typeof NOTIFICATION_PREF_KEYS)[number]
 export type ReminderDelay = 'eve' | '2h' | '1h'
@@ -110,6 +111,7 @@ export const PREF_KEY_OF_TYPE: Record<NotificationType, NotificationPrefKey> = {
   PATHWAY_END: 'end',
   SLOT_ALMOST_FULL: 'full',
   TASK_DUE: 'due',
+  PLANNING_CHANGED: 'planning',
 }
 
 // Liste sans aucun service actuel du compte : perimee, elle vaut « tous », comme a l'ecran.

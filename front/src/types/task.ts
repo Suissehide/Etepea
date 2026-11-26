@@ -21,6 +21,7 @@ export type NotificationType =
   | 'PATHWAY_END'
   | 'SLOT_ALMOST_FULL'
   | 'TASK_DUE'
+  | 'PLANNING_CHANGED'
 
 // Payload MENTION fige depuis l'etape 1 ; les autres types se lisent via `notificationTypes.tsx`.
 export type MentionPayload = {

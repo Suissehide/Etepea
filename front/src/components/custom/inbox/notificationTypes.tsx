@@ -2,6 +2,7 @@ import {
   AlarmClock,
   Bell,
   CalendarClock,
+  CalendarCog,
   CalendarX,
   ClipboardList,
   Flag,
@@ -93,6 +94,13 @@ export const NOTIFICATION_TYPES: Record<
     tint: '#fef2f2',
     kind: 'Échéance',
     cta: 'Ouvrir la tâche',
+  },
+  PLANNING_CHANGED: {
+    icon: CalendarCog,
+    color: '#7c3aed',
+    tint: '#f5f3ff',
+    kind: 'Planning modifié',
+    cta: 'Voir le planning',
   },
   MENTION: {
     icon: ListTodo,

@@ -61,6 +61,7 @@ const SUBJECTS: Record<NotificationType, string> = {
   DIAGNOSTIC_DUE: 'Etepea : diagnostic à réaliser',
   PATHWAY_END: 'Etepea : fin de parcours',
   TASK_DUE: 'Etepea : tâche à échéance',
+  PLANNING_CHANGED: 'Etepea : planning modifié',
   MENTION: 'Etepea : mention dans une tâche',
 }
 
@@ -114,6 +115,8 @@ export const notificationLine = ({
       return 'Un patient a terminé son parcours : bilan de fin à réaliser.'
     case 'TASK_DUE':
       return "Une de vos tâches arrive à échéance aujourd'hui."
+    case 'PLANNING_CHANGED':
+      return 'Le planning a été modifié par un collègue.'
     case 'MENTION': {
       const actor = asString(payload.actorName) || COLLEAGUE_UNKNOWN
       return `${actor} vous a mentionné dans une tâche.`

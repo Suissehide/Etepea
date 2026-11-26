@@ -122,6 +122,12 @@ const EVENTS: {
     label: 'Tâche qui arrive à échéance',
     description: "Le matin du jour d'échéance, pour vos tâches non terminées.",
   },
+  {
+    key: 'planning',
+    group: 'Créneaux',
+    label: 'Planning modifié',
+    description: 'Un collègue modifie le planning (administrateurs).',
+  },
 ]
 
 const DELAYS: { delay: ReminderDelay; label: string }[] = [

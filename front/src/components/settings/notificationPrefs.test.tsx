@@ -55,6 +55,7 @@ const essentialSaufAbsent: Prefs = {
     full: true,
     mention: true,
     due: true,
+    planning: true,
   },
   mail: {
     reminder: false,
@@ -66,6 +67,7 @@ const essentialSaufAbsent: Prefs = {
     full: false,
     mention: false,
     due: false,
+    planning: false,
   },
 }
 
@@ -132,6 +134,7 @@ describe('NotificationPrefs', () => {
           full: false,
           mention: true,
           due: false,
+          planning: false,
         },
       }),
       expect.anything(),
@@ -227,6 +230,7 @@ describe('NotificationPrefs', () => {
         full: true,
         mention: true,
         due: true,
+        planning: true,
       },
       mail: {
         reminder: false,
@@ -238,6 +242,7 @@ describe('NotificationPrefs', () => {
         full: false,
         mention: false,
         due: false,
+        planning: false,
       },
     })
     render(<NotificationPrefs />, { wrapper })

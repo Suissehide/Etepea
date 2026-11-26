@@ -112,6 +112,18 @@ class MembershipRepository implements MembershipRepositoryInterface {
     return await this.#withRoles(rows)
   }
 
+  async findActiveAdminUserIds(): Promise<string[]> {
+    const rows = await this.prisma.establishmentMembership.findMany({
+      where: {
+        ...this.establishmentScope,
+        role: 'ADMIN',
+        user: { deactivatedAt: null },
+      },
+      select: { userId: true },
+    })
+    return rows.map((r) => r.userId)
+  }
+
   async setServiceSoignant(
     serviceMembershipId: string,
     soignantId: string | null,

@@ -175,8 +175,6 @@ class AwilixIocContainer {
     this.#registerActivityLogDomain()
     this.#registerActivityLogRepository()
     this.#registerActivityLogSubscriber()
-    // Force-instantiate subscriber to trigger subscriptions at startup
-    diContainer.resolve('activityLogSubscriber')
     // ForbiddenWeek
     this.#registerForbiddenWeekDomain()
     this.#registerForbiddenWeekRepository()
@@ -207,6 +205,9 @@ class AwilixIocContainer {
     this.#registerTask()
     // Notification
     this.#registerNotification()
+
+    // Force-instantiate subscriber to trigger subscriptions at startup
+    diContainer.resolve('activityLogSubscriber')
 
     // Server
     this.#registerHttpServer()

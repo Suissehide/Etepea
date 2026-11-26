@@ -56,6 +56,7 @@ class ActivityLogSubscriber {
   private readonly userRepository: UserRepositoryInterface
   private readonly logger: Logger
   private readonly tenantContext: TenantContextInterface
+  private readonly notificationDispatcher: IocContainer['notificationDispatcher']
   private readonly patientRepository: IocContainer['patientRepository']
   private readonly appointmentRepository: IocContainer['appointmentRepository']
   private readonly diagnosticEducatifRepository: IocContainer['diagnosticEducatifRepository']
@@ -71,6 +72,7 @@ class ActivityLogSubscriber {
     userRepository,
     logger,
     tenantContext,
+    notificationDispatcher,
     patientRepository,
     appointmentRepository,
     diagnosticEducatifRepository,
@@ -85,6 +87,7 @@ class ActivityLogSubscriber {
     this.userRepository = userRepository
     this.logger = logger
     this.tenantContext = tenantContext
+    this.notificationDispatcher = notificationDispatcher
     this.patientRepository = patientRepository
     this.appointmentRepository = appointmentRepository
     this.diagnosticEducatifRepository = diagnosticEducatifRepository
@@ -165,16 +168,28 @@ class ActivityLogSubscriber {
       )
     }
     for (const action of PLANNING_ACTIONS) {
-      this.appEventBus.on(action, (p) =>
-        this.#log(
+      this.appEventBus.on(action, async (p) => {
+        // Lu avant tout await : un administrateur ne prévient personne.
+        const isAdmin =
+          this.tenantContext.current().establishmentRole === 'ADMIN'
+        const activityLogId = await this.record(
           action,
           p.entityType,
           p.userID,
           p.entityID,
           p.detail,
           p.restoreData,
-        ),
-      )
+        )
+        if (activityLogId && !isAdmin) {
+          this.notificationDispatcher.planningChanged({
+            actorId: p.userID,
+            activityLogId,
+            action,
+            entityType: p.entityType,
+            detail: p.detail ?? null,
+          })
+        }
+      })
     }
     // La reemission par le super-admin. `entityType: 'user'`, pas
     // `'member'` — cette route vise un COMPTE, hors de toute appartenance.
@@ -233,14 +248,21 @@ class ActivityLogSubscriber {
     )
   }
 
+  // Les journaux hors planning n'attendent pas d'identifiant.
   async #log(
+    ...args: Parameters<ActivityLogSubscriber['record']>
+  ): Promise<void> {
+    await this.record(...args)
+  }
+
+  async record(
     action: string,
     entityType: string,
     userID: string,
     entityID: string,
     complement?: string,
     restoreData?: Record<string, unknown>,
-  ): Promise<void> {
+  ): Promise<string | null> {
     try {
       // `findIdentity`, PAS `findByID`.
       //
@@ -275,7 +297,7 @@ class ActivityLogSubscriber {
         entityID,
         restoreData,
       ).catch(() => null)
-      await this.activityLogRepository.create({
+      const { id } = await this.activityLogRepository.create({
         userID,
         userFirstName: user?.firstName ?? null,
         userLastName: user?.lastName ?? null,
@@ -285,6 +307,7 @@ class ActivityLogSubscriber {
         detail: [entite, complement].filter(Boolean).join(' — ') || null,
         restoreData,
       })
+      return id
     } catch (err) {
       // Jamais `${err}` : ce depot (`activityLog.repository.ts`) n'a lui-meme aucun `catch`, donc
       // une erreur Prisma brute peut remonter ici telle quelle, et son message recopie
@@ -294,6 +317,7 @@ class ActivityLogSubscriber {
       const errorClass =
         err instanceof Error ? err.constructor.name : typeof err
       this.logger.error(`ActivityLog: failed to log ${action} [${errorClass}]`)
+      return null
     }
   }
 

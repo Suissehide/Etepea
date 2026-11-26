@@ -221,6 +221,30 @@ class NotificationDispatcher implements NotificationDispatcherInterface {
     await this.#write(rows)
   }
 
+  // Les suppressions ne se regroupent jamais ; les autres actions, une fois par auteur et par heure (UTC).
+  planningChanged(
+    input: Parameters<NotificationDispatcherInterface['planningChanged']>[0],
+  ): void {
+    this.#safe(async () => {
+      const { actorId, action } = input
+      const admins = await this.membershipRepository.findActiveAdminUserIds()
+      const dedupeKey =
+        action === 'planning.deleted'
+          ? undefined
+          : `planning:${actorId}:${new Date().toISOString().slice(0, 13)}`
+      await this.#write(
+        admins
+          .filter((userId) => userId !== actorId)
+          .map((userId) => ({
+            userId,
+            type: 'PLANNING_CHANGED' as const,
+            payload: input,
+            dedupeKey,
+          })),
+      )
+    })
+  }
+
   #session(s: SessionSnapshot) {
     return {
       appointmentId: s.appointmentId,

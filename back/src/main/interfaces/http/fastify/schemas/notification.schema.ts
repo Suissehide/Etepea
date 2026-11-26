@@ -13,6 +13,7 @@ export const notificationResponseSchema = z.object({
     'PATHWAY_END',
     'SLOT_ALMOST_FULL',
     'TASK_DUE',
+    'PLANNING_CHANGED',
   ]),
   payload: z.record(z.string(), z.unknown()),
   readAt: z.coerce.date().nullable(),

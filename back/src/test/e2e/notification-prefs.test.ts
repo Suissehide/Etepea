@@ -83,6 +83,7 @@ describe('preferences de notification', () => {
         full: false,
         mention: true,
         due: true,
+        planning: true,
       },
       mail: {
         reminder: true,
@@ -94,6 +95,7 @@ describe('preferences de notification', () => {
         full: false,
         mention: true,
         due: false,
+        planning: false,
       },
     }
     expect((await put(prefs)).statusCode).toBe(200)
@@ -116,6 +118,7 @@ describe('preferences de notification', () => {
         full: true,
         mention: true,
         due: true,
+        planning: true,
       },
       mail: {
         reminder: false,
@@ -127,6 +130,7 @@ describe('preferences de notification', () => {
         full: false,
         mention: false,
         due: false,
+        planning: false,
       },
     }
     expect((await put(prefs)).statusCode).toBe(400)
@@ -147,6 +151,7 @@ describe('preferences de notification', () => {
         full: true,
         mention: true,
         due: true,
+        planning: true,
       },
       mail: {
         reminder: false,
@@ -158,6 +163,7 @@ describe('preferences de notification', () => {
         full: false,
         mention: false,
         due: false,
+        planning: false,
       },
     }
     expect((await put({ ...base, services: [] })).statusCode).toBe(400)
@@ -183,6 +189,7 @@ describe('preferences de notification', () => {
         full: true,
         mention: true,
         due: true,
+        planning: true,
       },
       mail: {
         reminder: false,
@@ -194,6 +201,7 @@ describe('preferences de notification', () => {
         full: false,
         mention: false,
         due: false,
+        planning: false,
       },
     }
     expect((await put(prefs)).statusCode).toBe(200)
