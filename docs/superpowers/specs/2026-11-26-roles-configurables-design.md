@@ -42,7 +42,11 @@ model ServiceRoleHiddenSoignant {
   soignant (« Équipe SMCP » pour IDE, Diététicienne, Pharmacienne et Aide-soignante SMCP, par
   exemple). Il reste modifiable avant d'enregistrer.
 - Changer le rôle par défaut d'un soignant ne touche pas les comptes déjà rattachés : c'est un
-  pré-remplissage, pas un lien.
+  pré-remplissage, pas un lien. **L'écart est signalé** :
+  - à l'enregistrement du soignant, un message indique combien de comptes gardent un autre rôle ;
+  - dans l'écran Membres, un compte dont le rôle diffère du rôle par défaut de son soignant porte
+    un badge « Rôle différent de Kiné 1 », avec une action « Appliquer le rôle par défaut ».
+  Calculé à la lecture (comparaison `roleId` / `soignant.defaultRoleId`), rien de stocké.
 - Migration : pour chaque service, création de quatre rôles **Coordinateur**, **Intervenant**,
   **Secrétariat**, **Lecture seule**, avec exactement les permissions actuelles (plus les nouvelles
   permissions issues des découpages ci-dessous, accordées là où l'ancienne l'était). Aucun compte
