@@ -115,6 +115,7 @@ function SoignantSettings() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
               placeholder="Nom du soignant..."
               className="w-72"
             />

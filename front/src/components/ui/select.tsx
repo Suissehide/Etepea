@@ -3,6 +3,7 @@ import { Popover, Select as RadixSelect } from 'radix-ui'
 import React, { useState } from 'react'
 
 import { cn } from '../../libs/utils'
+import { ClearButton } from './clearButton.tsx'
 
 // ─── Select ──────────────────────────────────────────────────────────────────
 
@@ -201,14 +202,20 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
               onWheel={(e) => e.stopPropagation()}
               className="z-[200] w-[var(--radix-popover-trigger-width)] rounded-md border border-border bg-popover shadow-md animate-in fade-in-0 slide-in-from-top-2"
             >
-              <div className="p-2">
+              <div className="relative p-2">
                 <input
                   type="text"
                   placeholder="Rechercher..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded border border-border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded border border-border pl-2 pr-7 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
+                {searchTerm && (
+                  <ClearButton
+                    onClear={() => setSearchTerm('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2"
+                  />
+                )}
               </div>
 
               <ul className="p-1 max-h-52 overflow-y-auto">
@@ -399,14 +406,20 @@ export function MultiSelect({
           onWheel={(e) => e.stopPropagation()}
           className="z-[200] w-[var(--radix-popover-trigger-width)] rounded-md border border-border bg-popover shadow-md"
         >
-          <div className="p-2">
+          <div className="relative p-2">
             <input
               type="text"
               placeholder="Rechercher..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded border border-border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded border border-border pl-2 pr-7 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             />
+            {searchTerm && (
+              <ClearButton
+                onClear={() => setSearchTerm('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2"
+              />
+            )}
           </div>
 
           <ul className="p-1 max-h-52 overflow-y-auto">

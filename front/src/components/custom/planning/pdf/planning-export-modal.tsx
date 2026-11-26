@@ -28,6 +28,7 @@ import { useSlotsInRangeQuery } from '../../../../queries/useSlot.ts'
 import { useSoignantQueries } from '../../../../queries/useSoignant.ts'
 import type { Slot } from '../../../../types/slot.ts'
 import { Button } from '../../../ui/button.tsx'
+import { ClearButton } from '../../../ui/clearButton.tsx'
 import {
   PopoverAnchor,
   PopoverContent,
@@ -1022,6 +1023,7 @@ function FilterPicker({
             placeholder={searchPlaceholder}
             className="h-8 min-w-0 flex-1 border-none bg-transparent text-sm outline-none"
           />
+          {query && <ClearButton onClear={() => setQuery('')} />}
         </div>
         <div className="flex justify-between px-3 pt-2 pb-1 text-xs text-text-light">
           <span>
