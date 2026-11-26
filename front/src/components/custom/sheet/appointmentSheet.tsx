@@ -364,26 +364,27 @@ export default function AppointmentSheet({
                     />
                   )}
                 </form.AppField>
+              </fieldset>
+              <div className="mt-2 w-full border-t border-border"></div>
 
-                <div className="mt-2 w-full border-t border-border"></div>
-
-                <form.Field
-                  name="appointmentPatients"
-                  mode="array"
-                  validators={{
-                    onSubmit: ({ value }) => {
-                      if (isIndividual && value.length > 1) {
-                        return 'Un seul patient autorisé pour un créneau individuel'
-                      }
-                      if (!isIndividual && value.length > capacity) {
-                        return `Maximum ${capacity} patient${capacity > 1 ? 's' : ''} pour ce créneau`
-                      }
-                      return undefined
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <div className="flex-1 flex flex-col min-h-0">
+              <form.Field
+                name="appointmentPatients"
+                mode="array"
+                validators={{
+                  onSubmit: ({ value }) => {
+                    if (isIndividual && value.length > 1) {
+                      return 'Un seul patient autorisé pour un créneau individuel'
+                    }
+                    if (!isIndividual && value.length > capacity) {
+                      return `Maximum ${capacity} patient${capacity > 1 ? 's' : ''} pour ce créneau`
+                    }
+                    return undefined
+                  },
+                }}
+              >
+                {(field) => (
+                  <div className="flex-1 flex flex-col min-h-0">
+                    {canWrite && (
                       <div className="flex items-end gap-4 shrink-0">
                         <FormField className="flex-1">
                           <Label htmlFor={'patient-selection'}>
@@ -425,172 +426,180 @@ export default function AppointmentSheet({
                           Ajouter
                         </Button>
                       </div>
-                      <div className="flex justify-between items-center gap-2 text-sm text-text-light mt-3 mb-0.5 shrink-0">
-                        <span>Liste des patients</span>
-                        <span className="shrink-0">
-                          {currentPatientCount}/{capacity} patient
-                          {capacity > 1 ? 's' : ''}
-                          {isAtCapacity && (
-                            <span className="text-destructive ml-1">
-                              — capacité maximale atteinte
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-h-0 overflow-y-scroll space-y-2">
-                        {field.state.value.map((appointmentPatient, index) => {
-                          // Le rendez-vous porte déjà ses patients ; la liste complète,
-                          // chargée à part, ne sert qu'aux patients tout juste ajoutés.
-                          const patientData =
-                            appointment?.appointmentPatients?.find(
-                              (ap) =>
-                                ap.patient.id === appointmentPatient.patientID,
-                            )?.patient ??
-                            patients?.find(
-                              (p) => p.id === appointmentPatient.patientID,
-                            )
-                          const isExpanded = expandedSections[index] ?? false
-                          const toggleExpand = () =>
-                            setExpandedSections((prev) => ({
-                              ...prev,
-                              [index]: !prev[index],
-                            }))
+                    )}
+                    <div className="flex justify-between items-center gap-2 text-sm text-text-light mt-3 mb-0.5 shrink-0">
+                      <span>Liste des patients</span>
+                      <span className="shrink-0">
+                        {currentPatientCount}/{capacity} patient
+                        {capacity > 1 ? 's' : ''}
+                        {isAtCapacity && (
+                          <span className="text-destructive ml-1">
+                            — capacité maximale atteinte
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-y-scroll space-y-2">
+                      {field.state.value.map((appointmentPatient, index) => {
+                        // Le rendez-vous porte déjà ses patients ; la liste complète,
+                        // chargée à part, ne sert qu'aux patients tout juste ajoutés.
+                        const patientData =
+                          appointment?.appointmentPatients?.find(
+                            (ap) =>
+                              ap.patient.id === appointmentPatient.patientID,
+                          )?.patient ??
+                          patients?.find(
+                            (p) => p.id === appointmentPatient.patientID,
+                          )
+                        const isExpanded = expandedSections[index] ?? false
+                        const toggleExpand = () =>
+                          setExpandedSections((prev) => ({
+                            ...prev,
+                            [index]: !prev[index],
+                          }))
 
-                          return (
-                            <div
-                              key={`index_${patientData?.id}`}
-                              className="border border-border rounded-md py-2 px-4"
-                            >
-                              <div className="flex justify-between items-center gap-2">
-                                <button
+                        return (
+                          <div
+                            key={`index_${patientData?.id}`}
+                            className="border border-border rounded-md py-2 px-4"
+                          >
+                            <div className="flex justify-between items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={toggleExpand}
+                                aria-expanded={isExpanded}
+                                className="flex-1 self-stretch text-sm flex items-center gap-2 text-left cursor-pointer"
+                              >
+                                <PastillePresence
+                                  status={appointmentPatient.status}
+                                />
+                                {patientData
+                                  ? `${patientData.lastName} ${patientData.firstName}`
+                                  : ``}
+                              </button>
+                              <div className="flex gap-2 items-center">
+                                <form.Field
+                                  name={`appointmentPatients[${index}].convocationSent`}
+                                >
+                                  {(subField) => (
+                                    <div className="flex items-center gap-1.5 text-xs text-text-light">
+                                      <span aria-hidden="true">
+                                        Convocation
+                                      </span>
+                                      <Checkbox
+                                        aria-label="Convocation envoyée"
+                                        title="Convocation envoyée"
+                                        checked={!!subField.state.value}
+                                        disabled={!canWrite}
+                                        onChange={(e) =>
+                                          subField.handleChange(
+                                            e.target.checked,
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  )}
+                                </form.Field>
+                                <div className="h-6 border-l border-border"></div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   type="button"
                                   onClick={toggleExpand}
-                                  aria-expanded={isExpanded}
-                                  className="flex-1 self-stretch text-sm flex items-center gap-2 text-left cursor-pointer"
                                 >
-                                  <PastillePresence
-                                    status={appointmentPatient.status}
-                                  />
-                                  {patientData
-                                    ? `${patientData.lastName} ${patientData.firstName}`
-                                    : ``}
-                                </button>
-                                <div className="flex gap-2 items-center">
-                                  <form.Field
-                                    name={`appointmentPatients[${index}].convocationSent`}
-                                  >
-                                    {(subField) => (
-                                      <div className="flex items-center gap-1.5 text-xs text-text-light">
-                                        <span aria-hidden="true">
-                                          Convocation
-                                        </span>
-                                        <Checkbox
-                                          aria-label="Convocation envoyée"
-                                          title="Convocation envoyée"
-                                          checked={!!subField.state.value}
-                                          onChange={(e) =>
-                                            subField.handleChange(
-                                              e.target.checked,
-                                            )
-                                          }
-                                        />
-                                      </div>
-                                    )}
-                                  </form.Field>
-                                  <div className="h-6 border-l border-border"></div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    type="button"
-                                    onClick={toggleExpand}
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                    )}
-                                  </Button>
-                                  <div className="h-6 border-l border-border"></div>
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                  )}
+                                </Button>
+                                <div className="h-6 border-l border-border"></div>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  type="button"
+                                  aria-label="Voir le patient"
+                                  onClick={() =>
+                                    handleRedirectToPatient(patientData?.id)
+                                  }
+                                >
+                                  <EyeIcon className="w-4 h-4" />
+                                </Button>
+                                {canWrite && (
                                   <Button
                                     variant="outline"
                                     size="icon"
                                     type="button"
-                                    onClick={() =>
-                                      handleRedirectToPatient(patientData?.id)
-                                    }
-                                  >
-                                    <EyeIcon className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    type="button"
+                                    aria-label="Retirer le patient"
                                     onClick={() => field.removeValue(index)}
                                   >
                                     <TrashIcon className="w-4 h-4 text-destructive" />
                                   </Button>
-                                </div>
+                                )}
                               </div>
+                            </div>
 
-                              {isExpanded && (
-                                <div className="flex flex-col gap-3 pb-2 pt-2">
-                                  <div className="w-full flex gap-4">
-                                    {/* accompanying */}
-                                    <form.AppField
-                                      name={`appointmentPatients[${index}].accompanying`}
-                                    >
-                                      {(subField) => (
-                                        <subField.Select
-                                          label="Accompagnant"
-                                          className="flex-1"
-                                          options={
-                                            APPOINTMENT_ACCOMPANYING_OPTIONS
-                                          }
-                                        />
-                                      )}
-                                    </form.AppField>
-
-                                    {/* status */}
-                                    <form.AppField
-                                      name={`appointmentPatients[${index}].status`}
-                                    >
-                                      {(subField) => (
-                                        <subField.Select
-                                          label="Présence"
-                                          className="flex-1"
-                                          options={APPOINTMENT_STATUS_OPTIONS}
-                                        />
-                                      )}
-                                    </form.AppField>
-                                  </div>
-
-                                  {/* rejectionReason */}
+                            {isExpanded && (
+                              <fieldset
+                                disabled={!canWrite}
+                                className="flex flex-col gap-3 pb-2 pt-2"
+                              >
+                                <div className="w-full flex gap-4">
+                                  {/* accompanying */}
                                   <form.AppField
-                                    name={`appointmentPatients[${index}].rejectionReason`}
+                                    name={`appointmentPatients[${index}].accompanying`}
                                   >
                                     {(subField) => (
-                                      <subField.Input label="Raison de refus" />
+                                      <subField.Select
+                                        label="Accompagnant"
+                                        className="flex-1"
+                                        options={
+                                          APPOINTMENT_ACCOMPANYING_OPTIONS
+                                        }
+                                      />
                                     )}
                                   </form.AppField>
 
-                                  {/* transmissionNotes */}
+                                  {/* status */}
                                   <form.AppField
-                                    name={`appointmentPatients[${index}].transmissionNotes`}
+                                    name={`appointmentPatients[${index}].status`}
                                   >
                                     {(subField) => (
-                                      <subField.TextArea label="Notes de transmission" />
+                                      <subField.Select
+                                        label="Présence"
+                                        className="flex-1"
+                                        options={APPOINTMENT_STATUS_OPTIONS}
+                                      />
                                     )}
                                   </form.AppField>
                                 </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
+
+                                {/* rejectionReason */}
+                                <form.AppField
+                                  name={`appointmentPatients[${index}].rejectionReason`}
+                                >
+                                  {(subField) => (
+                                    <subField.Input label="Raison de refus" />
+                                  )}
+                                </form.AppField>
+
+                                {/* transmissionNotes */}
+                                <form.AppField
+                                  name={`appointmentPatients[${index}].transmissionNotes`}
+                                >
+                                  {(subField) => (
+                                    <subField.TextArea label="Notes de transmission" />
+                                  )}
+                                </form.AppField>
+                              </fieldset>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  )}
-                </form.Field>
-              </fieldset>
+                  </div>
+                )}
+              </form.Field>
             </form>
           )}
         </div>

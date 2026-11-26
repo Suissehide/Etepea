@@ -115,7 +115,8 @@ const reponse = (
   return searchParams.get('archived') === 'true' ? supprimes : [...liste]
 }
 
-const monter = () => {
+// `listeFigee` : la liste relue ne contient pas encore le rôle créé.
+const monter = (listeFigee = false) => {
   const appels: Appel[] = []
   const liste = [...actifs]
   vi.stubGlobal(
@@ -126,7 +127,13 @@ const monter = () => {
       const { pathname, searchParams } = new URL(url)
       const body = init?.body ? JSON.parse(String(init.body)) : undefined
       appels.push({ url, method, body })
-      const data = reponse(method, pathname, searchParams, body, liste)
+      const data = reponse(
+        method,
+        pathname,
+        searchParams,
+        body,
+        listeFigee ? [...liste] : liste,
+      )
       return Promise.resolve({
         ok: true,
         status: 200,
@@ -286,6 +293,27 @@ describe('écran Rôles', () => {
     await waitFor(() => expect(ecritures(appels)).toHaveLength(2))
     expect(ecritures(appels).map((a) => a.method)).toEqual(['POST', 'PATCH'])
     expect(ecritures(appels)[1].url).toContain('/roles/cree-2')
+  })
+
+  it('garde l editeur du role cree avant que la liste ne le contienne', async () => {
+    const appels = monter(true)
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Nouveau rôle/ }),
+    )
+    await userEvent.type(await screen.findByLabelText('Nom du rôle'), 'Diet')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    expect(
+      await screen.findByRole('button', { name: 'Dupliquer' }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Nom du rôle')).toHaveValue('Diet')
+    await waitFor(() =>
+      expect(appels.filter((a) => a.method === 'GET').length).toBeGreaterThan(
+        3,
+      ),
+    )
+    expect(
+      screen.getByRole('button', { name: 'Dupliquer' }),
+    ).toBeInTheDocument()
   })
 
   it('duplique un role : nouveau role pre-rempli de ses droits', async () => {

@@ -101,6 +101,8 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
   const queryClient = useQueryClient()
   const { createAppointment } = useAppointmentMutations()
   const canCreateAppointment = useCan('appointment:create')
+  // La sélection ne sert qu'aux actions groupées, toutes en appointment:write.
+  const canSelect = useCan('appointment:write')
 
   const appointmentEvents: CalendarEvent[] = useMemo(() => {
     if (!slots || !patient) {
@@ -451,8 +453,12 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
                   }
                 : undefined
             }
-            selectedSlotIds={selectedTag ? undefined : selectedIds}
-            onToggleSelect={selectedTag ? undefined : toggleSelect}
+            selectedSlotIds={
+              selectedTag || !canSelect ? undefined : selectedIds
+            }
+            onToggleSelect={
+              selectedTag || !canSelect ? undefined : toggleSelect
+            }
             unselectRef={calendarUnselectRef}
             onRangeChange={handleRangeChange}
             saveDates={false}
@@ -464,7 +470,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
               <>
                 <SelectAllButton
                   events={visibleAppointmentEvents}
-                  hidden={!!selectedTag}
+                  hidden={!!selectedTag || !canSelect}
                   selectedIds={selectedIds}
                   onSelectAll={selectAll}
                   onClear={clearSelection}

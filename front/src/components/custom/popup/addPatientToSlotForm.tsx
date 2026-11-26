@@ -270,7 +270,12 @@ const SlotSuggestionRow = ({
   suggestion: SlotSuggestion
   onSelect: SelectSuggestion
 }) => {
-  const isSelectable = !suggestion.alreadyBooked && !suggestion.isFull
+  // Rejoindre un rendez-vous collectif existant le modifie (appointment:write).
+  const canJoin = useCan('appointment:write')
+  const isSelectable =
+    !suggestion.alreadyBooked &&
+    !suggestion.isFull &&
+    (canJoin || !suggestion.joinableAppointmentID)
   const rowColor = useRowColor(suggestion.slot)
   if (isSelectable && suggestion.tranches?.length) {
     return (

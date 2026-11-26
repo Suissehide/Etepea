@@ -174,6 +174,8 @@ function RolesSettings() {
   const { deleteRole, restoreRole } = useRoleMutations()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [copie, setCopie] = useState<Role | null>(null)
+  // Le rôle rendu par la création, le temps que la liste se recharge.
+  const [cree, setCree] = useState<Role | null>(null)
   const choisir = (id: string | null) => {
     setSelectedId(id)
     setCopie(null)
@@ -186,7 +188,10 @@ function RolesSettings() {
     [soignants],
   )
   const selected =
-    selectedId === NOUVEAU ? null : roles.find((r) => r.id === selectedId)
+    selectedId === NOUVEAU
+      ? null
+      : (roles.find((r) => r.id === selectedId) ??
+        (cree?.id === selectedId ? cree : undefined))
 
   return (
     <DashboardLayout>
@@ -272,7 +277,10 @@ function RolesSettings() {
               copie={copie}
               autres={actifs}
               soignants={soignantOptions}
-              onCreated={(cree) => choisir(cree.id)}
+              onCreated={(role) => {
+                setCree(role)
+                choisir(role.id)
+              }}
               onDuplicate={(source) => {
                 setSelectedId(NOUVEAU)
                 setCopie(source)
