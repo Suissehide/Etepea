@@ -28,7 +28,7 @@ appartenance porte un rôle.
 | --- | --- | --- |
 | Plateforme | `User.isSuperAdmin` | Super-admin |
 | Établissement | `EstablishmentMembership.role` | `ADMIN`, `MEMBER` |
-| Service | `ServiceMembership.role` | `COORDINATEUR`, `INTERVENANT`, `SECRETARIAT`, `LECTURE` |
+| Service | `ServiceMembership.role` | Rôle du service en base (`ServiceRoleDef`) ; quatre rôles prédéfinis créés par service : `COORDINATEUR`, `INTERVENANT`, `SECRETARIAT`, `LECTURE` |
 
 ## Rôles
 
@@ -44,6 +44,27 @@ appartenance porte un rôle.
 
 Un utilisateur peut cumuler des rôles différents dans plusieurs services d'un
 même établissement, et appartenir à plusieurs établissements.
+
+## Rôles de service en base (2026-11-26)
+
+Les rôles de service ne sont plus figés : chaque service possède ses propres rôles (`ServiceRoleDef`), créés,
+renommés et supprimés (archivés, restaurables) depuis l'écran « Rôles » du menu Administration, réservé à
+l'`ADMIN` d'établissement (`roles:manage`, permission d'établissement). Un rôle porte une liste de
+permissions du catalogue ci-dessous et une liste de soignants masqués du Dashboard. Les quatre rôles
+prédéfinis sont semés dans chaque service avec les droits des colonnes du tableau. Un rôle encore attribué
+à un membre ne peut pas être supprimé (409).
+
+- L'`ADMIN` d'établissement et l'octroi super-admin ont toutes les permissions de service, sans rôle de service.
+- Le **rôle par défaut d'un soignant** pré-remplit le rôle proposé à l'invitation d'un compte rattaché ; il ne lie pas.
+- Catalogue découpé : `referentials:write` a disparu au profit de `thematics:write`, `soignants:write`,
+  `locations:write`, `diagnostic-templates:write`, `pdf-design:write`, `patient-form:write`, et d'autres
+  clés (`pathway-templates:write`, `patient:create`, `appointment:create`, `dashboard:write`, `dashboard:read`,
+  `agenda:read`, `patients:read`, `suivi:read`). Le catalogue exact est `SERVICE_PERMISSION_KEYS`
+  (`utils/permissions.ts`). Les tableaux ci-dessous décrivent les rôles prédéfinis au sens large ; la liste
+  de clés fait foi.
+- `dashboard:write` : ajouter (rendez-vous, collectif) depuis le Dashboard, propre au coordinateur.
+- Les soignants masqués d'un rôle s'ajoutent à `Soignant.hidden` dans la liste et le filtre du Dashboard
+  seulement (confort de lecture, pas une protection : l'Agenda les montre toujours).
 
 ## Permissions par rôle de service
 

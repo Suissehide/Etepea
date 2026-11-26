@@ -81,9 +81,12 @@ describe('table de navigation', () => {
     ) =>
       items.flatMap((item) => (item.permission ? [item.permission].flat() : []))
 
-    expect(permissions(NAVIGATION.service).every(isServicePermission)).toBe(
-      true,
-    )
+    // « Rôles » : réservé à l'ADMIN d'établissement, seule exception à l'échelle du service.
+    expect(
+      permissions(NAVIGATION.service).every(
+        (p) => isServicePermission(p) || p === 'roles:manage',
+      ),
+    ).toBe(true)
     expect(
       permissions(NAVIGATION.establishment).every(isEstablishmentPermission),
     ).toBe(true)

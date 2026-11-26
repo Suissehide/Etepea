@@ -70,7 +70,7 @@ function SidebarDashboardFilter() {
     return <LocationFilterSection title={title} />
   }
 
-  return <SoignantFilterSection title={title} />
+  return <SoignantFilterSection title={title} appliquerMasquesDuRole />
 }
 
 export default SidebarDashboardFilter

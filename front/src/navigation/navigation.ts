@@ -115,6 +115,13 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
       description: "L'équipe du service : inviter, changer un rôle, retirer",
     },
     {
+      label: 'Rôles',
+      to: '/e/$establishmentId/s/$serviceId/roles',
+      permission: 'roles:manage',
+      group: 'Administration',
+      description: 'Droits de chaque rôle du service',
+    },
+    {
       label: 'Thématiques',
       to: '/e/$establishmentId/s/$serviceId/thematic',
       permission: 'thematics:write',
