@@ -27,7 +27,10 @@ export interface ServiceRoleRepositoryInterface {
     name: string,
     exceptId?: string,
   ) => Promise<{ id: string } | null>
-  countActiveSoignants: (soignantIds: string[]) => Promise<number>
+  // Soignants du service courant parmi ces ids, supprimés compris.
+  findSoignants: (
+    soignantIds: string[],
+  ) => Promise<{ id: string; archivedAt: Date | null }[]>
   countDefaultOfActiveSoignants: (roleId: string) => Promise<number>
   create: (
     params: Required<Omit<ServiceRoleWriteEntityRepo, 'archived'>>,

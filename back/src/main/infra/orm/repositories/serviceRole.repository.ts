@@ -17,7 +17,10 @@ const roleSelect = {
   preset: true,
   permissions: true,
   archivedAt: true,
-  hiddenSoignants: { select: { soignantId: true } },
+  hiddenSoignants: {
+    where: { soignant: { archivedAt: null } },
+    select: { soignantId: true },
+  },
 } as const
 
 class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
@@ -79,13 +82,12 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
     })
   }
 
-  async countActiveSoignants(soignantIds: string[]): Promise<number> {
-    return await this.prisma.soignant.count({
-      where: {
-        ...this.tenantContext.scope(),
-        id: { in: soignantIds },
-        archivedAt: null,
-      },
+  async findSoignants(
+    soignantIds: string[],
+  ): Promise<{ id: string; archivedAt: Date | null }[]> {
+    return await this.prisma.soignant.findMany({
+      where: { ...this.tenantContext.scope(), id: { in: soignantIds } },
+      select: { id: true, archivedAt: true },
     })
   }
 

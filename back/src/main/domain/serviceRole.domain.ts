@@ -102,12 +102,11 @@ class ServiceRoleDomain implements ServiceRoleDomainInterface {
 
   private async checkedSoignants(soignantIds: string[]): Promise<string[]> {
     const uniques = [...new Set(soignantIds)]
-    const actifs =
-      await this.serviceRoleRepository.countActiveSoignants(uniques)
-    if (actifs !== uniques.length) {
+    const trouves = await this.serviceRoleRepository.findSoignants(uniques)
+    if (trouves.length !== uniques.length) {
       throw Boom.badRequest('Soignant inconnu dans ce service')
     }
-    return uniques
+    return trouves.filter((s) => s.archivedAt === null).map((s) => s.id)
   }
 
   private emit(

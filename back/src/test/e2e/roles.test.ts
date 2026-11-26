@@ -424,6 +424,42 @@ describe('roles de service : liste et attribution par roleId', () => {
       expect(res.statusCode).toBe(400)
     })
 
+    it('ignore un soignant masque supprime : lecture filtree, enregistrement toujours possible', async () => {
+      const [actif, parti] = await Promise.all(
+        ['Actif', 'Parti'].map((name) =>
+          testDb.soignant.create({
+            data: { name, serviceId: A, establishmentId: E },
+          }),
+        ),
+      )
+      const cree = (
+        await roles('POST', '', {
+          name: 'Masque avec depart',
+          permissions: ['agenda:read'],
+          hiddenSoignantIds: [actif.id, parti.id],
+        })
+      ).json() as RoleDto
+      await testDb.soignant.update({
+        where: { id: parti.id },
+        data: { archivedAt: new Date() },
+      })
+      const liste = (
+        await t.app.inject({
+          method: 'GET',
+          url: tenantUrl(E, A, '/roles'),
+          cookies: admin,
+        })
+      ).json() as RoleDto[]
+      expect(liste.find((r) => r.id === cree.id)?.hiddenSoignantIds).toEqual([
+        actif.id,
+      ])
+      const res = await roles('PATCH', `/${cree.id}`, {
+        hiddenSoignantIds: [actif.id, parti.id],
+      })
+      expect(res.statusCode).toBe(200)
+      expect((res.json() as RoleDto).hiddenSoignantIds).toEqual([actif.id])
+    })
+
     it('remplace les soignants masques et journalise role.updated avec le nom', async () => {
       const s1 = await testDb.soignant.create({
         data: { name: 'S1', serviceId: A, establishmentId: E },

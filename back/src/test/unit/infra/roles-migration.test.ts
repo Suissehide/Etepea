@@ -24,7 +24,7 @@ const permissionsInsertedFor = (sql: string, preset: string): string[] => {
 
 const AJOUT = join(
   __dirname,
-  '../../../../prisma/migrations/20261128120000_dashboard_write/migration.sql',
+  '../../../../prisma/migrations/20261126140000_dashboard_write/migration.sql',
 )
 
 describe('migration roles_configurables', () => {

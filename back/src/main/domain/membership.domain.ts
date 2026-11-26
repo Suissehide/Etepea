@@ -73,6 +73,7 @@ const UNKNOWN_ROLE = 'Rôle inconnu dans ce service'
 
 const SELF_SERVICE_ACTION = 'Cannot apply this action to your own account'
 
+const ROLE_NOT_GRANTABLE = "Ce rôle donne des droits que vous n'avez pas"
 const SUPER_ADMIN_ACTIVATION =
   'This account cannot be activated or deactivated from an establishment'
 
@@ -204,6 +205,7 @@ class MembershipDomain implements MembershipDomainInterface {
     const { serviceId } = this.tenantContext.scope()
     const services = [{ serviceId, roleId, soignantId }]
     await this.assertReferences(services)
+    await this.assertGrantable(roleId)
     // Depot borne au service courant : un soignant d'ailleurs rend 404.
     const soignant = soignantId
       ? await this.soignantRepository.findByID(soignantId)
@@ -275,6 +277,7 @@ class MembershipDomain implements MembershipDomainInterface {
     const affectation = await this.assertOtherServiceMember(serviceMembershipId)
     if (affectation.role.id !== roleId) {
       await this.assertRole(this.tenantContext.scope().serviceId, roleId)
+      await this.assertGrantable(roleId)
     }
     const updated = await this.membershipRepository.setServiceRole(
       serviceMembershipId,
@@ -327,6 +330,19 @@ class MembershipDomain implements MembershipDomainInterface {
       ) {
         throw Boom.notFound(`Soignant ${service.soignantId} not found`)
       }
+    }
+  }
+
+  // Depuis un service, on n'attribue qu'un rôle inclus dans ses propres droits.
+  private async assertGrantable(roleId: string): Promise<void> {
+    const { servicePermissions } = this.tenantContext.currentService()
+    const role = await this.serviceRoleRepository.findByID(roleId)
+    if (
+      !role.permissions.every((p) =>
+        (servicePermissions as readonly string[]).includes(p),
+      )
+    ) {
+      throw Boom.forbidden(ROLE_NOT_GRANTABLE)
     }
   }
 

@@ -305,6 +305,52 @@ describe('l equipe d un service, geree par son coordinateur', () => {
     ).toBe(1)
   })
 
+  it('n attribue qu un role inclus dans les droits de l appelant', async () => {
+    const role = (name: string, permissions: string[]) =>
+      testDb.serviceRoleDef.create({
+        data: { establishmentId: E, serviceId: A, name, permissions },
+      })
+    const gestion = await role('Gestion equipe', [
+      'service-members:manage',
+      'members:read',
+      'agenda:read',
+    ])
+    const sousEnsemble = await role('Agenda seul', ['agenda:read'])
+    await createUser({
+      email: 'gestion-a@test.fr',
+      memberships: [
+        {
+          establishmentId: E,
+          services: [{ serviceId: A, role: 'LECTURE', roleId: gestion.id }],
+        },
+      ],
+    })
+    const cookies = await signIn(t.app, 'gestion-a@test.fr')
+    const cible = await affectation('lecteur-a@test.fr', A)
+    const [promotion, invitation, permis] = [
+      await call(cookies, 'PATCH', tenantUrl(E, A, `/membres/${cible.id}`), {
+        roleId: R.COORDINATEUR,
+      }),
+      await call(cookies, 'POST', tenantUrl(E, A, '/membres'), {
+        email: 'promu@test.fr',
+        firstName: 'Pro',
+        lastName: 'Mu',
+        roleId: R.COORDINATEUR,
+      }),
+      await call(cookies, 'PATCH', tenantUrl(E, A, `/membres/${cible.id}`), {
+        roleId: sousEnsemble.id,
+      }),
+    ]
+    expect([promotion.statusCode, invitation.statusCode]).toEqual([403, 403])
+    expect(promotion.json().message).toBe(
+      "Ce rôle donne des droits que vous n'avez pas",
+    )
+    expect(permis.statusCode).toBe(200)
+    expect((await affectation('lecteur-a@test.fr', A)).roleId).toBe(
+      sousEnsemble.id,
+    )
+  })
+
   // Le journal doit distinguer « le coordinateur a affecte X a son service » de « le chef
   // d'etablissement a rattache X a l'etablissement » : des actions a part, et datees du SERVICE
   // courant — l'ecran d'activite du service est le seul a pouvoir les montrer.
