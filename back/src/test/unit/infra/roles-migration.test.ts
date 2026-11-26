@@ -22,14 +22,34 @@ const permissionsInsertedFor = (sql: string, preset: string): string[] => {
     .sort()
 }
 
+const AJOUT = join(
+  __dirname,
+  '../../../../prisma/migrations/20261128120000_dashboard_write/migration.sql',
+)
+
 describe('migration roles_configurables', () => {
   const sql = readFileSync(MIGRATION, 'utf8')
+  const ajout = readFileSync(AJOUT, 'utf8')
+  const ajoutes = (preset: string) =>
+    ajout.includes(`"preset" = '${preset}'`) &&
+    ajout.includes("array_append(\"permissions\", 'dashboard:write')")
 
   for (const [preset, perms] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
     it(`la migration écrit exactement les droits de ${preset}`, () => {
-      expect(permissionsInsertedFor(sql, preset)).toEqual([...perms].sort())
+      const apres = [
+        ...permissionsInsertedFor(sql, preset),
+        ...(ajoutes(preset) ? ['dashboard:write'] : []),
+      ]
+      expect(apres.sort()).toEqual([...perms].sort())
     })
   }
+
+  it('la migration dashboard_write ne cible que COORDINATEUR', () => {
+    expect(ajoutes('COORDINATEUR')).toBe(true)
+    for (const autre of ['INTERVENANT', 'SECRETARIAT', 'LECTURE']) {
+      expect(ajoutes(autre)).toBe(false)
+    }
+  })
 
   it('defaultRolesData produit les quatre presets avec leurs droits', () => {
     const roles = defaultRolesData('s1', 'e1')

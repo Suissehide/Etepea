@@ -68,6 +68,8 @@ export const SERVICE_PERMISSION_KEYS = [
   // Tableau de bord d'activite du service courant, en chiffres agreges (MDS-40). Accordee a
   // LECTURE : c'est l'ecran de la direction.
   'activity:read',
+  // Ajouter (RDV, collectif) depuis le Dashboard, qui reste en consultation pour les autres rôles.
+  'dashboard:write',
   'pathway-templates:write',
   'thematics:write',
   'soignants:write',
@@ -158,6 +160,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<
     'stats:read',
     'stats:write',
     'activity:read',
+    'dashboard:write',
   ],
   INTERVENANT: [
     ...READ_ALL,

@@ -30,6 +30,13 @@ describe('permissions', () => {
     )
   })
 
+  it('reserve l ajout depuis le dashboard au coordinateur', () => {
+    expect(DEFAULT_ROLE_PERMISSIONS.COORDINATEUR).toContain('dashboard:write')
+    for (const role of ['INTERVENANT', 'SECRETARIAT', 'LECTURE'] as const) {
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain('dashboard:write')
+    }
+  })
+
   it('reserve les indicateurs ARS au coordinateur', () => {
     expect(DEFAULT_ROLE_PERMISSIONS.COORDINATEUR).toContain('stats:read')
     for (const role of ['INTERVENANT', 'SECRETARIAT', 'LECTURE'] as const) {
@@ -286,7 +293,7 @@ describe('permissions', () => {
     for (const cle of Object.values(DEFAULT_ROLE_PERMISSIONS).flat()) {
       expect(catalogue).toContain(cle)
     }
-    expect(SERVICE_PERMISSION_KEYS).toHaveLength(34)
+    expect(SERVICE_PERMISSION_KEYS).toHaveLength(35)
   })
 
   it('est identique a la copie du front', () => {
