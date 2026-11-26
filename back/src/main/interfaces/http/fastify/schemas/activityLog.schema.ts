@@ -21,6 +21,7 @@ const establishmentActivityLogResponseSchema = activityLogResponseSchema.extend(
   {
     serviceId: z.string().nullable(),
     detail: z.string().nullable(),
+    restoredAt: z.coerce.date().nullable(),
   },
 )
 

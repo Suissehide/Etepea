@@ -1,5 +1,7 @@
 import { EventEmitter } from 'node:events'
 
+type PlanningEntity = 'slot' | 'pathway' | 'forbiddenWeek' | 'planningCycle'
+
 type AppEvents = {
   'patient.created': { userID: string; patientId: string }
   'patient.updated': { userID: string; patientId: string }
@@ -50,6 +52,31 @@ type AppEvents = {
   'role.updated': { userID: string; roleId: string }
   'role.archived': { userID: string; roleId: string }
   'role.restored': { userID: string; roleId: string }
+  // Planning : `restoreData` porte de quoi annuler une suppression.
+  'planning.created': {
+    userID: string
+    entityType: PlanningEntity
+    entityID: string
+    restoreData?: Record<string, unknown>
+  }
+  'planning.updated': {
+    userID: string
+    entityType: PlanningEntity
+    entityID: string
+    restoreData?: Record<string, unknown>
+  }
+  'planning.deleted': {
+    userID: string
+    entityType: PlanningEntity
+    entityID: string
+    restoreData?: Record<string, unknown>
+  }
+  'planning.restored': {
+    userID: string
+    entityType: PlanningEntity
+    entityID: string
+    restoreData?: Record<string, unknown>
+  }
 }
 
 // Complement du libelle du journal, quand l'entite ne le dit pas seule (supprimee, parcours vises…).

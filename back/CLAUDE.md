@@ -147,7 +147,7 @@ Key cross-cutting concerns:
   written**: any future event emitted from a non-tenant route will be refused and swallowed the
   same way.
 - **The action vocabulary is a CONTRACT between the two repos, like the permission matrix
-  (étape 4b, final branch review).** `ActivityLog.action` can carry **23** values (the 21 `AppEvents`
+  (étape 4b, final branch review).** `ActivityLog.action` can carry **27** values (the 25 `AppEvents`
   keys plus `ACTIVITY_LOG_SCRIPT_ACTIONS`, `utils/activity-log-actions.ts` — the two lines the
   bootstrap script writes outside the bus); `PatientAccessLog.action` carries the four of
   `AccessAction`. The front's platform screen reused the dictionary written for the *service*

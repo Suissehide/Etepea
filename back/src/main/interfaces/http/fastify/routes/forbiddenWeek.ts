@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod/v4'
 
@@ -10,8 +11,11 @@ import {
   forbiddenWeeksResponseSchema,
 } from '../schemas/forbiddenWeek.schema'
 
+const semaine = (date: Date | string) =>
+  `semaine du ${dayjs(date).format('DD/MM/YYYY')}`
+
 const forbiddenWeekRouter: FastifyPluginAsync = (fastify) => {
-  const { forbiddenWeekDomain } = fastify.iocContainer
+  const { forbiddenWeekDomain, appEventBus } = fastify.iocContainer
 
   // Lisible par tout membre du service (affichage des semaines interdites
   // dans le calendrier) ; l'ecriture demande planning:write.
@@ -40,6 +44,12 @@ const forbiddenWeekRouter: FastifyPluginAsync = (fastify) => {
     },
     async (request, reply) => {
       const forbiddenWeek = await forbiddenWeekDomain.create(request.body.date)
+      appEventBus.emit('planning.created', {
+        userID: request.user.userID,
+        entityType: 'forbiddenWeek',
+        entityID: forbiddenWeek.id,
+        detail: semaine(forbiddenWeek.startOfWeek),
+      })
       reply.code(201)
       return forbiddenWeek
     },
@@ -59,7 +69,14 @@ const forbiddenWeekRouter: FastifyPluginAsync = (fastify) => {
       config: { permission: 'planning:write' },
     },
     async (request, reply) => {
-      await forbiddenWeekDomain.delete(request.params.id)
+      const restoreData = await forbiddenWeekDomain.delete(request.params.id)
+      appEventBus.emit('planning.deleted', {
+        userID: request.user.userID,
+        entityType: 'forbiddenWeek',
+        entityID: request.params.id,
+        restoreData,
+        detail: semaine(restoreData.startOfWeek),
+      })
       reply.code(204).send()
     },
   )

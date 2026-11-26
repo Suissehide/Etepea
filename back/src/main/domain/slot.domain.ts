@@ -10,6 +10,7 @@ import type {
   SlotUpdateEntityDomain,
 } from '../types/domain/slot.domain.interface'
 import type { SlotRepositoryInterface } from '../types/infra/orm/repositories/slot.repository.interface'
+import type { AppEventBus } from '../utils/app-event-bus'
 import {
   type ConflictSlot,
   detectConflicts,
@@ -19,8 +20,14 @@ import {
 class SlotDomain implements SlotDomainInterface {
   private readonly slotRepository: SlotRepositoryInterface
   private readonly notificationDispatcher: NotificationDispatcherInterface
+  private readonly appEventBus: AppEventBus
 
-  constructor({ slotRepository, notificationDispatcher }: IocContainer) {
+  constructor({
+    slotRepository,
+    notificationDispatcher,
+    appEventBus,
+  }: IocContainer) {
+    this.appEventBus = appEventBus
     this.slotRepository = slotRepository
     this.notificationDispatcher = notificationDispatcher
   }
@@ -79,6 +86,12 @@ class SlotDomain implements SlotDomainInterface {
         )
       : []
     const after = await this.slotRepository.update(slotID, slotUpdateParams)
+    const restoring = Boolean(before.archivedAt) && !after.archivedAt
+    this.#emit(
+      archiving ? 'deleted' : restoring ? 'restored' : 'updated',
+      userID,
+      slotID,
+    )
     if (archiving) {
       this.notificationDispatcher.cancelled(userID, snapshots)
       return after
@@ -113,7 +126,20 @@ class SlotDomain implements SlotDomainInterface {
       archivedAt: new Date(),
     })
     this.notificationDispatcher.cancelled(userID, snapshots)
+    this.#emit('deleted', userID, slotID)
     return archived
+  }
+
+  #emit(
+    action: 'deleted' | 'restored' | 'updated',
+    userID: string,
+    slotID: string,
+  ): void {
+    this.appEventBus.emit(`planning.${action}`, {
+      userID,
+      entityType: 'slot',
+      entityID: slotID,
+    })
   }
 }
 

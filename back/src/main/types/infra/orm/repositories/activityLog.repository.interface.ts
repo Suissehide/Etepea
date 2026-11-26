@@ -11,12 +11,16 @@ export type ActivityLogEntityRepo = {
   entityType: string
   entityID: string
   createdAt: Date
+  restoredAt: Date | null
 }
 
 export type ActivityLogCreateEntityRepo = Omit<
   ActivityLogEntityRepo,
-  'id' | 'createdAt' | 'establishmentId' | 'serviceId' | 'detail'
-> & { detail?: string | null }
+  'id' | 'createdAt' | 'establishmentId' | 'serviceId' | 'detail' | 'restoredAt'
+> & {
+  detail?: string | null
+  restoreData?: Record<string, unknown>
+}
 
 export type ActivityLogFindManyParams = {
   page: number
@@ -94,7 +98,7 @@ export interface ActivityLogRepositoryInterface {
   create: (
     params: ActivityLogCreateEntityRepo,
     client?: PrimaTransactionClient,
-  ) => Promise<void>
+  ) => Promise<{ id: string }>
   findMany: (
     params: ActivityLogFindManyParams,
   ) => Promise<ActivityLogFindManyResult>

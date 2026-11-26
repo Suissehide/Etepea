@@ -3,6 +3,7 @@ import utc from 'dayjs/plugin/utc'
 
 import type { IocContainer } from '../types/application/ioc'
 import type { ActivityLogRepositoryInterface } from '../types/infra/orm/repositories/activityLog.repository.interface'
+import type { PathwayRestoreData } from '../types/infra/orm/repositories/pathway.repository.interface'
 import type { UserRepositoryInterface } from '../types/infra/orm/repositories/user.repository.interface'
 import type { Logger } from '../types/utils/logger'
 import type { TenantContextInterface } from '../types/utils/tenant-context'
@@ -42,6 +43,13 @@ const ROLE_ACTIONS = [
   'role.restored',
 ] as const
 
+const PLANNING_ACTIONS = [
+  'planning.created',
+  'planning.updated',
+  'planning.deleted',
+  'planning.restored',
+] as const
+
 class ActivityLogSubscriber {
   private readonly appEventBus: AppEventBus
   private readonly activityLogRepository: ActivityLogRepositoryInterface
@@ -52,6 +60,10 @@ class ActivityLogSubscriber {
   private readonly appointmentRepository: IocContainer['appointmentRepository']
   private readonly diagnosticEducatifRepository: IocContainer['diagnosticEducatifRepository']
   private readonly membershipRepository: IocContainer['membershipRepository']
+  private readonly slotRepository: IocContainer['slotRepository']
+  private readonly thematicRepository: IocContainer['thematicRepository']
+  private readonly pathwayRepository: IocContainer['pathwayRepository']
+  private readonly pathwayTemplateRepository: IocContainer['pathwayTemplateRepository']
 
   constructor({
     appEventBus,
@@ -63,6 +75,10 @@ class ActivityLogSubscriber {
     appointmentRepository,
     diagnosticEducatifRepository,
     membershipRepository,
+    slotRepository,
+    pathwayRepository,
+    pathwayTemplateRepository,
+    thematicRepository,
   }: IocContainer) {
     this.appEventBus = appEventBus
     this.activityLogRepository = activityLogRepository
@@ -73,6 +89,10 @@ class ActivityLogSubscriber {
     this.appointmentRepository = appointmentRepository
     this.diagnosticEducatifRepository = diagnosticEducatifRepository
     this.membershipRepository = membershipRepository
+    this.slotRepository = slotRepository
+    this.pathwayRepository = pathwayRepository
+    this.thematicRepository = thematicRepository
+    this.pathwayTemplateRepository = pathwayTemplateRepository
     this.#subscribe()
   }
 
@@ -144,6 +164,18 @@ class ActivityLogSubscriber {
         this.#log(action, 'role', p.userID, p.roleId, p.detail),
       )
     }
+    for (const action of PLANNING_ACTIONS) {
+      this.appEventBus.on(action, (p) =>
+        this.#log(
+          action,
+          p.entityType,
+          p.userID,
+          p.entityID,
+          p.detail,
+          p.restoreData,
+        ),
+      )
+    }
     // La reemission par le super-admin. `entityType: 'user'`, pas
     // `'member'` — cette route vise un COMPTE, hors de toute appartenance.
     //
@@ -207,6 +239,7 @@ class ActivityLogSubscriber {
     userID: string,
     entityID: string,
     complement?: string,
+    restoreData?: Record<string, unknown>,
   ): Promise<void> {
     try {
       // `findIdentity`, PAS `findByID`.
@@ -237,7 +270,11 @@ class ActivityLogSubscriber {
       const user = await this.userRepository
         .findIdentity(userID)
         .catch(() => null)
-      const entite = await this.#decrire(entityType, entityID).catch(() => null)
+      const entite = await this.#decrire(
+        entityType,
+        entityID,
+        restoreData,
+      ).catch(() => null)
       await this.activityLogRepository.create({
         userID,
         userFirstName: user?.firstName ?? null,
@@ -246,6 +283,7 @@ class ActivityLogSubscriber {
         entityType,
         entityID,
         detail: [entite, complement].filter(Boolean).join(' — ') || null,
+        restoreData,
       })
     } catch (err) {
       // Jamais `${err}` : ce depot (`activityLog.repository.ts`) n'a lui-meme aucun `catch`, donc
@@ -261,7 +299,11 @@ class ActivityLogSubscriber {
 
   // L'entite visee, lue juste apres l'action, sous le meme contexte de tenant. Rejette si elle
   // n'existe plus : l'evenement porte alors son nom dans `detail`.
-  async #decrire(entityType: string, entityID: string): Promise<string | null> {
+  async #decrire(
+    entityType: string,
+    entityID: string,
+    restoreData?: Record<string, unknown>,
+  ): Promise<string | null> {
     switch (entityType) {
       case 'patient':
         return nom(await this.patientRepository.findByID(entityID))
@@ -289,6 +331,32 @@ class ActivityLogSubscriber {
         return affectation
           ? `${nom(membre.user)} (${affectation.role.name})`
           : nom(membre.user)
+      }
+      case 'slot': {
+        const slot = await this.slotRepository.findByID(entityID)
+        return [
+          dayjs.utc(slot.startDate).format('DD/MM/YYYY à HH:mm'),
+          slot.slotTemplate.thematicId
+            ? (
+                await this.thematicRepository.findByID(
+                  slot.slotTemplate.thematicId,
+                )
+              ).name
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' — ')
+      }
+      case 'pathway': {
+        // Un parcours supprimé n'existe plus : ce que la restauration garde le décrit.
+        const pathway =
+          (restoreData as PathwayRestoreData | undefined)?.pathway ??
+          (await this.pathwayRepository.findByID(entityID))
+        const modele = pathway.templateID
+          ? (await this.pathwayTemplateRepository.findByID(pathway.templateID))
+              .name
+          : 'Parcours'
+        return `${modele} — ${dayjs.utc(pathway.startDate).format('DD/MM/YYYY')}`
       }
       default:
         return null

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod/v4'
 
@@ -9,7 +10,21 @@ import {
 } from '../schemas/planningCycle.schema'
 
 const planningCycleRouter: FastifyPluginAsync = (fastify) => {
-  const { planningCycleDomain } = fastify.iocContainer
+  const { planningCycleDomain, appEventBus, tenantContext } =
+    fastify.iocContainer
+  // Un cycle par service : le service sert d'identifiant à sa ligne de journal.
+  const emit = (
+    action: 'updated' | 'deleted',
+    userID: string,
+    cycle: { startOfWeek: string; weekCount: number },
+  ) =>
+    appEventBus.emit(`planning.${action}`, {
+      userID,
+      entityType: 'planningCycle',
+      entityID: tenantContext.current().serviceId ?? '',
+      detail: `${cycle.weekCount} semaines à partir du ${dayjs(cycle.startOfWeek).format('DD/MM/YYYY')}`,
+      ...(action === 'deleted' ? { restoreData: cycle } : {}),
+    })
 
   // Lisible par tout membre du service : la numerotation des semaines
   // s'affiche pour tout le monde, seule sa configuration est reservee.
@@ -35,11 +50,16 @@ const planningCycleRouter: FastifyPluginAsync = (fastify) => {
       },
       config: { permission: 'planning:write' },
     },
-    (request) => {
-      return planningCycleDomain.save({
+    async (request) => {
+      const saved = await planningCycleDomain.save({
         startOfWeek: request.body.startOfWeek,
         weekCount: request.body.weekCount,
       })
+      emit('updated', request.user.userID, {
+        startOfWeek: saved.startOfWeek.toISOString().slice(0, 10),
+        weekCount: saved.weekCount,
+      })
+      return saved
     },
   )
 
@@ -55,8 +75,11 @@ const planningCycleRouter: FastifyPluginAsync = (fastify) => {
       },
       config: { permission: 'planning:write' },
     },
-    async (_request, reply) => {
-      await planningCycleDomain.delete()
+    async (request, reply) => {
+      const deleted = await planningCycleDomain.delete()
+      if (deleted) {
+        emit('deleted', request.user.userID, deleted)
+      }
       reply.code(204).send()
     },
   )

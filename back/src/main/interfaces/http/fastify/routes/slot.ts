@@ -26,7 +26,7 @@ import {
 
 const slotRouter: FastifyPluginAsync = (fastify) => {
   const { iocContainer } = fastify
-  const { slotDomain, slotTemplateDomain, logger } = iocContainer
+  const { slotDomain, slotTemplateDomain, logger, appEventBus } = iocContainer
 
   // Get all
   fastify.get<{ Querystring: GetSlotsQuery }>(
@@ -120,6 +120,11 @@ const slotRouter: FastifyPluginAsync = (fastify) => {
       }
 
       const slot = await slotDomain.create(createSlotInput, copiedFromSlotID)
+      appEventBus.emit('planning.created', {
+        userID: request.user.userID,
+        entityType: 'slot',
+        entityID: slot.id,
+      })
       reply.code(201)
       return { ...slot, conflicts: await slotDomain.conflictsOf(slot) }
     },

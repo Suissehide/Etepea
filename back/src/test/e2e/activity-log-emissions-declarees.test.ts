@@ -88,6 +88,11 @@ const CONTEXTES_REELS: Record<string, ContexteReel> = {
   'role.updated': { genre: 'tenant-service' },
   'role.archived': { genre: 'tenant-service' },
   'role.restored': { genre: 'tenant-service' },
+  // routes planning (et SlotDomain) : sous `/e/:e/s/:s/...`.
+  'planning.created': { genre: 'tenant-service' },
+  'planning.updated': { genre: 'tenant-service' },
+  'planning.deleted': { genre: 'tenant-service' },
+  'planning.restored': { genre: 'tenant-service' },
 }
 
 // Liste NOMMEE, jamais un pourcentage implicite : un evenement
@@ -254,9 +259,13 @@ describe("chaque evenement declare ecrit une ligne d'activite sous son contexte 
         )
       }
 
+      // `entityType` y est une union, que le lecteur de source ne range pas parmi les champs `string`.
+      const complement = nomEvenement.startsWith('planning.')
+        ? { entityType: 'forbiddenWeek' }
+        : {}
       appEventBus.emit(
         nomEvenement as never,
-        chargeSynthetique(evenement) as never,
+        { ...chargeSynthetique(evenement), ...complement } as never,
       )
 
       const lignes = await attendreLigne(nomEvenement)

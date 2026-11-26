@@ -37,6 +37,7 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
     slotDomain,
     slotTemplateDomain,
     forbiddenWeekDomain,
+    appEventBus,
   } = iocContainer
 
   // Get all
@@ -110,6 +111,11 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
     },
     async (request, reply) => {
       const pathway = await pathwayDomain.create(request.body)
+      appEventBus.emit('planning.created', {
+        userID: request.user.userID,
+        entityType: 'pathway',
+        entityID: pathway.id,
+      })
       reply.code(201)
       return pathway
     },
@@ -134,6 +140,11 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
       if (!updated) {
         throw Boom.notFound('Pathway not found')
       }
+      appEventBus.emit('planning.updated', {
+        userID: request.user.userID,
+        entityType: 'pathway',
+        entityID: pathwayID,
+      })
       return updated
     },
   )
@@ -153,7 +164,16 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
     },
     async (request, reply) => {
       const { pathwayID } = request.params
-      await pathwayDomain.delete(pathwayID, request.user.userID)
+      const restoreData = await pathwayDomain.delete(
+        pathwayID,
+        request.user.userID,
+      )
+      appEventBus.emit('planning.deleted', {
+        userID: request.user.userID,
+        entityType: 'pathway',
+        entityID: pathwayID,
+        restoreData,
+      })
       reply.code(204).send()
     },
   )
@@ -233,11 +253,17 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
         slotIDs.push(slot.id)
       }
 
-      return await pathwayDomain.create({
+      const pathway = await pathwayDomain.create({
         startDate: effectiveStartDate,
         templateID: pathwayTemplate.id,
         slotIDs,
       })
+      appEventBus.emit('planning.created', {
+        userID: request.user.userID,
+        entityType: 'pathway',
+        entityID: pathway.id,
+      })
+      return pathway
     },
   )
 
@@ -254,9 +280,19 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
       },
       config: { permission: 'planning:write' },
     },
-    (request) => {
+    async (request) => {
       const { pathwayTemplateIDs, fromDate } = request.body
-      return pathwayDomain.regenerate(pathwayTemplateIDs, fromDate)
+      const result = await pathwayDomain.regenerate(
+        pathwayTemplateIDs,
+        fromDate,
+      )
+      appEventBus.emit('planning.updated', {
+        userID: request.user.userID,
+        entityType: 'pathway',
+        entityID: pathwayTemplateIDs.join(','),
+        detail: `${result.pathwaysUpdated} parcours régénérés`,
+      })
+      return result
     },
   )
 

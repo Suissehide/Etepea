@@ -807,6 +807,9 @@ model ActivityLog {
   entityID        String
   // Ce que la ligne designe, en clair et fige au moment de l'action (patient, rendez-vous, membre).
   detail          String?
+  // Ce qu'il faut pour annuler l'action (planning) ; jamais servi par HTTP.
+  restoreData     Json?
+  restoredAt      DateTime?
   createdAt       DateTime @default(now())
 
   @@index([userID])

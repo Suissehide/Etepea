@@ -34,6 +34,10 @@ export const ACTION_LABELS: Record<string, string> = {
   'role.updated': 'Rôle modifié',
   'role.archived': 'Rôle supprimé',
   'role.restored': 'Rôle restauré',
+  'planning.created': 'Planning : ajout',
+  'planning.updated': 'Planning : modification',
+  'planning.deleted': 'Planning : suppression',
+  'planning.restored': 'Planning : restauration',
 }
 
 export const ACTION_OPTIONS = toSelectOptions(ACTION_LABELS)
@@ -48,6 +52,8 @@ export const TYPE_LABELS: Record<string, string> = {
   member: 'Membre',
   user: 'Compte',
   role: 'Rôle',
+  forbiddenWeek: 'Semaine interdite',
+  planningCycle: 'Cycle',
 }
 
 export const PERIOD_DAYS: Record<string, string> = {

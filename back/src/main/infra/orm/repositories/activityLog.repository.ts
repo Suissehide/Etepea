@@ -1,3 +1,4 @@
+import type { Prisma } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
@@ -53,10 +54,15 @@ class ActivityLogRepository implements ActivityLogRepositoryInterface {
   async create(
     params: ActivityLogCreateEntityRepo,
     client: PrimaTransactionClient = this.prisma,
-  ): Promise<void> {
+  ): Promise<{ id: string }> {
     try {
-      await client.activityLog.create({
-        data: { ...params, ...this.contextColumns },
+      return await client.activityLog.create({
+        data: {
+          ...params,
+          restoreData: params.restoreData as Prisma.InputJsonObject | undefined,
+          ...this.contextColumns,
+        },
+        select: { id: true },
       })
     } catch (err) {
       throw this.errorHandler.boomErrorFromPrismaError({
