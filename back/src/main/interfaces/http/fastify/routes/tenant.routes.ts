@@ -19,6 +19,7 @@ import { diagnosticEducatifTemplateRouter } from './diagnosticEducatifTemplate'
 import { enrollmentIssueRouter } from './enrollmentIssue'
 import { forbiddenWeekRouter } from './forbiddenWeek'
 import { indicatorCatalogRouter, indicatorSetRouter } from './indicatorSet'
+import { legacyAppointmentRouter } from './legacyAppointment'
 import { locationReadRouter, locationWriteRouter } from './location'
 import { notificationRouter } from './notification'
 import { pathwayRouter } from './pathway'
@@ -172,6 +173,9 @@ const tenantRoutes: FastifyPluginAsyncZod = async (fastify) => {
   fastify.addHook('onResponse', fastify.recordPatientAccess)
 
   await fastify.register(appointmentRouter, { prefix: '/appointment' })
+  await fastify.register(legacyAppointmentRouter, {
+    prefix: '/legacy-appointments',
+  })
   await fastify.register(slotRouter, { prefix: '/slot' })
   await fastify.register(slotTemplateRouter, { prefix: '/slot-template' })
   await fastify.register(pathwayRouter, { prefix: '/pathway' })

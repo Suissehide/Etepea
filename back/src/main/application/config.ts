@@ -87,6 +87,11 @@ const configSchema = z.object({
     .string()
     .optional()
     .transform((val) => val || 'Etepea <no-reply@etepea.local>'),
+
+  // Rendez-vous poussés par l'ancienne app : sans jeton, la route refuse tout.
+  legacyRdvToken: z.string().optional(),
+  legacyRdvEstablishmentId: z.string().optional(),
+  legacyRdvServiceId: z.string().optional(),
 })
 const envVarNames = [
   'CORS_ORIGIN',
@@ -109,6 +114,9 @@ const envVarNames = [
   'SMTP_USER',
   'SMTP_PASS',
   'SMTP_FROM',
+  'LEGACY_RDV_TOKEN',
+  'LEGACY_RDV_ESTABLISHMENT_ID',
+  'LEGACY_RDV_SERVICE_ID',
 ]
 
 // `env` optionnel : `process.env` par defaut, pour que tout appelant de

@@ -54,6 +54,7 @@ import type { EstablishmentRepositoryInterface } from '../infra/orm/repositories
 import type { ForbiddenWeekRepositoryInterface } from '../infra/orm/repositories/forbiddenWeek.repository.interface'
 import type { IndicatorCohortRepositoryInterface } from '../infra/orm/repositories/indicatorCohort.repository.interface'
 import type { IndicatorSetRepositoryInterface } from '../infra/orm/repositories/indicatorSet.repository.interface'
+import type { LegacyAppointmentRepositoryInterface } from '../infra/orm/repositories/legacyAppointment.repository.interface'
 import type { LocationRepositoryInterface } from '../infra/orm/repositories/location.repository.interface'
 import type { MembershipRepositoryInterface } from '../infra/orm/repositories/membership.repository.interface'
 import type { NotificationRepositoryInterface } from '../infra/orm/repositories/notification.repository.interface'
@@ -167,6 +168,7 @@ export interface IocContainer {
   // ForbiddenWeek
   readonly forbiddenWeekDomain: ForbiddenWeekDomainInterface
   readonly forbiddenWeekRepository: ForbiddenWeekRepositoryInterface
+  readonly legacyAppointmentRepository: LegacyAppointmentRepositoryInterface
   // PlanningCycle
   readonly planningCycleDomain: PlanningCycleDomainInterface
   readonly planningCycleRepository: PlanningCycleRepositoryInterface

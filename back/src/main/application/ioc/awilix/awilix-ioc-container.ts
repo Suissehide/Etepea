@@ -52,6 +52,7 @@ import { EstablishmentRepository } from '../../../infra/orm/repositories/establi
 import { ForbiddenWeekRepository } from '../../../infra/orm/repositories/forbiddenWeek.repository'
 import { IndicatorCohortRepository } from '../../../infra/orm/repositories/indicatorCohort.repository'
 import { IndicatorSetRepository } from '../../../infra/orm/repositories/indicatorSet.repository'
+import { LegacyAppointmentRepository } from '../../../infra/orm/repositories/legacyAppointment.repository'
 import { LocationRepository } from '../../../infra/orm/repositories/location.repository'
 import { MembershipRepository } from '../../../infra/orm/repositories/membership.repository'
 import { NotificationRepository } from '../../../infra/orm/repositories/notification.repository'
@@ -180,6 +181,10 @@ class AwilixIocContainer {
     // ForbiddenWeek
     this.#registerForbiddenWeekDomain()
     this.#registerForbiddenWeekRepository()
+    this.register(
+      'legacyAppointmentRepository',
+      asClass(LegacyAppointmentRepository).singleton(),
+    )
     // PlanningCycle
     this.#registerPlanningCycleDomain()
     this.#registerPlanningCycleRepository()

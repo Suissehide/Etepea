@@ -64,6 +64,9 @@ services:
       - SMTP_USER
       - SMTP_PASS
       - SMTP_FROM
+      - LEGACY_RDV_TOKEN
+      - LEGACY_RDV_ESTABLISHMENT_ID
+      - LEGACY_RDV_SERVICE_ID
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_IMAGE_NAME}-back.rule=Host(`${TRAEFIK_BACK_HOST}`)"

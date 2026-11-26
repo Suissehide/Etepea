@@ -47,6 +47,8 @@ model Establishment {
   name          String
   createdAt     DateTime  @default(now())
   deactivatedAt DateTime?
+  // Fonctionnalités activées pour tout l'établissement (ex. « legacy-rdv »).
+  features      String[]  @default([])
 
   services               Service[]
   memberships            EstablishmentMembership[]
@@ -63,6 +65,8 @@ model Service {
   // Réglages de l'Activité : champ du motif d'arrêt et choix qui vaut « parcours terminé ».
   stopReasonFieldKey String?
   completedChoiceKey String?
+  // Fonctionnalités activées pour ce service, en plus de celles de l'établissement.
+  features           String[]  @default([])
 
   establishment       Establishment            @relation(fields: [establishmentId], references: [id])
   memberships         ServiceMembership[]
@@ -1071,4 +1075,24 @@ model Notification {
   @@index([serviceId])
   @@index([mailState, createdAt])
   @@index([userId, createdAt])
+}
+
+// Rendez-vous créés dans l'ancienne app (Draxa), à reporter à la main. Temporaire.
+model LegacyAppointment {
+  id              String           @id @default(cuid())
+  establishmentId String
+  serviceId       String
+  legacyId        String
+  date            DateTime         @db.Date
+  time            String
+  durationMinutes Int?
+  patientName     String
+  thematic        String?
+  type            AppointmentType?
+  receivedAt      DateTime         @default(now())
+  reportedAt      DateTime?
+
+  @@unique([id, serviceId])
+  @@unique([serviceId, legacyId])
+  @@index([serviceId])
 }
