@@ -86,7 +86,9 @@ Les hooks de filtrage clinique lisent le même ensemble.
 ## Soignants masqués
 
 `hiddenSoignants` du rôle s'ajoute au filtre `Soignant.hidden` existant dans le Dashboard
-(liste et filtre des soignants). Filtré côté back dans la réponse, pas seulement à l'affichage.
+(liste et filtre des soignants). La liste des soignants masqués arrive par `/me` et le filtre se
+fait à l'affichage : c'est du confort de lecture, pas une donnée à protéger (les mêmes noms restent
+visibles dans l'Agenda).
 Portée : Dashboard uniquement, comme le demandent les cas n°2 et n°3. L'Agenda n'est pas concerné.
 
 ## Écran « Rôles »
