@@ -108,9 +108,11 @@ Quand un membre **non administrateur** modifie le planning (`planning:write`) :
 1. une ligne au journal d'activité (`planning.slotCreated`, `planning.slotUpdated`,
    `planning.slotArchived`, etc.) avec le détail lisible ;
 2. une notification `PLANNING_CHANGED` aux `ADMIN` de l'établissement ;
-3. pour une suppression, un bouton « Restaurer » depuis la notification et le journal. Possible
-   parce que créneaux et modèles archivent au lieu de supprimer ; à vérifier entité par entité
-   au plan, et à rendre archivable ce qui ne l'est pas encore.
+3. pour une suppression, un bouton « Restaurer » depuis la notification et le journal. Un créneau
+   (suppression ou archivage) et un parcours (ses créneaux vivants sont archivés, la ligne du parcours est
+   supprimée) s'archivent ; une semaine interdite et un cycle de planification sont supprimés en dur, leurs
+   valeurs gardées dans la ligne de journal (`restoreData`). Journal pour tous les auteurs, ADMIN compris ;
+   une notification par suppression, les autres modifications groupées par service, auteur et heure.
 
 Annuler une modification autre qu'une suppression : hors périmètre.
 

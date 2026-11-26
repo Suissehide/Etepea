@@ -75,7 +75,7 @@ associe les permissions aux rôles. C'est cette matrice qui fait foi.
 | Permission | Périmètre | Coordinateur | Intervenant | Secrétariat | Lecture |
 | --- | --- | :-: | :-: | :-: | :-: |
 | `planning:read` | Lecture des modèles de parcours et de créneaux, parcours, créneaux, cycle de planification, semaines interdites | ✔ | ✔ | ✔ | ✔ |
-| `planning:write` | Modèles de parcours et de créneaux, parcours, créneaux, cycle de planification, semaines interdites | ✔ | | | |
+| `planning:write` | Parcours, créneaux, cycle de planification, semaines interdites, restauration d'une suppression du planning (`POST /e/:e/s/:s/planning/restore/:activityLogId`) | ✔ | | | |
 | `referentials:read` | Lecture des thématiques, modèles de diagnostic, soignants et salles du service | ✔ | ✔ | ✔ | ✔ |
 | `referentials:write` | Thématiques, modèles de diagnostic éducatif ; soignants et salles du service, et le rattachement d'un membre du service à un soignant (depuis le 2026-09-29, `decisions-navigation.md`) | ✔ | | | |
 | `patient:read` | Identité, contact, contexte social, sous-dossier hors champs cliniques, planning individuel, suivi | ✔ | ✔ | ✔ | ✔ |
@@ -98,6 +98,8 @@ associe les permissions aux rôles. C'est cette matrice qui fait foi.
 
 Règles associées :
 
+- Depuis le 2026-11-26, les routes `slot-template` (POST, PATCH, DELETE) exigent `pathway-templates:write`, plus `planning:write` : un modèle de créneau est un modèle de parcours.
+- La restauration (`planning:write`) répond 204, ou 409 (déjà restauré, autre cycle enregistré depuis, semaine déjà interdite) et 404 (ligne qui n'est pas une suppression du service, créneau disparu).
 - Les champs cliniques sont filtrés **par le back, dans les deux sens**, pas
   seulement masqués côté front. En sortie, un hook de sérialisation les
   retire de toute réponse quand l'appelant n'a pas `clinical:read` ; en
