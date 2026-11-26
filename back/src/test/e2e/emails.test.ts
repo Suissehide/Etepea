@@ -6,6 +6,7 @@ import {
   createEstablishment,
   createService,
   createUser,
+  roleIdOf,
   signIn,
   tenantUrl,
 } from './setup/fixtures'
@@ -81,7 +82,9 @@ describe('e-mails d invitation et mot de passe oublie', () => {
         firstName: 'Ana',
         lastName: 'Lys',
         role: 'MEMBER',
-        services: [{ serviceId, role: 'INTERVENANT' }],
+        services: [
+          { serviceId, roleId: await roleIdOf(serviceId, 'INTERVENANT') },
+        ],
       },
     })
 
@@ -121,7 +124,7 @@ describe('e-mails d invitation et mot de passe oublie', () => {
       payload: {
         email: 'recrue@lilas.fr',
         firstName: 'Noé',
-        role: 'SECRETARIAT',
+        roleId: await roleIdOf(serviceId, 'SECRETARIAT'),
       },
     })
 

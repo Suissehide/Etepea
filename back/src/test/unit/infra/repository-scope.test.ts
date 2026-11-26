@@ -13,6 +13,8 @@ import { PatientServiceFileRepository } from '../../../main/infra/orm/repositori
 import { PdfAssetRepository } from '../../../main/infra/orm/repositories/pdf-asset.repository'
 import { PdfDesignPresetRepository } from '../../../main/infra/orm/repositories/pdf-design-preset.repository'
 import { PlanningCycleRepository } from '../../../main/infra/orm/repositories/planningCycle.repository'
+import { ServiceRepository } from '../../../main/infra/orm/repositories/service.repository'
+import { ServiceRoleRepository } from '../../../main/infra/orm/repositories/serviceRole.repository'
 import { SlotRepository } from '../../../main/infra/orm/repositories/slot.repository'
 import { SlotTemplateRepository } from '../../../main/infra/orm/repositories/slotTemplate.repository'
 import { SoignantRepository } from '../../../main/infra/orm/repositories/soignant.repository'
@@ -21,6 +23,7 @@ import { UserRepository } from '../../../main/infra/orm/repositories/user.reposi
 import { assertTenantScope } from '../../../main/infra/orm/tenant-guard'
 import type { IocContainer } from '../../../main/types/application/ioc'
 import type { Tenant } from '../../../main/types/utils/tenant-context'
+import { defaultRolesInput } from '../../../main/utils/default-roles'
 import { TenantContext } from '../../../main/utils/tenant-context'
 import {
   TenantContextMissingError,
@@ -90,10 +93,6 @@ const buildFakePrisma = (responses: Partial<Record<string, unknown>> = {}) => {
             typeof arg === 'function'
               ? arg(prisma)
               : Promise.all(arg as Promise<unknown>[])
-        }
-        // Résolution du rôle d'un preset (role-id.ts) : SQL brut, hors du suivi des appels.
-        if (model === '$queryRaw') {
-          return () => Promise.resolve([{ id: 'role-1' }])
         }
         return handler(model)
       },
@@ -526,7 +525,7 @@ describe('MembershipRepository (gestion des membres)', () => {
       repo.create({
         userId: 'u9',
         role: 'MEMBER',
-        services: [{ serviceId: 'sv1', role: 'LECTURE' }],
+        services: [{ serviceId: 'sv1', roleId: 'role-1' }],
       }),
     )
 
@@ -541,7 +540,6 @@ describe('MembershipRepository (gestion des membres)', () => {
             create: [
               {
                 serviceId: 'sv1',
-                role: 'LECTURE',
                 roleId: 'role-1',
                 establishmentId: 'e1',
               },
@@ -585,9 +583,6 @@ describe('MembershipRepository (gestion des membres)', () => {
       {},
       {
         get: (_t, model: string) => {
-          if (model === '$queryRaw') {
-            return () => Promise.resolve([{ id: 'role-1' }])
-          }
           return model === '$transaction'
             ? (fn: (client: unknown) => unknown) => fn(prisma)
             : guarded(model)
@@ -609,11 +604,11 @@ describe('MembershipRepository (gestion des membres)', () => {
           await repo.create({
             userId: 'u9',
             role: 'MEMBER',
-            services: [{ serviceId: 'sv1', role: 'LECTURE' }],
+            services: [{ serviceId: 'sv1', roleId: 'role-1' }],
           })
           await repo.update('em1', {
             role: 'ADMIN',
-            services: [{ serviceId: 'sv1', role: 'LECTURE' }],
+            services: [{ serviceId: 'sv1', roleId: 'role-1' }],
           })
           await repo.delete('em1')
         },
@@ -719,8 +714,8 @@ describe('MembershipRepository (gestion des membres)', () => {
       repo.update('em1', {
         role: 'ADMIN',
         services: [
-          { serviceId: 'sv1', role: 'LECTURE' },
-          { serviceId: 'sv2', role: 'COORDINATEUR' },
+          { serviceId: 'sv1', roleId: 'role-1' },
+          { serviceId: 'sv2', roleId: 'role-2' },
         ],
       }),
     )
@@ -759,7 +754,7 @@ describe('MembershipRepository (gestion des membres)', () => {
         data: {
           establishmentMembershipId: 'em1',
           serviceId: 'sv1',
-          role: 'LECTURE',
+          roleId: 'role-1',
           establishmentId: 'e1',
         },
       },
@@ -774,7 +769,7 @@ describe('MembershipRepository (gestion des membres)', () => {
           establishmentId: 'e1',
           serviceId: 'sv2',
         },
-        data: { role: 'COORDINATEUR' },
+        data: { roleId: 'role-2' },
       },
     })
     expect(calls[5]).toMatchObject({
@@ -2212,6 +2207,121 @@ describe('MembershipRepository.soignantDuService', () => {
         { kind: 'system' },
       ),
     ).not.toThrow()
+  })
+})
+
+// `#createDefaultRoles`, emploi declare du mode systeme (`runAsSystem-unicite.test.ts`) : la creation
+// de service n'a pas de service de tenant. Ses BORNES sont gardees ici.
+describe('ServiceRepository.create, roles par defaut', () => {
+  const adminEtab = { ...tenant, serviceId: null, servicePermissions: null }
+  const rolesData = defaultRolesInput().map((role) => ({
+    ...role,
+    serviceId: 'sv-neuf',
+    establishmentId: 'e1',
+  }))
+  const rolesArgs = {
+    data: rolesData,
+    select: { id: true, preset: true },
+  }
+
+  it('cree les quatre roles du seul service cree, sous systeme, et affecte le createur en Coordinateur', async () => {
+    const ctx = new TenantContext()
+    const vus: { model: string; op: string; args: unknown; kind?: string }[] =
+      []
+    const tx = new Proxy(
+      {},
+      {
+        get: (_t, model: string) =>
+          new Proxy(
+            {},
+            {
+              get: (_u, op: string) => (args: Record<string, unknown>) => {
+                vus.push({ model, op, args, kind: ctx.peek()?.kind })
+                if (op === 'createManyAndReturn') {
+                  return Promise.resolve([
+                    { id: 'r-coord', preset: 'COORDINATEUR' },
+                    { id: 'r-inter', preset: 'INTERVENANT' },
+                  ])
+                }
+                if (model === 'service') {
+                  return Promise.resolve({ id: 'sv-neuf' })
+                }
+                return Promise.resolve({ id: 'em-createur' })
+              },
+            },
+          ),
+      },
+    )
+    const prisma = { $transaction: (fn: (c: unknown) => unknown) => fn(tx) }
+    const repo = new ServiceRepository(buildContainer(prisma, ctx))
+
+    await ctx.run(adminEtab, () => repo.create({ name: 'Neuf' }, 'u1'))
+
+    expect(vus.map((v) => [v.model, v.op, v.kind])).toEqual([
+      ['service', 'create', 'tenant'],
+      ['serviceRoleDef', 'createManyAndReturn', 'system'],
+      ['establishmentMembership', 'findFirst', 'tenant'],
+      ['serviceMembership', 'create', 'tenant'],
+    ])
+    expect(vus[1]?.args).toEqual(rolesArgs)
+    expect(vus[3]?.args).toEqual({
+      data: {
+        establishmentMembershipId: 'em-createur',
+        serviceId: 'sv-neuf',
+        establishmentId: 'e1',
+        roleId: 'r-coord',
+      },
+    })
+  })
+
+  it('la forme est refusee sans service courant, et permise dans le mode encadre', () => {
+    const appel = {
+      model: 'ServiceRoleDef',
+      operation: 'createManyAndReturn',
+      args: rolesArgs,
+    }
+    expect(() =>
+      assertTenantScope(appel, { kind: 'tenant', tenant: adminEtab }),
+    ).toThrow(TenantScopeMissingError)
+    expect(() => assertTenantScope(appel, { kind: 'system' })).not.toThrow()
+  })
+})
+
+// La validation d'un roleId hors contexte de service : lue depuis `Service`, sans mode encadre.
+describe('ServiceRoleRepository.findActiveInService', () => {
+  it('passe le garde en administration d etablissement, borne au service et au role', async () => {
+    const ctx = new TenantContext()
+    const vus: unknown[] = []
+    const prisma = {
+      service: {
+        findFirst: (args: Record<string, unknown>) => {
+          assertTenantScope(
+            { model: 'Service', operation: 'findFirst', args },
+            ctx.peek(),
+          )
+          vus.push(args)
+          return Promise.resolve({ id: 'sv2' })
+        },
+      },
+    }
+    const repo = new ServiceRoleRepository(buildContainer(prisma, ctx))
+
+    const role = await ctx.run(
+      { ...tenant, serviceId: null, servicePermissions: null },
+      () => repo.findActiveInService('r1', 'sv2'),
+    )
+
+    expect(role).toEqual({ id: 'r1' })
+    expect(vus).toEqual([
+      {
+        where: {
+          id: 'sv2',
+          establishmentId: 'e1',
+          roles: { some: { id: 'r1', serviceId: 'sv2', archivedAt: null } },
+        },
+        select: { id: true },
+      },
+    ])
   })
 })
 

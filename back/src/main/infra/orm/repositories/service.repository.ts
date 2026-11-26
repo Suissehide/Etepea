@@ -1,4 +1,5 @@
 import type { IocContainer } from '../../../types/application/ioc'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   ServiceCreateEntityRepo,
   ServiceEntityRepo,
@@ -7,13 +8,14 @@ import type {
 } from '../../../types/infra/orm/repositories/service.repository.interface'
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'
 import type { TenantContextInterface } from '../../../types/utils/tenant-context'
+import { defaultRolesInput } from '../../../utils/default-roles'
 import type { PostgresPrismaClient } from '../postgres-client'
-import { createDefaultRoles, roleIdOf } from '../role-id'
 
 // Famille établissement (ESTABLISHMENT_MODELS, tenant-guard.ts) : `Service` et
 // `ServiceMembership` portent tous deux `establishmentId`, aucun des deux n'exige de service
 // courant — c'est ce qui rend cette classe utilisable depuis l'administration d'établissement
-// (`serviceId` null dans le tenant), sans détour par `runAsSystem` ni par aucun mode encadré.
+// (`serviceId` null dans le tenant). Seule exception : les rôles par défaut d'un service créé
+// (`createDefaultRoles`, mode système déclaré).
 class ServiceRepository implements ServiceRepositoryInterface {
   private readonly prisma: PostgresPrismaClient
   private readonly errorHandler: ErrorHandlerInterface
@@ -100,7 +102,11 @@ class ServiceRepository implements ServiceRepositoryInterface {
         const service = await tx.service.create({
           data: { name, establishmentId },
         })
-        await createDefaultRoles(tx, service.id, establishmentId)
+        const coordinateurId = await this.#createDefaultRoles(
+          tx,
+          service.id,
+          establishmentId,
+        )
         const membership = await tx.establishmentMembership.findFirst({
           where: { userId: creatorUserId, establishmentId },
         })
@@ -110,12 +116,7 @@ class ServiceRepository implements ServiceRepositoryInterface {
               establishmentMembershipId: membership.id,
               serviceId: service.id,
               establishmentId,
-              role: 'COORDINATEUR',
-              roleId: await roleIdOf(
-                tx,
-                { serviceId: service.id, establishmentId },
-                'COORDINATEUR',
-              ),
+              roleId: coordinateurId,
             },
           })
         }
@@ -127,6 +128,32 @@ class ServiceRepository implements ServiceRepositoryInterface {
         error: err,
       })
     }
+  }
+
+  // Mode système déclaré (runAsSystem-unicite.test.ts) : `ServiceRoleDef` est un modèle de service
+  // et l'administration d'établissement n'a pas de service de tenant. Borné au service qu'on
+  // vient de créer, chaque ligne portant serviceId et establishmentId ; rend l'id du Coordinateur.
+  async #createDefaultRoles(
+    tx: PrimaTransactionClient,
+    serviceId: string,
+    establishmentId: string,
+  ): Promise<string> {
+    const roles = await this.tenantContext.runAsSystem(
+      async () =>
+        await tx.serviceRoleDef.createManyAndReturn({
+          data: defaultRolesInput().map((role) => ({
+            ...role,
+            serviceId,
+            establishmentId,
+          })),
+          select: { id: true, preset: true },
+        }),
+    )
+    const coordinateur = roles.find((r) => r.preset === 'COORDINATEUR')
+    if (!coordinateur) {
+      throw new Error('Rôle Coordinateur absent des rôles par défaut')
+    }
+    return coordinateur.id
   }
 
   async update(

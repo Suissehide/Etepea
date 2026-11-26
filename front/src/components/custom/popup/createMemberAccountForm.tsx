@@ -5,16 +5,15 @@ import { InvitationSent } from '@/components/custom/invitationSent.tsx'
 import {
   ESTABLISHMENT_ROLE_DESCRIPTION,
   ESTABLISHMENT_ROLE_LABEL,
-  SERVICE_ROLE_DESCRIPTION,
-  SERVICE_ROLE_LABEL,
 } from '@/constants/member.constant.ts'
 import { useAppForm } from '@/hooks/formConfig.tsx'
 import { buildAccessLinkUrl } from '@/libs/accessLink.ts'
 import { toSelectOptions } from '@/libs/utils.ts'
 import { useMemberMutations } from '@/queries/useMembers.ts'
+import { useRolesByService } from '@/queries/useRoles.ts'
 import { useServicesQuery } from '@/queries/useServices.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
-import type { EstablishmentRole, ServiceRole } from '@/types/auth.ts'
+import type { EstablishmentRole } from '@/types/auth.ts'
 import { Button } from '../../ui/button.tsx'
 import {
   Popup,
@@ -27,15 +26,12 @@ import {
 } from '../../ui/popup.tsx'
 import { SoignantDuServiceSelect } from '../soignantDuServiceSelect.tsx'
 import AdminServiceRole from './adminServiceRole.tsx'
+import { serviceRoleOptions } from './editMemberForm.tsx'
 
 const NO_SERVICE = 'NONE'
 const NO_SERVICE_ROLE = 'NONE'
 
 const ESTABLISHMENT_ROLE_OPTIONS = toSelectOptions(ESTABLISHMENT_ROLE_LABEL)
-const SERVICE_ROLE_OPTIONS = [
-  { value: NO_SERVICE_ROLE, label: 'Aucun' },
-  ...toSelectOptions(SERVICE_ROLE_LABEL),
-]
 
 // Onglet des membres : inviter un membre. Compte créé (ou repris s'il n'est
 // rattaché nulle part) avec un lien, ou, s'il exerce déjà dans un autre
@@ -74,6 +70,12 @@ function CreateMemberAccountForm() {
     ],
     [services],
   )
+  const activeServiceIds = useMemo(
+    () =>
+      (services ?? []).filter((s) => s.deactivatedAt === null).map((s) => s.id),
+    [services],
+  )
+  const rolesByService = useRolesByService(activeServiceIds)
 
   const form = useAppForm({
     defaultValues: {
@@ -92,7 +94,7 @@ function CreateMemberAccountForm() {
           : [
               {
                 serviceId: value.serviceId,
-                role: value.serviceRole as ServiceRole,
+                roleId: value.serviceRole,
                 soignantId: value.soignantId,
               },
             ]
@@ -218,7 +220,11 @@ function CreateMemberAccountForm() {
                 <form.AppField
                   name="serviceId"
                   listeners={{
-                    onChange: () => form.setFieldValue('soignantId', null),
+                    // Un rôle appartient à son service : en changer remet le rôle à « Aucun ».
+                    onChange: () => {
+                      form.setFieldValue('soignantId', null)
+                      form.setFieldValue('serviceRole', NO_SERVICE_ROLE)
+                    },
                   }}
                 >
                   {(field) => (
@@ -240,7 +246,7 @@ function CreateMemberAccountForm() {
                   </p>
                 )}
 
-                {/* Chef d'établissement : coordinateur de tous les services, pas de
+                {/* Chef d'établissement : tous les droits dans chaque service, pas de
                 rôle à choisir. Sinon, pas de rôle sans service choisi. */}
                 <form.Subscribe
                   selector={(state) => [
@@ -259,16 +265,12 @@ function CreateMemberAccountForm() {
                         {(field) => (
                           <field.Select
                             label="Rôle dans le service"
-                            options={SERVICE_ROLE_OPTIONS}
+                            options={serviceRoleOptions(
+                              rolesByService[serviceId] ?? [],
+                              undefined,
+                            )}
                             clearable={false}
                             disabled={serviceId === NO_SERVICE}
-                            description={
-                              serviceId === NO_SERVICE
-                                ? undefined
-                                : SERVICE_ROLE_DESCRIPTION[
-                                    field.state.value as ServiceRole
-                                  ]
-                            }
                           />
                         )}
                       </form.AppField>

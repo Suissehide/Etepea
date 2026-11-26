@@ -271,10 +271,10 @@ describe('etats de l ecran des membres', () => {
         deactivatedAt: null,
       },
       serviceMemberships: [
-        { serviceId: 'svcA', role: 'COORDINATEUR' as const },
+        { serviceId: 'svcA', roleId: 'role-coord' },
         // Service absent de la liste chargee (course, ou tout autre ecart) :
-        // le role reste visible, sans nom de service devant.
-        { serviceId: 'svc-disparu', role: 'LECTURE' as const },
+        // l'affectation reste visible, sans nom de service ni de role.
+        { serviceId: 'svc-disparu', roleId: 'role-disparu' },
       ],
     }
     monter([
@@ -287,6 +287,15 @@ describe('etats de l ecran des membres', () => {
           deactivatedAt: null,
         },
       ]),
+      {
+        match: (url, method) =>
+          url.endsWith('/e/e1/s/svcA/roles') && method === 'GET',
+        respond: () => ({
+          ok: true,
+          status: 200,
+          json: async () => [{ id: 'role-coord', name: 'Coordinateur' }],
+        }),
+      },
       {
         match: (url, method) =>
           url.endsWith('/admin/members') && method === 'GET',
@@ -302,8 +311,10 @@ describe('etats de l ecran des membres', () => {
       expect(screen.getByText('affecte@chu.fr')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Cardiologie : Coordinateur')).toBeInTheDocument()
-    expect(screen.getByText('Lecture')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Cardiologie : Coordinateur'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Rôle')).toBeInTheDocument()
   })
 
   // « identifiants copiables »

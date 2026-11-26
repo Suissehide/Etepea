@@ -1,4 +1,3 @@
-import type { ServiceRole } from './auth.ts'
 import type { InvitationStatus } from './member.ts'
 
 // Un membre d'UN service, vu depuis ce service (2026-09-29) : son affectation (`id`), son role
@@ -6,7 +5,7 @@ import type { InvitationStatus } from './member.ts'
 // `back/src/main/interfaces/http/fastify/schemas/serviceMembers.schema.ts`.
 export type ServiceMember = {
   id: string
-  role: ServiceRole
+  role: { id: string; name: string }
   soignantId: string | null
   user: {
     id: string
@@ -25,7 +24,7 @@ export type InviteServiceMemberInput = {
   email: string
   firstName?: string
   lastName?: string
-  role: ServiceRole
+  roleId: string
   soignantId?: string | null
 }
 

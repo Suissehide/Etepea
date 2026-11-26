@@ -3,10 +3,7 @@ import type {
   ServiceMembership,
   User,
 } from '../../../../../generated/client'
-import type {
-  EstablishmentRole,
-  ServiceRole,
-} from '../../../../../generated/enums'
+import type { EstablishmentRole } from '../../../../../generated/enums'
 import type { PrimaTransactionClient } from '../client'
 
 // Une appartenance telle que la manipule la gestion des membres : la ligne
@@ -19,13 +16,13 @@ export type MembershipRow = EstablishmentMembership & {
   >
   serviceMemberships: Pick<
     ServiceMembership,
-    'serviceId' | 'role' | 'soignantId'
+    'serviceId' | 'roleId' | 'soignantId'
   >[]
 }
 
 export type ServiceAssignment = {
   serviceId: string
-  role: ServiceRole
+  roleId: string
   soignantId?: string | null
 }
 
@@ -47,7 +44,7 @@ export type MembershipUpdateRepo = {
 export type ServiceMemberRow = {
   id: string
   establishmentMembershipId: string
-  role: ServiceRole
+  role: { id: string; name: string }
   soignantId: string | null
   establishmentMembership: {
     user: {
@@ -86,14 +83,14 @@ export interface MembershipRepositoryInterface {
   // N'ajoute QU'une affectation — contrairement a `update`, qui remplace la liste entiere.
   addServiceMember: (
     establishmentMembershipId: string,
-    role: ServiceRole,
+    roleId: string,
     soignantId?: string | null,
     client?: PrimaTransactionClient,
   ) => Promise<ServiceMemberRow>
   // Sous le contexte de SERVICE : le role d'une affectation du service courant.
   setServiceRole: (
     serviceMembershipId: string,
-    role: ServiceRole,
+    roleId: string,
   ) => Promise<ServiceMemberRow | null>
   // Sous le contexte de SERVICE : retire une affectation du service courant, sans toucher au
   // rattachement d'etablissement ni aux autres services.

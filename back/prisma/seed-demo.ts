@@ -403,7 +403,6 @@ async function main() {
           {
             serviceId: service.id,
             establishmentId: establishment.id,
-            role: 'COORDINATEUR',
             roleId: coordinateur.id,
           },
         ],

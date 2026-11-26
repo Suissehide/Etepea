@@ -1,4 +1,3 @@
-import type { ServiceRole } from '../../../../generated/enums'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
@@ -11,7 +10,6 @@ import type {
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'
 import type { TenantContextInterface } from '../../../types/utils/tenant-context'
 import type { PostgresPrismaClient } from '../postgres-client'
-import { roleIdOf, scopedRoleIdOf } from '../role-id'
 
 // Famille établissement : EstablishmentMembership porte establishmentId.
 //
@@ -45,7 +43,7 @@ class MembershipRepository implements MembershipRepositoryInterface {
   private readonly serviceMemberSelect = {
     id: true,
     establishmentMembershipId: true,
-    role: true,
+    roleId: true,
     soignantId: true,
     establishmentMembership: {
       select: {
@@ -63,18 +61,43 @@ class MembershipRepository implements MembershipRepositoryInterface {
     },
   } as const
 
-  findServiceMembers(): Promise<ServiceMemberRow[]> {
-    const { establishmentId, serviceId } = this.tenantContext.scope()
-    return this.prisma.serviceMembership.findMany({
-      where: { establishmentId, serviceId },
-      select: this.serviceMemberSelect,
-      orderBy: { createdAt: 'asc' },
-    })
+  // Nom du rôle lu à part : le garde refuse l'include à-un `roleDef` (aucun `where` possible).
+  async #withRoles<T extends { roleId: string }>(
+    rows: T[],
+  ): Promise<(Omit<T, 'roleId'> & { role: { id: string; name: string } })[]> {
+    const roleIds = [...new Set(rows.map((r) => r.roleId))]
+    const roles =
+      roleIds.length === 0
+        ? []
+        : await this.prisma.serviceRoleDef.findMany({
+            where: { ...this.tenantContext.scope(), id: { in: roleIds } },
+            select: { id: true, name: true },
+          })
+    const nameById = new Map(roles.map((r) => [r.id, r.name]))
+    return rows.map(({ roleId, ...row }) => ({
+      ...row,
+      role: { id: roleId, name: nameById.get(roleId) ?? '' },
+    }))
   }
 
-  findTaskMembers(): Promise<ServiceMemberRow[]> {
+  async #withRole<T extends { roleId: string }>(row: T | null) {
+    return row ? ((await this.#withRoles([row]))[0] ?? null) : null
+  }
+
+  async findServiceMembers(): Promise<ServiceMemberRow[]> {
     const { establishmentId, serviceId } = this.tenantContext.scope()
-    return this.prisma.serviceMembership.findMany({
+    return await this.#withRoles(
+      await this.prisma.serviceMembership.findMany({
+        where: { establishmentId, serviceId },
+        select: this.serviceMemberSelect,
+        orderBy: { createdAt: 'asc' },
+      }),
+    )
+  }
+
+  async findTaskMembers(): Promise<ServiceMemberRow[]> {
+    const { establishmentId, serviceId } = this.tenantContext.scope()
+    const rows = await this.prisma.serviceMembership.findMany({
       where: {
         establishmentId,
         serviceId,
@@ -83,6 +106,7 @@ class MembershipRepository implements MembershipRepositoryInterface {
       select: this.serviceMemberSelect,
       orderBy: { createdAt: 'asc' },
     })
+    return await this.#withRoles(rows)
   }
 
   async setServiceSoignant(
@@ -98,57 +122,59 @@ class MembershipRepository implements MembershipRepositoryInterface {
     if (count === 0) {
       return null
     }
-    return this.prisma.serviceMembership.findFirst({
-      where,
-      select: this.serviceMemberSelect,
-    })
+    return await this.#withRole(
+      await this.prisma.serviceMembership.findFirst({
+        where,
+        select: this.serviceMemberSelect,
+      }),
+    )
   }
 
-  findServiceMemberByID(
+  async findServiceMemberByID(
     serviceMembershipId: string,
   ): Promise<ServiceMemberRow | null> {
     const { establishmentId, serviceId } = this.tenantContext.scope()
-    return this.prisma.serviceMembership.findFirst({
-      where: { id: serviceMembershipId, establishmentId, serviceId },
-      select: this.serviceMemberSelect,
-    })
+    return await this.#withRole(
+      await this.prisma.serviceMembership.findFirst({
+        where: { id: serviceMembershipId, establishmentId, serviceId },
+        select: this.serviceMemberSelect,
+      }),
+    )
   }
 
-  findServiceMemberByMembership(
+  async findServiceMemberByMembership(
     establishmentMembershipId: string,
   ): Promise<ServiceMemberRow | null> {
     const { establishmentId, serviceId } = this.tenantContext.scope()
-    return this.prisma.serviceMembership.findFirst({
-      where: { establishmentMembershipId, establishmentId, serviceId },
-      select: this.serviceMemberSelect,
-    })
+    return await this.#withRole(
+      await this.prisma.serviceMembership.findFirst({
+        where: { establishmentMembershipId, establishmentId, serviceId },
+        select: this.serviceMemberSelect,
+      }),
+    )
   }
 
   // `client` optionnel, meme raison que `create` plus bas : l'affectation d'un compte
   // fraichement cree partage le sort de sa creation et de l'emission de son lien.
   async addServiceMember(
     establishmentMembershipId: string,
-    role: ServiceRole,
+    roleId: string,
     soignantId: string | null = null,
     client: PrimaTransactionClient = this.prisma,
   ): Promise<ServiceMemberRow> {
     const { establishmentId, serviceId } = this.tenantContext.scope()
     try {
-      return await client.serviceMembership.create({
+      const row = await client.serviceMembership.create({
         data: {
           establishmentMembershipId,
           serviceId,
           establishmentId,
-          role,
-          roleId: await scopedRoleIdOf(
-            client,
-            { serviceId, establishmentId },
-            role,
-          ),
+          roleId,
           soignantId,
         },
         select: this.serviceMemberSelect,
       })
+      return (await this.#withRoles([row]))[0] as ServiceMemberRow
     } catch (err) {
       throw this.errorHandler.boomErrorFromPrismaError({
         entityName: 'ServiceMembership',
@@ -159,28 +185,23 @@ class MembershipRepository implements MembershipRepositoryInterface {
 
   async setServiceRole(
     serviceMembershipId: string,
-    role: ServiceRole,
+    roleId: string,
   ): Promise<ServiceMemberRow | null> {
     const { establishmentId, serviceId } = this.tenantContext.scope()
     const where = { id: serviceMembershipId, establishmentId, serviceId }
     const { count } = await this.prisma.serviceMembership.updateMany({
       where,
-      data: {
-        role,
-        roleId: await scopedRoleIdOf(
-          this.prisma,
-          { serviceId, establishmentId },
-          role,
-        ),
-      },
+      data: { roleId },
     })
     if (count === 0) {
       return null
     }
-    return this.prisma.serviceMembership.findFirst({
-      where,
-      select: this.serviceMemberSelect,
-    })
+    return await this.#withRole(
+      await this.prisma.serviceMembership.findFirst({
+        where,
+        select: this.serviceMemberSelect,
+      }),
+    )
   }
 
   async deleteServiceMember(serviceMembershipId: string): Promise<void> {
@@ -205,7 +226,7 @@ class MembershipRepository implements MembershipRepositoryInterface {
       },
       serviceMemberships: {
         where: { establishmentId },
-        select: { serviceId: true, role: true, soignantId: true },
+        select: { serviceId: true, roleId: true, soignantId: true },
       },
     } as const
   }
@@ -326,19 +347,12 @@ class MembershipRepository implements MembershipRepositoryInterface {
           ...params,
           establishmentId,
           serviceMemberships: {
-            create: await Promise.all(
-              services.map(async (service) => ({
-                serviceId: service.serviceId,
-                role: service.role,
-                roleId: await roleIdOf(
-                  client,
-                  { serviceId: service.serviceId, establishmentId },
-                  service.role,
-                ),
-                soignantId: service.soignantId ?? null,
-                establishmentId,
-              })),
-            ),
+            create: services.map((service) => ({
+              serviceId: service.serviceId,
+              roleId: service.roleId,
+              soignantId: service.soignantId ?? null,
+              establishmentId,
+            })),
           },
         },
         include: this.rowInclude,
@@ -397,12 +411,7 @@ class MembershipRepository implements MembershipRepositoryInterface {
                 },
                 // `soignantId` absent : le rattachement existant est garde.
                 data: {
-                  role: service.role,
-                  roleId: await roleIdOf(
-                    tx,
-                    { serviceId: service.serviceId, establishmentId },
-                    service.role,
-                  ),
+                  roleId: service.roleId,
                   ...(service.soignantId !== undefined && {
                     soignantId: service.soignantId,
                   }),
@@ -413,12 +422,7 @@ class MembershipRepository implements MembershipRepositoryInterface {
                 data: {
                   establishmentMembershipId: id,
                   serviceId: service.serviceId,
-                  role: service.role,
-                  roleId: await roleIdOf(
-                    tx,
-                    { serviceId: service.serviceId, establishmentId },
-                    service.role,
-                  ),
+                  roleId: service.roleId,
                   soignantId: service.soignantId ?? null,
                   establishmentId,
                 },

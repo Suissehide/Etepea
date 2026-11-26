@@ -7,7 +7,6 @@ import { nomDuCompte } from '../components/custom/popup/editSoignantAccountsForm
 import { Etiquette, EtiquetteStatut } from '../components/table/etiquette.tsx'
 import type { Features } from '../components/table/features.ts'
 import { Button } from '../components/ui/button.tsx'
-import { SERVICE_ROLE_LABEL } from '../constants/member.constant.ts'
 import type { ServiceMember } from '../types/serviceMember.ts'
 import type { Soignant } from '../types/soignant.ts'
 
@@ -55,9 +54,7 @@ export const getServiceMemberColumns = ({
   columnHelper.display({
     id: 'role',
     header: 'Rôle',
-    cell: ({ row }) => (
-      <Etiquette>{SERVICE_ROLE_LABEL[row.original.role]}</Etiquette>
-    ),
+    cell: ({ row }) => <Etiquette>{row.original.role.name}</Etiquette>,
   }),
   columnHelper.display({
     id: 'soignant',

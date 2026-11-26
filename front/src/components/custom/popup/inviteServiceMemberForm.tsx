@@ -2,16 +2,11 @@ import { Check, Plus, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { InvitationSent } from '@/components/custom/invitationSent.tsx'
-import {
-  SERVICE_ROLE_DESCRIPTION,
-  SERVICE_ROLE_LABEL,
-} from '@/constants/member.constant.ts'
 import { useAppForm } from '@/hooks/formConfig.tsx'
 import { buildAccessLinkUrl } from '@/libs/accessLink.ts'
-import { toSelectOptions } from '@/libs/utils.ts'
+import { useRolesQuery } from '@/queries/useRoles.ts'
 import { useServiceMemberMutations } from '@/queries/useServiceMembers.ts'
 import { useSoignantQueries } from '@/queries/useSoignant.ts'
-import type { ServiceRole } from '@/types/auth.ts'
 import { Button } from '../../ui/button.tsx'
 import {
   Popup,
@@ -22,8 +17,6 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../../ui/popup.tsx'
-
-const SERVICE_ROLE_OPTIONS = toSelectOptions(SERVICE_ROLE_LABEL)
 
 // MDS-17 : le coordinateur invite dans SON service. Ni service ni role d'etablissement a choisir
 // — le back pose le premier depuis le tenant resolu, et le second est toujours « Membre ».
@@ -38,6 +31,11 @@ function InviteServiceMemberForm() {
   const [open, setOpen] = useState(false)
   const { inviteMember } = useServiceMemberMutations()
   const { soignants } = useSoignantQueries()
+  const { roles } = useRolesQuery()
+  const roleOptions = roles.map((r) => ({ value: r.id, label: r.name }))
+  // Pré-sélection : le rôle issu du préréglage Intervenant, s'il existe encore.
+  const defaultRoleId =
+    roles.find((r) => r.preset === 'INTERVENANT')?.id ?? roles[0]?.id ?? ''
   const soignantOptions = useMemo(
     () =>
       [...(soignants ?? [])]
@@ -51,7 +49,7 @@ function InviteServiceMemberForm() {
       email: '',
       firstName: '',
       lastName: '',
-      role: 'INTERVENANT',
+      roleId: '',
       soignantId: '',
     },
     onSubmit: ({ value }) => {
@@ -59,7 +57,7 @@ function InviteServiceMemberForm() {
         email: value.email,
         firstName: value.firstName || undefined,
         lastName: value.lastName || undefined,
-        role: value.role as ServiceRole,
+        roleId: value.roleId,
         soignantId: value.soignantId || null,
       })
     },
@@ -75,6 +73,12 @@ function InviteServiceMemberForm() {
       form.reset()
     }
   }, [open, form])
+
+  useEffect(() => {
+    if (open && !form.getFieldValue('roleId')) {
+      form.setFieldValue('roleId', defaultRoleId)
+    }
+  }, [open, form, defaultRoleId])
 
   const invited = inviteMember.data
 
@@ -161,17 +165,18 @@ function InviteServiceMemberForm() {
                   {(field) => <field.Input label="Prénom" />}
                 </form.AppField>
 
-                <form.AppField name="role">
+                <form.AppField
+                  name="roleId"
+                  validators={{
+                    onSubmit: ({ value }) =>
+                      value ? undefined : 'Le rôle est nécessaire',
+                  }}
+                >
                   {(field) => (
                     <field.Select
                       label="Rôle dans le service"
-                      options={SERVICE_ROLE_OPTIONS}
+                      options={roleOptions}
                       clearable={false}
-                      description={
-                        SERVICE_ROLE_DESCRIPTION[
-                          field.state.value as ServiceRole
-                        ]
-                      }
                     />
                   )}
                 </form.AppField>

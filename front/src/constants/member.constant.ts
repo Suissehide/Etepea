@@ -22,25 +22,13 @@ export const SERVICE_ROLE_LABEL: Record<ServiceRole, string> = {
 export const ESTABLISHMENT_ROLE_DESCRIPTION: Record<EstablishmentRole, string> =
   {
     ADMIN:
-      "Gère l'établissement : services, membres, journaux d'activité et d'accès. Coordinateur de tous les services, même sans y être affecté.",
+      "Gère l'établissement : services, membres, journaux d'activité et d'accès. Tous les droits dans chaque service, même sans y être affecté.",
     MEMBER:
       "Aucun droit propre : n'accède qu'aux services auxquels il est affecté, selon le rôle choisi pour chacun.",
   }
 
-export const SERVICE_ROLE_DESCRIPTION: Record<ServiceRole, string> = {
-  COORDINATEUR:
-    'Tout le service : paramétrage (parcours, planning, thématiques, modèles), dossiers patients et contenu clinique, journal des consultations.',
-  INTERVENANT:
-    'Agenda, présences, dossiers patients, diagnostics éducatifs et transmissions. Pas de paramétrage du service.',
-  SECRETARIAT:
-    'Identité et coordonnées des patients, rendez-vous, présences, export PDF. Pas d’accès au contenu clinique.',
-  LECTURE:
-    'Consultation du suivi, du planning et des listes, sans modification ni accès au contenu clinique.',
-}
-
 // Rôle de service affiché, non modifiable, quand le rôle établissement est
-// Chef d'établissement (coordinateur implicite de tous les services).
-export const ADMIN_SERVICE_ROLE_LABEL =
-  "Coordinateur (via Chef d'établissement)"
+// Chef d'établissement (tous les droits dans chaque service, sans rôle).
+export const ADMIN_SERVICE_ROLE_LABEL = "Tous les droits (Chef d'établissement)"
 export const ADMIN_SERVICE_ROLE_DESCRIPTION =
-  "Le chef d'établissement est coordinateur de tous les services : pas de rôle à choisir."
+  "Le chef d'établissement a tous les droits dans chaque service : pas de rôle à choisir."

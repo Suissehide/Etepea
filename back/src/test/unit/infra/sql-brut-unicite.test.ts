@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 
-// Le SQL brut contourne le garde-fou d'ORM : il n'a le droit d'exister que dans ces fichiers.
-const AUTORISES = ['infra/orm/postgres-client.ts', 'infra/orm/role-id.ts']
+// Le SQL brut contourne le garde-fou d'ORM : il n'a le droit d'exister que dans ce fichier.
+const AUTORISES = ['infra/orm/postgres-client.ts']
 
 const RACINE = join(__dirname, '../../../main')
 
@@ -16,7 +16,7 @@ const fichiers = (dossier: string): string[] =>
   })
 
 describe('unicité du SQL brut dans src/main', () => {
-  it('$queryRaw / $executeRaw (et leurs variantes Unsafe) ne figurent que dans les fichiers déclarés', () => {
+  it('$queryRaw / $executeRaw (et leurs variantes Unsafe) ne figurent que dans le fichier déclaré', () => {
     const trouves = fichiers(RACINE)
       .filter((chemin) =>
         /\$(query|execute)Raw(Unsafe)?\b/.test(readFileSync(chemin, 'utf8')),

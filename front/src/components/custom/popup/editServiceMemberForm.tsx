@@ -1,14 +1,9 @@
 import { Check, Pencil, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import {
-  SERVICE_ROLE_DESCRIPTION,
-  SERVICE_ROLE_LABEL,
-} from '../../../constants/member.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { toSelectOptions } from '../../../libs/utils.ts'
+import { useRolesQuery } from '../../../queries/useRoles.ts'
 import { useServiceMemberMutations } from '../../../queries/useServiceMembers.ts'
-import type { ServiceRole } from '../../../types/auth.ts'
 import type { ServiceMember } from '../../../types/serviceMember.ts'
 import { Button } from '../../ui/button.tsx'
 import {
@@ -21,28 +16,31 @@ import {
   PopupTrigger,
 } from '../../ui/popup.tsx'
 
-const SERVICE_ROLE_OPTIONS = toSelectOptions(SERVICE_ROLE_LABEL)
-
 // MDS-17 : le role de CE service, et rien d'autre. Le rattachement a l'etablissement et les
 // affectations aux autres services restent a l'administration (`members:manage`).
 function EditServiceMemberForm({ member }: { member: ServiceMember }) {
   const [open, setOpen] = useState(false)
   const { setRole } = useServiceMemberMutations()
+  const { roles } = useRolesQuery()
+  // Le rôle actuel reste affiché même s'il a été supprimé depuis.
+  const roleOptions = [
+    ...roles.map((r) => ({ value: r.id, label: r.name })),
+    ...(roles.some((r) => r.id === member.role.id)
+      ? []
+      : [{ value: member.role.id, label: member.role.name }]),
+  ]
 
   const form = useAppForm({
-    defaultValues: { role: member.role as string },
+    defaultValues: { roleId: member.role.id },
     onSubmit: ({ value }) => {
-      setRole.mutate({
-        affectationId: member.id,
-        role: value.role as ServiceRole,
-      })
+      setRole.mutate({ affectationId: member.id, roleId: value.roleId })
       setOpen(false)
     },
   })
 
   useEffect(() => {
     if (open) {
-      form.reset({ role: member.role })
+      form.reset({ roleId: member.role.id })
     }
   }, [open, member, form])
 
@@ -78,15 +76,12 @@ function EditServiceMemberForm({ member }: { member: ServiceMember }) {
               {member.user.email}
             </p>
 
-            <form.AppField name="role">
+            <form.AppField name="roleId">
               {(field) => (
                 <field.Select
                   label="Rôle"
-                  options={SERVICE_ROLE_OPTIONS}
+                  options={roleOptions}
                   clearable={false}
-                  description={
-                    SERVICE_ROLE_DESCRIPTION[field.state.value as ServiceRole]
-                  }
                 />
               )}
             </form.AppField>

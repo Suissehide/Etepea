@@ -137,8 +137,7 @@ model ServiceMembership {
   establishmentMembershipId String
   serviceId                 String
   establishmentId           String
-  role                      ServiceRole
-  // Rôle de service en base ; `role` disparaît quand l'API ne parle plus que de `roleId`.
+  // Rôle de service en base, du même service (clé composite).
   roleId                    String
   // Le soignant (un metier du service) que ce membre incarne DANS CE SERVICE — ses taches, par
   // exemple. Reference simple, nullable : la coherence de service (le soignant appartient bien au

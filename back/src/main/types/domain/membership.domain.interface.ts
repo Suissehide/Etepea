@@ -1,4 +1,4 @@
-import type { EstablishmentRole, ServiceRole } from '../../../generated/enums'
+import type { EstablishmentRole } from '../../../generated/enums'
 import type {
   MembershipRow,
   MembershipUpdateRepo,
@@ -42,7 +42,7 @@ export type ServiceInviteDomain = {
   email: string
   firstName?: string
   lastName?: string
-  role: ServiceRole
+  roleId: string
   soignantId?: string | null
 }
 
@@ -65,7 +65,7 @@ export interface MembershipDomainInterface {
   // se retire pas de son service.
   setServiceMemberRole: (
     serviceMembershipId: string,
-    role: ServiceRole,
+    roleId: string,
   ) => Promise<ServiceMemberRowDomain>
   removeServiceMember: (serviceMembershipId: string) => Promise<void>
   findAll: () => Promise<MembershipRowDomain[]>

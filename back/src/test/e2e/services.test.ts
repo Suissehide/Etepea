@@ -7,6 +7,7 @@ import {
   createService,
   createUser,
   grantAccess,
+  roleIdOf,
   signIn,
   tenantUrl,
 } from './setup/fixtures'
@@ -126,6 +127,25 @@ describe('routes services', () => {
     expect(affectation.roleId).toBe(
       roles.find((r) => r.preset === 'COORDINATEUR')?.id,
     )
+    expect(roles.every((r) => r.establishmentId === establishmentId)).toBe(true)
+
+    const liste = await testApp.app.inject({
+      method: 'GET',
+      url: tenantUrl(establishmentId, service.id, '/roles'),
+      cookies: adminCookies,
+    })
+    expect(liste.statusCode).toBe(200)
+    expect(
+      (liste.json() as { name: string; memberCount: number }[]).map((r) => [
+        r.name,
+        r.memberCount,
+      ]),
+    ).toEqual([
+      ['Coordinateur', 1],
+      ['Intervenant', 0],
+      ['Secrétariat', 0],
+      ['Lecture seule', 0],
+    ])
   })
 
   // Sous un octroi temporaire (spec §4.3),
@@ -596,6 +616,7 @@ describe('routes services', () => {
       })
       const cible = await createUser({ email: 'cible-migration@b.fr' })
       const cookies = await signIn(testApp.app, admin.email)
+      const intervenant = await roleIdOf(svc.id, 'INTERVENANT')
 
       const res = await testApp.app.inject({
         method: 'POST',
@@ -604,13 +625,13 @@ describe('routes services', () => {
         payload: {
           email: cible.email,
           role: 'MEMBER',
-          services: [{ serviceId: svc.id, role: 'INTERVENANT' }],
+          services: [{ serviceId: svc.id, roleId: intervenant }],
         },
       })
 
       expect(res.statusCode).toBe(201)
       expect(res.json().member.serviceMemberships).toEqual([
-        { serviceId: svc.id, role: 'INTERVENANT' },
+        { serviceId: svc.id, roleId: intervenant },
       ])
     })
   })

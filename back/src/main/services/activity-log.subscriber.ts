@@ -10,13 +10,6 @@ import type { AppEventBus } from '../utils/app-event-bus'
 
 dayjs.extend(utc)
 
-const ROLES_DE_SERVICE: Record<string, string> = {
-  COORDINATEUR: 'Coordinateur',
-  INTERVENANT: 'Intervenant',
-  SECRETARIAT: 'Secrétariat',
-  LECTURE: 'Lecture',
-}
-
 type Personne = {
   firstName: string | null
   lastName: string | null
@@ -276,12 +269,13 @@ class ActivityLogSubscriber {
       }
       case 'member': {
         const membre = await this.membershipRepository.findByID(entityID)
-        const serviceId = this.tenantContext.current().serviceId
-        const role = membre.serviceMemberships.find(
-          (s) => s.serviceId === serviceId,
-        )?.role
-        return role
-          ? `${nom(membre.user)} (${ROLES_DE_SERVICE[role] ?? role})`
+        const affectation = this.tenantContext.current().serviceId
+          ? await this.membershipRepository.findServiceMemberByMembership(
+              entityID,
+            )
+          : null
+        return affectation
+          ? `${nom(membre.user)} (${affectation.role.name})`
           : nom(membre.user)
       }
       default:

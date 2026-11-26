@@ -3,20 +3,12 @@ import { z } from 'zod/v4'
 import type { InvitationLinkState } from '../../../../types/domain/accessLink.domain.interface'
 import { cuid } from './id.schema'
 
-type ServiceRole = 'COORDINATEUR' | 'INTERVENANT' | 'SECRETARIAT' | 'LECTURE'
-
-const serviceRoleSchema = z.enum([
-  'COORDINATEUR',
-  'INTERVENANT',
-  'SECRETARIAT',
-  'LECTURE',
-])
 const establishmentRoleSchema = z.enum(['ADMIN', 'MEMBER'])
 // Voir `service.schema.ts` : le service d'origine porte un identifiant `svc_...` fabrique par
 // la migration du socle, jamais un cuid.
 const assignmentSchema = z.object({
   serviceId: z.string().min(1),
-  role: serviceRoleSchema,
+  roleId: cuid(),
   soignantId: cuid().nullable().optional(),
 })
 
@@ -47,7 +39,7 @@ export const memberResponseSchema = z.object({
   serviceMemberships: z.array(
     z.object({
       serviceId: z.string(),
-      role: serviceRoleSchema,
+      roleId: z.string(),
       soignantId: z.string().nullable(),
     }),
   ),
@@ -134,7 +126,7 @@ export const createMemberAccountResponseSchema = z.object({
     id: z.string(),
     role: establishmentRoleSchema,
     serviceMemberships: z.array(
-      z.object({ serviceId: z.string(), role: serviceRoleSchema }),
+      z.object({ serviceId: z.string(), roleId: z.string() }),
     ),
   }),
   // null : compte déjà en poste ailleurs, rattaché sans lien.
@@ -176,7 +168,7 @@ export const memberAccessLinkResponseSchema = z.object({
 export const projectCreatedMember = (member: {
   id: string
   role: 'ADMIN' | 'MEMBER'
-  serviceMemberships: { serviceId: string; role: ServiceRole }[]
+  serviceMemberships: { serviceId: string; roleId: string }[]
 }) => ({
   id: member.id,
   role: member.role,

@@ -620,6 +620,41 @@ describe('isolation par tenant', () => {
     // prouve par la LISTE et par les deux ecritures, qui sont les seules routes a prendre un
     // identifiant. Les presets, eux, sont GLOBAUX et visibles de partout — c'est leur raison
     // d'etre, pas une fuite.
+    // Rôles de service : la liste ne rend que ceux du service courant, et le rôle d'un autre
+    // service n'est jamais attribuable ici.
+    it('les roles d un autre service ne se lisent ni ne s attribuent', async () => {
+      const { est, serviceA, serviceB, cookiesA } = scenario
+      const rolesDeB = await testDb.serviceRoleDef.findMany({
+        where: { serviceId: serviceB.id },
+        select: { id: true },
+      })
+      const liste = await t.app.inject({
+        method: 'GET',
+        url: tenantUrl(est.id, serviceA.id, '/roles'),
+        cookies: cookiesA,
+      })
+      expect(liste.statusCode).toBe(200)
+      const ids = (liste.json() as { id: string }[]).map((r) => r.id)
+      expect(ids).toHaveLength(4)
+      for (const { id } of rolesDeB) {
+        expect(ids).not.toContain(id)
+      }
+
+      const invitation = await t.app.inject({
+        method: 'POST',
+        url: tenantUrl(est.id, serviceA.id, '/membres'),
+        cookies: cookiesA,
+        payload: {
+          email: 'role-etranger@test.fr',
+          roleId: rolesDeB[0]?.id,
+        },
+      })
+      expect(invitation.statusCode).toBe(400)
+      expect(
+        await testDb.user.count({ where: { email: 'role-etranger@test.fr' } }),
+      ).toBe(0)
+    })
+
     it('un design de PDF d un autre service ne se lit, ne se modifie ni ne se supprime', async () => {
       const { est, serviceA, serviceB, cookiesA, cookiesB } = scenario
       const contenu = {

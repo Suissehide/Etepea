@@ -24,14 +24,14 @@ import ts from 'typescript5'
 // chacun soit DECLARE (enumere ci-dessous, avec sa raison, dans un fichier PRECIS).
 //
 // LE COMPTE, DIT UNE SEULE FOIS ET DANS UNE SEULE UNITE :
-//   - SEPT emplois DECLARES, c'est-a-dire sept entrees d'`AUTORISES` ci-dessous, une par FICHIER,
+//   - HUIT emplois DECLARES, c'est-a-dire huit entrees d'`AUTORISES` ci-dessous, une par FICHIER,
 //     chacune avec sa raison ;
-//   - DOUZE APPELS au total, `application/starter.ts` en portant quatre (Task 3 de l etape 3,
-//     scheduleNotificationMails, ajoute le quatrieme), `patientServiceFile.repository.ts` et
-//     `membership.repository.ts` en portant deux chacun.
+//   - QUATORZE APPELS au total, `application/starter.ts` en portant quatre (Task 3 de l etape 3,
+//     scheduleNotificationMails, ajoute le quatrieme), `patientServiceFile.repository.ts`,
+//     `membership.repository.ts` et `user.repository.ts` en portant deux chacun.
 //
 // La liste ci-dessous enumere les SITES D'APPEL, groupes par question posee — c'est l'unite qui
-// se relit, pas celle qui se compte. Elle en porte HUIT (le huitieme : les services actuels des
+// se relit, pas celle qui se compte. Elle en porte DIX (le huitieme : les services actuels des
 // destinataires de notifications), parce que les deux appels de
 // `application/starter.ts` repondent a la meme question (purger un journal) alors que les deux
 // de `patientServiceFile.repository.ts` en posent deux distinctes, et que le site de la
@@ -105,6 +105,7 @@ import ts from 'typescript5'
 //      ailleurs (`src/test/e2e/activity-log-emissions-declarees.test.ts`).
 //   8. Les services actuels des destinataires (`infra/orm/repositories/user.repository.ts`, `#currentServices`) : bornee aux comptes lus, seule une liste perimee en sort, ramenee a « tous ».
 //   9. Les roles des affectations du compte (meme fichier, `#rolesOf`, appele par `findByID`) : bornee aux roleId deja lus.
+//  10. Les roles par defaut d'un service cree (`infra/orm/repositories/service.repository.ts`, `#createDefaultRoles`) : bornee au service qu'on vient de creer.
 //
 // `runAsSuperAdmin` (meme fichier) y ajoute un troisieme mode, qui ne retire
 // rien mais substitue au filtre de tenant une liste declaree et exhaustive de couples (modele,
@@ -248,6 +249,18 @@ const AUTORISES = [
       'est un modele de service, que le garde ne lit qu avec le serviceId du tenant. Bornee aux ' +
       'roleId des affectations deja lues, verifiee par repository-scope.test.ts',
     appels: 2,
+  },
+  {
+    fichier: 'infra/orm/repositories/service.repository.ts',
+    raison:
+      '#createDefaultRoles — les quatre roles par defaut du service qu on vient de creer, et ' +
+      'l id de son Coordinateur pour le createur. La creation de service est une route ' +
+      'd administration d etablissement, sans service de tenant, et ServiceRoleDef est un modele ' +
+      'de service : le garde refuse toute forme qui en cree une ligne (la ligne imbriquee sous ' +
+      'Service ne peut pas porter establishmentId, cle composite heritee). N ecrit que dans ce ' +
+      'service, chaque ligne portant serviceId et establishmentId ; bornes verifiees par ' +
+      'repository-scope.test.ts',
+    appels: 1,
   },
 ]
 

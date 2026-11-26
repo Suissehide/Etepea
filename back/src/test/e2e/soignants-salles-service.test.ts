@@ -5,6 +5,7 @@ import {
   createEstablishment,
   createService,
   createUser,
+  roleIdOf,
   signIn,
   tenantUrl,
 } from './setup/fixtures'
@@ -24,6 +25,8 @@ describe('soignants et salles a l echelle du service', () => {
   let intervenantA: { access_token: string }
   let admin: { access_token: string }
   let membreId: string
+  const rA = { INTERVENANT: '' }
+  const rB = { LECTURE: '' }
 
   const call = (
     cookies: { access_token: string },
@@ -38,6 +41,8 @@ describe('soignants et salles a l echelle du service', () => {
     E = (await createEstablishment('CHU Haut-Leveque')).id
     A = (await createService(E, 'Cardiologie')).id
     B = (await createService(E, 'Pneumologie')).id
+    rA.INTERVENANT = await roleIdOf(A, 'INTERVENANT')
+    rB.LECTURE = await roleIdOf(B, 'LECTURE')
     await createUser({
       email: 'coord@test.fr',
       memberships: [
@@ -199,8 +204,8 @@ describe('soignants et salles a l echelle du service', () => {
       adminUrl(E, `/members/${membreId}`),
       {
         services: [
-          { serviceId: A, role: 'INTERVENANT' },
-          { serviceId: B, role: 'LECTURE' },
+          { serviceId: A, roleId: rA.INTERVENANT },
+          { serviceId: B, roleId: rB.LECTURE },
         ],
       },
     )
@@ -269,7 +274,7 @@ describe('soignants et salles a l echelle du service', () => {
       (
         await call(coordA, 'POST', tenantUrl(E, A, '/membres'), {
           email: 'ailleurs@test.fr',
-          role: 'INTERVENANT',
+          roleId: rA.INTERVENANT,
           soignantId: soignantB.id,
         })
       ).statusCode,
@@ -277,7 +282,7 @@ describe('soignants et salles a l echelle du service', () => {
 
     const invite = await call(coordA, 'POST', tenantUrl(E, A, '/membres'), {
       email: 'kine@test.fr',
-      role: 'INTERVENANT',
+      roleId: rA.INTERVENANT,
       soignantId: kine.id,
     })
     expect(invite.statusCode).toBe(201)
@@ -346,7 +351,7 @@ describe('soignants et salles a l echelle du service', () => {
           email: 'mauvais@test.fr',
           role: 'MEMBER',
           services: [
-            { serviceId: A, role: 'INTERVENANT', soignantId: soignantB.id },
+            { serviceId: A, roleId: rA.INTERVENANT, soignantId: soignantB.id },
           ],
         })
       ).statusCode,
@@ -355,15 +360,15 @@ describe('soignants et salles a l echelle du service', () => {
     const cree = await call(admin, 'POST', adminUrl(E, '/members/account'), {
       email: 'ide@test.fr',
       role: 'MEMBER',
-      services: [{ serviceId: A, role: 'INTERVENANT', soignantId: ide.id }],
+      services: [{ serviceId: A, roleId: rA.INTERVENANT, soignantId: ide.id }],
     })
     expect(cree.statusCode).toBe(201)
     const id = cree.json().member.id
 
     const maj = await call(admin, 'PATCH', adminUrl(E, `/members/${id}`), {
       services: [
-        { serviceId: A, role: 'INTERVENANT', soignantId: null },
-        { serviceId: B, role: 'LECTURE', soignantId: soignantB.id },
+        { serviceId: A, roleId: rA.INTERVENANT, soignantId: null },
+        { serviceId: B, roleId: rB.LECTURE, soignantId: soignantB.id },
       ],
     })
     expect(maj.statusCode).toBe(200)
@@ -372,8 +377,8 @@ describe('soignants et salles a l echelle du service', () => {
     const membre = membres.find((m: { id: string }) => m.id === id)
     expect(membre.serviceMemberships).toEqual(
       expect.arrayContaining([
-        { serviceId: A, role: 'INTERVENANT', soignantId: null },
-        { serviceId: B, role: 'LECTURE', soignantId: soignantB.id },
+        { serviceId: A, roleId: rA.INTERVENANT, soignantId: null },
+        { serviceId: B, roleId: rB.LECTURE, soignantId: soignantB.id },
       ]),
     )
   })

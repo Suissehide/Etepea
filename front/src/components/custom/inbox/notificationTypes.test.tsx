@@ -23,7 +23,7 @@ const n = (
 
 const claire: ServiceMember = {
   id: 'm1',
-  role: 'INTERVENANT',
+  role: { id: 'r-inter', name: 'Intervenant' },
   soignantId: null,
   user: {
     id: 'u2',

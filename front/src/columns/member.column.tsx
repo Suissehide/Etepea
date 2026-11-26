@@ -11,12 +11,10 @@ import {
 } from '../components/table/etiquette.tsx'
 import type { Features } from '../components/table/features.ts'
 import { Button } from '../components/ui/button.tsx'
-import {
-  ESTABLISHMENT_ROLE_LABEL,
-  SERVICE_ROLE_LABEL,
-} from '../constants/member.constant.ts'
+import { ESTABLISHMENT_ROLE_LABEL } from '../constants/member.constant.ts'
 import type { EstablishmentRole } from '../types/auth.ts'
 import type { Member } from '../types/member.ts'
+import type { Role } from '../types/role.ts'
 import type { Service } from '../types/service.ts'
 
 const columnHelper = createColumnHelper<Features, Member>()
@@ -76,6 +74,8 @@ type MemberColumnOptions = {
   // membre réellement affecté — un geste comblé mais invisible ailleurs que
   // dans la popup d'édition.
   services: Service[]
+  // Les rôles de chaque service actif (`GET /e/:e/s/:s/roles`), pour nommer `roleId`.
+  rolesByService: Record<string, Role[]>
   onToggleActive: (member: Member) => void
   onRemove: (member: Member) => void
   onResendInvitation: (member: Member) => void
@@ -89,6 +89,7 @@ type MemberColumnOptions = {
 
 export const getMemberColumns = ({
   services,
+  rolesByService,
   onToggleActive,
   onRemove,
   onResendInvitation,
@@ -154,9 +155,11 @@ export const getMemberColumns = ({
         <div className="flex flex-wrap gap-1">
           {assignments.map((assignment) => {
             const service = services.find((s) => s.id === assignment.serviceId)
-            const label = service
-              ? `${service.name} : ${SERVICE_ROLE_LABEL[assignment.role]}`
-              : SERVICE_ROLE_LABEL[assignment.role]
+            const role =
+              rolesByService[assignment.serviceId]?.find(
+                (r) => r.id === assignment.roleId,
+              )?.name ?? 'Rôle'
+            const label = service ? `${service.name} : ${role}` : role
             return <Etiquette key={assignment.serviceId}>{label}</Etiquette>
           })}
         </div>

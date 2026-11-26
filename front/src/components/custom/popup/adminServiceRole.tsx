@@ -6,7 +6,7 @@ import { Input } from '../../ui/input.tsx'
 import { Label } from '../../ui/label.tsx'
 
 // Remplace le choix du rôle de service quand le rôle établissement est Chef
-// d'établissement : il est coordinateur de tous les services, rien à choisir.
+// d'établissement : il a tous les droits dans chaque service, rien à choisir.
 function AdminServiceRole({ id, label }: { id: string; label: string }) {
   const descriptionId = `${id}-description`
   return (

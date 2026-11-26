@@ -158,7 +158,6 @@ describe('toMeResponse', () => {
               establishmentMembershipId: 'em1',
               serviceId: 's1',
               establishmentId: 'e1',
-              role: 'INTERVENANT',
               roleId: 'r9',
               soignantId: null,
               createdAt: new Date(),
@@ -179,7 +178,7 @@ describe('toMeResponse', () => {
       {
         id: 's1',
         name: 'Svc s1',
-        role: 'INTERVENANT',
+        role: null,
         roleId: 'r9',
         roleName: 'Agenda seul',
         permissions: ['agenda:read'],

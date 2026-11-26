@@ -21,12 +21,10 @@ export const meResponseSchema = z.object({
           // un. Porte par l'affectation de service depuis le 2026-09-29.
           soignantId: z.string().nullable(),
           affecte: z.boolean(),
-          role: z.enum([
-            'COORDINATEUR',
-            'INTERVENANT',
-            'SECRETARIAT',
-            'LECTURE',
-          ]),
+          // Transitoire : préréglage du rôle, null pour un rôle créé.
+          role: z
+            .enum(['COORDINATEUR', 'INTERVENANT', 'SECRETARIAT', 'LECTURE'])
+            .nullable(),
           roleId: z.string().nullable(),
           roleName: z.string(),
           permissions: z.array(z.string()),

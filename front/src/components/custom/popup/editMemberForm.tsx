@@ -4,16 +4,16 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ESTABLISHMENT_ROLE_DESCRIPTION,
   ESTABLISHMENT_ROLE_LABEL,
-  SERVICE_ROLE_DESCRIPTION,
-  SERVICE_ROLE_LABEL,
 } from '../../../constants/member.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { toSelectOptions } from '../../../libs/utils.ts'
 import { useMemberMutations } from '../../../queries/useMembers.ts'
+import { useRolesByService } from '../../../queries/useRoles.ts'
 import { useServicesQuery } from '../../../queries/useServices.ts'
 import { useAuthStore } from '../../../store/useAuthStore.ts'
-import type { EstablishmentRole, ServiceRole } from '../../../types/auth.ts'
+import type { EstablishmentRole } from '../../../types/auth.ts'
 import type { Member, MemberServiceAssignment } from '../../../types/member.ts'
+import type { Role } from '../../../types/role.ts'
 import type { Service } from '../../../types/service.ts'
 import { Button } from '../../ui/button.tsx'
 import {
@@ -35,9 +35,16 @@ interface EditMemberFormProps {
 export const NO_SERVICE_ROLE = 'NONE'
 
 const ESTABLISHMENT_ROLE_OPTIONS = toSelectOptions(ESTABLISHMENT_ROLE_LABEL)
-const SERVICE_ROLE_OPTIONS = [
+// « Aucun », puis les rôles non supprimés du service ; le rôle actuel reste listé s'il a été supprimé.
+export const serviceRoleOptions = (
+  roles: Role[],
+  currentRoleId: string | undefined,
+) => [
   { value: NO_SERVICE_ROLE, label: 'Aucun' },
-  ...toSelectOptions(SERVICE_ROLE_LABEL),
+  ...roles.map((r) => ({ value: r.id, label: r.name })),
+  ...(currentRoleId && !roles.some((r) => r.id === currentRoleId)
+    ? [{ value: currentRoleId, label: 'Rôle actuel' }]
+    : []),
 ]
 
 // Construit les affectations de service à envoyer à la mise à jour, à
@@ -76,7 +83,7 @@ export function buildServiceAssignments({
     })
     .map((service) => ({
       serviceId: service.id,
-      role: serviceRoles[service.id] as ServiceRole,
+      roleId: serviceRoles[service.id] as string,
       ...(serviceSoignants && {
         soignantId: serviceSoignants[service.id] ?? null,
       }),
@@ -93,7 +100,7 @@ function buildDefaultServiceRoles(
   const roleByServiceId = new Map(
     existingMemberships.map((membership) => [
       membership.serviceId,
-      membership.role,
+      membership.roleId,
     ]),
   )
   return Object.fromEntries(
@@ -131,6 +138,12 @@ function EditMemberForm({ member }: EditMemberFormProps) {
       ),
     [services],
   )
+  const activeServiceIds = useMemo(
+    () =>
+      sortedServices.filter((s) => s.deactivatedAt === null).map((s) => s.id),
+    [sortedServices],
+  )
+  const rolesByService = useRolesByService(activeServiceIds)
 
   const form = useAppForm({
     defaultValues: {
@@ -254,7 +267,7 @@ function EditMemberForm({ member }: EditMemberFormProps) {
                   </p>
                 )}
 
-              {/* Chef d'établissement : coordinateur de tous les services, les
+              {/* Chef d'établissement : tous les droits dans chaque service, les
               rôles choisis restent en mémoire (et enregistrés) s'il repasse
               Membre. */}
               {!servicesPending &&
@@ -283,13 +296,13 @@ function EditMemberForm({ member }: EditMemberFormProps) {
                                     {(field) => (
                                       <field.Select
                                         label={label}
-                                        options={SERVICE_ROLE_OPTIONS}
+                                        options={serviceRoleOptions(
+                                          rolesByService[service.id] ?? [],
+                                          member.serviceMemberships.find(
+                                            (m) => m.serviceId === service.id,
+                                          )?.roleId,
+                                        )}
                                         clearable={false}
-                                        description={
-                                          SERVICE_ROLE_DESCRIPTION[
-                                            field.state.value as ServiceRole
-                                          ]
-                                        }
                                       />
                                     )}
                                   </form.AppField>

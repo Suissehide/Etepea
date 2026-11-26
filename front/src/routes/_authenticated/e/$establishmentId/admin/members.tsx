@@ -9,6 +9,7 @@ import ReactTable from '@/components/table/reactTable.tsx'
 import { can } from '@/hooks/useCan.ts'
 import { queryState } from '@/libs/queryState.ts'
 import { useMemberMutations, useMembersQuery } from '@/queries/useMembers.ts'
+import { useRolesByService } from '@/queries/useRoles.ts'
 import { useServicesQuery } from '@/queries/useServices.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import type { Member } from '@/types/member.ts'
@@ -45,6 +46,12 @@ function MemberSettings() {
   // chargée retombe sur `[]`, et la colonne affiche alors le rôle sans le
   // nom plutôt que rien).
   const { services } = useServicesQuery()
+  const activeServiceIds = useMemo(
+    () =>
+      (services ?? []).filter((s) => s.deactivatedAt === null).map((s) => s.id),
+    [services],
+  )
+  const rolesByService = useRolesByService(activeServiceIds)
   const { removeMember, deactivateMember, reactivateMember, resendInvitation } =
     useMemberMutations()
 
@@ -94,6 +101,7 @@ function MemberSettings() {
     () =>
       getMemberColumns({
         services: services ?? [],
+        rolesByService,
         onToggleActive: handleToggleActive,
         onRemove: setRemoveTarget,
         onResendInvitation: (member) => resendInvitation.mutate(member.id),
@@ -103,7 +111,14 @@ function MemberSettings() {
         isToggling,
         avecIdentifiant: superAdmin,
       }),
-    [services, handleToggleActive, isToggling, superAdmin, resendInvitation],
+    [
+      services,
+      rolesByService,
+      handleToggleActive,
+      isToggling,
+      superAdmin,
+      resendInvitation,
+    ],
   )
 
   return (

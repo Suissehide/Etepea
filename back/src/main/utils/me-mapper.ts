@@ -19,7 +19,7 @@ export type MeResponse = {
     services: {
       id: string
       name: string
-      role: ServiceRole
+      role: ServiceRole | null
       roleId: string | null
       roleName: string
       permissions: string[]

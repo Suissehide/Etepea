@@ -174,6 +174,10 @@ const build = (
         return Promise.resolve({})
       },
     },
+    serviceRoleRepository: {
+      findActiveInService: (roleId: string) =>
+        Promise.resolve(roleId === 'inconnu' ? null : { id: roleId }),
+    },
     soignantRepository: {
       findByID: (id: string) =>
         id === 'so1'
@@ -234,7 +238,7 @@ describe('MembershipDomain', () => {
       domain.createAccount({
         email: 'ailleurs@b.fr',
         role: 'MEMBER',
-        services: [{ serviceId: 's1', role: 'INTERVENANT' }],
+        services: [{ serviceId: 's1', roleId: 'r-intervenant' }],
       }),
     )
     expect(res.accessLink).toBeNull()
@@ -251,7 +255,7 @@ describe('MembershipDomain', () => {
         domain.createAccount({
           email: 'ailleurs@b.fr',
           role: 'MEMBER',
-          services: [{ serviceId: 'zz', role: 'LECTURE' }],
+          services: [{ serviceId: 'zz', roleId: 'r-lecture' }],
         }),
       ),
       404,
@@ -401,7 +405,7 @@ describe('MembershipDomain', () => {
   // une autre.
   it('autorise l utilisateur courant a vider sa propre liste de services', async () => {
     const { domain, ctx, calls } = build(
-      [row({ serviceMemberships: [{ serviceId: 's1', role: 'INTERVENANT' }] })],
+      [row({ serviceMemberships: [{ serviceId: 's1', roleId: 'r-intervenant' }] })],
       2,
     )
     await asAdmin(ctx, () => domain.update('em1', { services: [] }))
@@ -421,7 +425,7 @@ describe('MembershipDomain', () => {
     const { domain, ctx, calls } = build([row({})], 2)
     await asAdmin(ctx, () =>
       domain.update('em1', {
-        services: [{ serviceId: 's1', role: 'LECTURE' }],
+        services: [{ serviceId: 's1', roleId: 'r-lecture' }],
       }),
     )
     // Une mise a jour qui ne touche pas du tout aux services reste permise.
@@ -451,7 +455,7 @@ describe('MembershipDomain', () => {
         firstName: 'Neuf',
         lastName: 'Compte',
         role: 'MEMBER',
-        services: [{ serviceId: 's1', role: 'INTERVENANT' }],
+        services: [{ serviceId: 's1', roleId: 'r-intervenant' }],
       }),
     )
 
@@ -516,7 +520,7 @@ describe('MembershipDomain', () => {
         domain.createAccount({
           email: 'inconnu@b.fr',
           role: 'MEMBER',
-          services: [{ serviceId: 'zz', role: 'LECTURE' }],
+          services: [{ serviceId: 'zz', roleId: 'r-lecture' }],
         }),
       ),
       404,

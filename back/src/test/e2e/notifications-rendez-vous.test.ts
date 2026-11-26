@@ -475,7 +475,6 @@ describe('NotificationDispatcher et rendez-vous', () => {
         establishmentMembershipId: rattachement.id,
         serviceId: autreService,
         establishmentId: E,
-        role: 'INTERVENANT',
         roleId: await roleIdOf(autreService, 'INTERVENANT'),
       },
     })

@@ -99,6 +99,21 @@ const EXCEPTIONS: { fichier: string; raison: string; occurrences: number }[] = [
     occurrences: 5,
   },
   {
+    fichier: 'api/roles.api.ts',
+    raison:
+      "`getForService` : l'ecran des membres de l'administration d'etablissement nomme le role de chaque " +
+      "affectation, tous services confondus ; le service y est une DONNEE de la requete (l'etablissement, " +
+      'lui, reste implicite via `establishmentServiceApiUrl`)',
+    occurrences: 2,
+  },
+  {
+    fichier: 'queries/useRoles.ts',
+    raison:
+      'meme raison que api/roles.api.ts : une requete par service affiche, cle portant le service demande ' +
+      '(comme useInbox), sous le client de requetes de l etablissement',
+    occurrences: 3,
+  },
+  {
     fichier: 'api/inbox.api.ts',
     raison:
       'panneaux Taches et Notifications de la topbar (2026-10-19) : ils lisent TOUS les services du compte, ' +

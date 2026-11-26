@@ -31,6 +31,10 @@ const CONFLICT_MESSAGES: Record<string, { title: string; message: string }> = {
     message:
       'Vous ne pouvez pas changer votre propre rôle ni vous retirer de ce service. Demandez-le à un autre coordinateur, ou au chef d’établissement.',
   },
+  'Rôle inconnu dans ce service': {
+    title: 'Rôle introuvable',
+    message: 'Ce rôle n’existe plus dans ce service : choisissez-en un autre.',
+  },
   'This account is deactivated and cannot be added as a member': {
     title: 'Compte désactivé',
     message:
@@ -97,17 +101,17 @@ export const ServiceMembersApi = {
 
   setRole: async ({
     affectationId,
-    role,
+    roleId,
   }: {
     affectationId: string
-    role: ServiceMember['role']
+    roleId: string
   }): Promise<ServiceMember> => {
     const response = await fetchWithAuth(
       `${tenantApiUrl()}/membres/${affectationId}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ roleId }),
       },
     )
     if (!response.ok) {

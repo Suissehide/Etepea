@@ -92,9 +92,9 @@ const appartenancesReelles = (
                 (serviceMembership) =>
                   serviceMembership.service.deactivatedAt === null,
               )
-              .map(({ serviceId, role, roleDef }) => ({
+              .map(({ serviceId, roleDef }) => ({
                 id: serviceId,
-                role: roleDef.preset ?? role,
+                role: roleDef.preset,
                 roleId: roleDef.id,
                 roleName: roleDef.name,
                 permissions: parsePermissions(roleDef.permissions),

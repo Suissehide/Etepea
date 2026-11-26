@@ -26,7 +26,7 @@ const appartenanceComplete = {
   establishmentId: 'e1',
   role: 'MEMBER' as const,
   createdAt: new Date('2026-01-02T03:04:05.000Z'),
-  serviceMemberships: [{ serviceId: 's1', role: 'INTERVENANT' as const }],
+  serviceMemberships: [{ serviceId: 's1', roleId: 'r-intervenant' }],
   user: {
     id: 'u1',
     email: 'ancienne@adresse.fr',
@@ -50,7 +50,7 @@ describe('reponse de la creation d un compte de membre', () => {
     // Ce que la projection doit au contraire CONSERVER : sans cela elle serait « sure » en
     // ne rendant rien, et l'ecran n'aurait plus de quoi se mettre a jour.
     expect(projete.serviceMemberships).toEqual([
-      { serviceId: 's1', role: 'INTERVENANT' },
+      { serviceId: 's1', roleId: 'r-intervenant' },
     ])
   })
 

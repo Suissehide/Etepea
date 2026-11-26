@@ -32,6 +32,7 @@ import { planningCycleRouter } from './planningCycle'
 import { serviceFieldRouter } from './serviceField'
 import { serviceFieldCategoryRouter } from './serviceFieldCategory'
 import { serviceMembersRouter } from './serviceMembers'
+import { serviceRoleRouter } from './serviceRole'
 import { slotRouter } from './slot'
 import { slotTemplateRouter } from './slotTemplate'
 import { soignantReadRouter, soignantWriteRouter } from './soignant'
@@ -203,6 +204,7 @@ const tenantRoutes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(forbiddenWeekRouter, { prefix: '/forbidden-week' })
   await fastify.register(planningCycleRouter, { prefix: '/planning-cycle' })
   await fastify.register(serviceMembersRouter, { prefix: '/membres' })
+  await fastify.register(serviceRoleRouter, { prefix: '/roles' })
   await fastify.register(serviceActivityLogRouter, { prefix: '/activity-log' })
   await fastify.register(activityReportRouter, { prefix: '/activite' })
   await fastify.register(indicatorSetRouter, { prefix: '/indicator-sets' })

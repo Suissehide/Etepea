@@ -6,6 +6,7 @@ import {
   createEstablishment,
   createService,
   createUser,
+  roleIdOf,
   signIn,
 } from './setup/fixtures'
 
@@ -28,6 +29,7 @@ describe('routes membres', () => {
   let establishmentId: string
   let serviceId: string
   let selfMembershipId: string
+  const R: Record<string, string> = {}
 
   beforeAll(async () => {
     await truncateAll()
@@ -35,6 +37,14 @@ describe('routes membres', () => {
     establishmentId = establishment.id
     const service = await createService(establishmentId, 'S')
     serviceId = service.id
+    for (const preset of [
+      'COORDINATEUR',
+      'INTERVENANT',
+      'SECRETARIAT',
+      'LECTURE',
+    ] as const) {
+      R[preset] = await roleIdOf(serviceId, preset)
+    }
 
     // Le compte administrateur est aussi coordinateur du service : c'est ce
     // qui lui permet d'atteindre le journal d'activite, monte sous le prefixe
@@ -94,22 +104,22 @@ describe('routes membres', () => {
     const added = await call('POST', '/account', {
       email: 'new@b.fr',
       role: 'MEMBER',
-      services: [{ serviceId, role: 'INTERVENANT' }],
+      services: [{ serviceId, roleId: R.INTERVENANT }],
     })
     expect(added.statusCode).toBe(201)
     const membershipId = added.json().member.id as string
     expect(added.json().member.serviceMemberships).toEqual([
-      { serviceId, role: 'INTERVENANT' },
+      { serviceId, roleId: R.INTERVENANT },
     ])
 
     const patched = await call('PATCH', `/${membershipId}`, {
       role: 'ADMIN',
-      services: [{ serviceId, role: 'COORDINATEUR' }],
+      services: [{ serviceId, roleId: R.COORDINATEUR }],
     })
     expect(patched.statusCode).toBe(200)
     expect(patched.json().role).toBe('ADMIN')
     expect(patched.json().serviceMemberships).toEqual([
-      { serviceId, role: 'COORDINATEUR', soignantId: null },
+      { serviceId, roleId: R.COORDINATEUR, soignantId: null },
     ])
 
     const off = await call('POST', `/${membershipId}/deactivate`)
@@ -192,8 +202,8 @@ describe('routes membres', () => {
           email: 'new@b.fr',
           role: 'MEMBER',
           services: [
-            { serviceId, role: 'LECTURE' },
-            { serviceId, role: 'COORDINATEUR' },
+            { serviceId, roleId: R.LECTURE },
+            { serviceId, roleId: R.COORDINATEUR },
           ],
         })
       ).statusCode,
@@ -319,13 +329,13 @@ describe('routes membres', () => {
       firstName: 'Neuf',
       lastName: 'Compte',
       role: 'MEMBER',
-      services: [{ serviceId, role: 'INTERVENANT' }],
+      services: [{ serviceId, roleId: R.INTERVENANT }],
     })
 
     expect(res.statusCode).toBe(201)
     expect(Object.keys(res.json()).sort()).toEqual(['accessLink', 'member'])
     expect(res.json().member.serviceMemberships).toEqual([
-      { serviceId, role: 'INTERVENANT' },
+      { serviceId, roleId: R.INTERVENANT },
     ])
 
     // 201 ne prouverait rien seul : le compte doit exister, porter le nom soumis, et le

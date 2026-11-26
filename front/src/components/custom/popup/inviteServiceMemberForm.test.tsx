@@ -60,6 +60,25 @@ const routeInvitation = (body: unknown, status = 201): Route => ({
   respond: () => ({ ok: status < 400, status, json: async () => body }),
 })
 
+const routeRoles: Route = {
+  match: (url, method) => url.endsWith('/s/svcA/roles') && method === 'GET',
+  respond: () => ({
+    ok: true,
+    status: 200,
+    json: async () => [
+      {
+        id: 'role-inter',
+        name: 'Intervenant',
+        preset: 'INTERVENANT',
+        permissions: [],
+        hiddenSoignantIds: [],
+        memberCount: 0,
+        archivedAt: null,
+      },
+    ],
+  }),
+}
+
 // Pas de `gcTime: 0` : une entree sans observateur disparaitrait du cache avant l'assertion, et
 // la garde du jeton serait vraie par construction.
 const renderForm = () => {
@@ -103,7 +122,10 @@ describe('InviteServiceMemberForm', () => {
   it('affiche le lien de premiere connexion, une seule fois, pour un compte neuf', async () => {
     vi.stubGlobal(
       'fetch',
-      buildFetchMock([routeInvitation({ accessLink: { token: JETON } })]),
+      buildFetchMock([
+        routeRoles,
+        routeInvitation({ accessLink: { token: JETON } }),
+      ]),
     )
     renderForm()
 
@@ -125,7 +147,7 @@ describe('InviteServiceMemberForm', () => {
   it('dit explicitement qu il n y a aucun lien a transmettre pour un compte deja rattache', async () => {
     vi.stubGlobal(
       'fetch',
-      buildFetchMock([routeInvitation({ accessLink: null })]),
+      buildFetchMock([routeRoles, routeInvitation({ accessLink: null })]),
     )
     renderForm()
 

@@ -4,6 +4,7 @@ import {
   createEstablishment,
   createService,
   createUser,
+  roleIdOf,
   signIn,
   tenantUrl,
 } from './setup/fixtures'
@@ -158,7 +159,7 @@ describe('journal d activite : le detail de chaque ligne', () => {
         email: 'paul@exemple.test',
         firstName: 'Paul',
         lastName: 'Martin',
-        role: 'INTERVENANT',
+        roleId: await roleIdOf(serviceId, 'INTERVENANT'),
       },
     })
     expect(res.statusCode).toBeLessThan(300)

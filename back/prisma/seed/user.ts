@@ -115,7 +115,6 @@ export default async function seedUsers(
             u.serviceMemberships.map(async ({ service, role }) => ({
               serviceId: service.id,
               establishmentId,
-              role,
               roleId: (
                 await prisma.serviceRoleDef.findFirstOrThrow({
                   where: { serviceId: service.id, preset: role },

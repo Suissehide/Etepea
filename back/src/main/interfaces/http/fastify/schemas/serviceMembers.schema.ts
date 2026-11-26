@@ -8,7 +8,7 @@ import { invitationStatusSchema, projectUserStatus } from './members.schema'
 // soignant (metier du service) que le membre y incarne. Voir `routes/serviceMembers.ts`.
 export const serviceMemberResponseSchema = z.object({
   id: z.string(),
-  role: z.enum(['COORDINATEUR', 'INTERVENANT', 'SECRETARIAT', 'LECTURE']),
+  role: z.object({ id: z.string(), name: z.string() }),
   soignantId: z.string().nullable(),
   user: z.object({
     id: z.string(),
@@ -29,13 +29,6 @@ export const setServiceSoignantSchema = z.object({
   soignantId: cuid().nullable(),
 })
 
-const serviceRoleSchema = z.enum([
-  'COORDINATEUR',
-  'INTERVENANT',
-  'SECRETARIAT',
-  'LECTURE',
-])
-
 // Inviter dans le service courant. NI `serviceId` NI role d'etablissement dans le corps : le
 // premier vient du tenant resolu, le second est toujours `MEMBER` (voir `inviteToService`).
 // `firstName`/`lastName` optionnels, comme `createMemberAccountSchema` : un compte existant
@@ -47,11 +40,11 @@ export const inviteServiceMemberSchema = z.object({
   }),
   firstName: z.string().trim().optional(),
   lastName: z.string().trim().optional(),
-  role: serviceRoleSchema,
+  roleId: cuid(),
   soignantId: cuid().nullable().optional(),
 })
 
-export const setServiceRoleSchema = z.object({ role: serviceRoleSchema })
+export const setServiceRoleSchema = z.object({ roleId: cuid() })
 
 // VOLONTAIREMENT REDUIT A UN SEUL CHAMP, et c'est le point : rendre l'affectation creee
 // porterait le nom STOCKE du compte et son cuid, deux oracles d'existence sur une adresse qui a
@@ -71,7 +64,7 @@ export type SetServiceRoleBody = z.infer<typeof setServiceRoleSchema>
 export const projectServiceMember = (
   row: {
     id: string
-    role: 'COORDINATEUR' | 'INTERVENANT' | 'SECRETARIAT' | 'LECTURE'
+    role: { id: string; name: string }
     soignantId: string | null
     establishmentMembership: {
       user: {

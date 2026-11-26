@@ -30,6 +30,7 @@ import type { PlanningCycleDomainInterface } from '../domain/planningCycle.domai
 import type { ServiceDomainInterface } from '../domain/service.domain.interface'
 import type { ServiceFieldDomainInterface } from '../domain/serviceField.domain.interface'
 import type { ServiceFieldCategoryDomainInterface } from '../domain/serviceFieldCategory.domain.interface'
+import type { ServiceRoleDomainInterface } from '../domain/serviceRole.domain.interface'
 import type { SlotDomainInterface } from '../domain/slot.domain.interface'
 import type { SlotTemplateDomainInterface } from '../domain/slotTemplate.domain.interface'
 import type { SoignantDomainInterface } from '../domain/soignant.domain.interface'
@@ -71,6 +72,7 @@ import type { PlanningCycleRepositoryInterface } from '../infra/orm/repositories
 import type { ServiceRepositoryInterface } from '../infra/orm/repositories/service.repository.interface'
 import type { ServiceFieldRepositoryInterface } from '../infra/orm/repositories/serviceField.repository.interface'
 import type { ServiceFieldCategoryRepositoryInterface } from '../infra/orm/repositories/serviceFieldCategory.repository.interface'
+import type { ServiceRoleRepositoryInterface } from '../infra/orm/repositories/serviceRole.repository.interface'
 import type { SlotRepositoryInterface } from '../infra/orm/repositories/slot.repository.interface'
 import type { SlotTemplateRepositoryInterface } from '../infra/orm/repositories/slotTemplate.repository.interface'
 import type { SoignantRepositoryInterface } from '../infra/orm/repositories/soignant.repository.interface'
@@ -100,6 +102,8 @@ export interface IocContainer {
   // Membership (membres d'un établissement)
   readonly membershipDomain: MembershipDomainInterface
   readonly membershipRepository: MembershipRepositoryInterface
+  readonly serviceRoleDomain: ServiceRoleDomainInterface
+  readonly serviceRoleRepository: ServiceRoleRepositoryInterface
   // Appointment
   readonly appointmentDomain: AppointmentDomainInterface
   readonly appointmentRepository: AppointmentRepositoryInterface

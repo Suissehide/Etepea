@@ -82,7 +82,7 @@ const serviceMembersRouter: FastifyPluginAsync = (fastify) => {
         await project([
           await membershipDomain.setServiceMemberRole(
             request.params.serviceMembershipId,
-            request.body.role,
+            request.body.roleId,
           ),
         ])
       )[0],

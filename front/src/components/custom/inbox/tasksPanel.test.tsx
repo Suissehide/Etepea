@@ -93,7 +93,7 @@ describe('TasksPanel', () => {
       .mockResolvedValue([
         {
           id: 'm1',
-          role: 'INTERVENANT',
+          role: { id: 'r-inter', name: 'Intervenant' },
           soignantId: null,
           user: {
             id: 'u1',
@@ -107,7 +107,7 @@ describe('TasksPanel', () => {
         },
         {
           id: 'm2',
-          role: 'INTERVENANT',
+          role: { id: 'r-inter', name: 'Intervenant' },
           soignantId: null,
           user: {
             id: 'u2',

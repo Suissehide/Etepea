@@ -1,4 +1,4 @@
-import type { EstablishmentRole, ServiceRole } from './auth.ts'
+import type { EstablishmentRole } from './auth.ts'
 
 // Un membre est le rattachement d'un compte utilisateur à l'établissement.
 // Le rôle d'établissement (administrateur ou membre) et les rôles de
@@ -6,7 +6,8 @@ import type { EstablishmentRole, ServiceRole } from './auth.ts'
 // distinctes et se règlent séparément : voir `serviceMemberships`.
 export type MemberServiceAssignment = {
   serviceId: string
-  role: ServiceRole
+  // Un rôle du service visé (`GET /roles` de ce service).
+  roleId: string
   // Absent à l'écriture : le back garde le rattachement existant.
   soignantId?: string | null
 }

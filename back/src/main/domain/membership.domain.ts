@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import type { EstablishmentRole, ServiceRole } from '../../generated/enums'
+import type { EstablishmentRole } from '../../generated/enums'
 import { memberAddedMail } from '../infra/mail/templates'
 import type { PostgresOrm } from '../infra/orm/postgres-client'
 import type { IocContainer } from '../types/application/ioc'
@@ -21,6 +21,7 @@ import type {
   MembershipRepositoryInterface,
   ServiceAssignment,
 } from '../types/infra/orm/repositories/membership.repository.interface'
+import type { ServiceRoleRepositoryInterface } from '../types/infra/orm/repositories/serviceRole.repository.interface'
 import type { SoignantRepositoryInterface } from '../types/infra/orm/repositories/soignant.repository.interface'
 import type { UserRepositoryInterface } from '../types/infra/orm/repositories/user.repository.interface'
 import type { TenantContextInterface } from '../types/utils/tenant-context'
@@ -68,6 +69,8 @@ const DEACTIVATED_LINK =
 const ALREADY_SERVICE_MEMBER =
   'This account is already a member of this service'
 
+const UNKNOWN_ROLE = 'Rôle inconnu dans ce service'
+
 const SELF_SERVICE_ACTION = 'Cannot apply this action to your own account'
 
 const SUPER_ADMIN_ACTIVATION =
@@ -81,6 +84,7 @@ class MembershipDomain implements MembershipDomainInterface {
   private readonly accessLinkDomain: AccessLinkDomainInterface
   private readonly postgresOrm: PostgresOrm
   private readonly soignantRepository: SoignantRepositoryInterface
+  private readonly serviceRoleRepository: ServiceRoleRepositoryInterface
   private readonly establishmentRepository: EstablishmentRepositoryInterface
   private readonly mailer: MailerInterface
   private readonly frontUrl: string
@@ -88,6 +92,7 @@ class MembershipDomain implements MembershipDomainInterface {
   constructor({
     membershipRepository,
     soignantRepository,
+    serviceRoleRepository,
     establishmentRepository,
     userRepository,
     tenantContext,
@@ -104,6 +109,7 @@ class MembershipDomain implements MembershipDomainInterface {
     this.accessLinkDomain = accessLinkDomain
     this.postgresOrm = postgresOrm
     this.soignantRepository = soignantRepository
+    this.serviceRoleRepository = serviceRoleRepository
     this.establishmentRepository = establishmentRepository
     this.mailer = mailer
     this.frontUrl = config.frontUrl
@@ -187,11 +193,11 @@ class MembershipDomain implements MembershipDomainInterface {
     email,
     firstName,
     lastName,
-    role,
+    roleId,
     soignantId = null,
   }: ServiceInviteDomain): Promise<ServiceInviteResult> {
     const { serviceId } = this.tenantContext.scope()
-    const services = [{ serviceId, role, soignantId }]
+    const services = [{ serviceId, roleId, soignantId }]
     await this.assertReferences(services)
     // Depot borne au service courant : un soignant d'ailleurs rend 404.
     const soignant = soignantId
@@ -216,7 +222,7 @@ class MembershipDomain implements MembershipDomainInterface {
       }
       await this.membershipRepository.addServiceMember(
         membership.id,
-        role,
+        roleId,
         soignantId,
       )
       this.emit('serviceMember.added', membership.id)
@@ -259,12 +265,13 @@ class MembershipDomain implements MembershipDomainInterface {
 
   async setServiceMemberRole(
     serviceMembershipId: string,
-    role: ServiceRole,
+    roleId: string,
   ): Promise<ServiceMemberRowDomain> {
     const affectation = await this.assertOtherServiceMember(serviceMembershipId)
+    await this.assertRole(this.tenantContext.scope().serviceId, roleId)
     const updated = await this.membershipRepository.setServiceRole(
       serviceMembershipId,
-      role,
+      roleId,
     )
     if (!updated) {
       throw Boom.notFound('Service member not found')
@@ -296,6 +303,7 @@ class MembershipDomain implements MembershipDomainInterface {
       if (!(await this.membershipRepository.serviceExists(service.serviceId))) {
         throw Boom.notFound(`Service ${service.serviceId} not found`)
       }
+      await this.assertRole(service.serviceId, service.roleId)
       if (
         service.soignantId &&
         !(await this.membershipRepository.soignantDuService(
@@ -305,6 +313,14 @@ class MembershipDomain implements MembershipDomainInterface {
       ) {
         throw Boom.notFound(`Soignant ${service.soignantId} not found`)
       }
+    }
+  }
+
+  private async assertRole(serviceId: string, roleId: string): Promise<void> {
+    if (
+      !(await this.serviceRoleRepository.findActiveInService(roleId, serviceId))
+    ) {
+      throw Boom.badRequest(UNKNOWN_ROLE)
     }
   }
 

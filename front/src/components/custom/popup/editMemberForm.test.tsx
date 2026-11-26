@@ -7,7 +7,6 @@ import {
   ADMIN_SERVICE_ROLE_DESCRIPTION,
   ADMIN_SERVICE_ROLE_LABEL,
   ESTABLISHMENT_ROLE_DESCRIPTION,
-  SERVICE_ROLE_DESCRIPTION,
 } from '@/constants/member.constant.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
@@ -35,6 +34,25 @@ const admin: User = {
   establishments: [{ id: 'e1', name: 'CHU', role: 'ADMIN', services: [] }],
 }
 
+// Les rôles d'un service, tels que `GET /e/:e/s/:s/roles` les rend.
+const R = (serviceId: string, preset: string) => `role-${serviceId}-${preset}`
+const ROLE_NAMES: Record<string, string> = {
+  COORDINATEUR: 'Coordinateur',
+  INTERVENANT: 'Intervenant',
+  SECRETARIAT: 'Secrétariat',
+  LECTURE: 'Lecture seule',
+}
+const rolesOf = (serviceId: string) =>
+  Object.entries(ROLE_NAMES).map(([preset, name]) => ({
+    id: R(serviceId, preset),
+    name,
+    preset,
+    permissions: [],
+    hiddenSoignantIds: [],
+    memberCount: 0,
+    archivedAt: null,
+  }))
+
 const memberFixture: Member = {
   id: 'm1',
   role: 'MEMBER',
@@ -48,8 +66,8 @@ const memberFixture: Member = {
     invitationResendableAt: null,
   },
   serviceMemberships: [
-    { serviceId: 'svcA', role: 'COORDINATEUR' },
-    { serviceId: 'svcB', role: 'INTERVENANT' },
+    { serviceId: 'svcA', roleId: R('svcA', 'COORDINATEUR') },
+    { serviceId: 'svcB', roleId: R('svcB', 'INTERVENANT') },
   ],
 }
 
@@ -85,7 +103,11 @@ const servicesFixture = [
 
 type Route = {
   match: (url: string, method: string) => boolean
-  respond: () => { ok: boolean; status: number; json: () => Promise<unknown> }
+  respond: (url: string) => {
+    ok: boolean
+    status: number
+    json: () => Promise<unknown>
+  }
 }
 
 const buildFetchMock = (routes: Route[]) =>
@@ -96,13 +118,22 @@ const buildFetchMock = (routes: Route[]) =>
     if (!route) {
       throw new Error(`Appel fetch non attendu dans ce test : ${method} ${url}`)
     }
-    const result = route.respond()
+    const result = route.respond(url)
     return { ...result, url }
   })
 
 const routeSoignants: Route = {
   match: (url, method) => url.endsWith('/admin/soignant') && method === 'GET',
   respond: () => ({ ok: true, status: 200, json: async () => [] }),
+}
+
+const routeRoles: Route = {
+  match: (url, method) => /\/s\/[^/]+\/roles$/.test(url) && method === 'GET',
+  respond: (url) => ({
+    ok: true,
+    status: 200,
+    json: async () => rolesOf(url.split('/s/')[1]?.split('/')[0] ?? ''),
+  }),
 }
 
 const routeServices = (services: unknown[] = servicesFixture): Route => ({
@@ -158,17 +189,15 @@ describe('EditMemberForm — affecter un membre a un service', () => {
   // plus DE commande a desactiver), un simple `toBeEnabled()` global serait
   // donc vrai par vacuite.
   it("propose TOUS les services de l'etablissement, chacun pre-rempli avec le role reellement affecte (ou Aucun), y compris un service desactive", async () => {
-    renderForm(buildFetchMock([routeSoignants, routeServices()]))
+    renderForm(buildFetchMock([routeSoignants, routeRoles, routeServices()]))
     await ouvrir()
 
-    await waitFor(() => {
-      expect(screen.getByLabelText('Cardiologie')).toBeInTheDocument()
-    })
-
     // Deux services deja affectes : chacun montre SON role, pas un autre.
-    expect(screen.getByLabelText('Cardiologie')).toHaveTextContent(
-      'Coordinateur',
-    )
+    await waitFor(() => {
+      expect(screen.getByLabelText('Cardiologie')).toHaveTextContent(
+        'Coordinateur',
+      )
+    })
     expect(screen.getByLabelText('Neurologie')).toHaveTextContent('Intervenant')
     // Aucune affectation : « Aucun », jamais un role herite d'un autre service.
     expect(screen.getByLabelText('Pédiatrie')).toHaveTextContent('Aucun')
@@ -197,6 +226,7 @@ describe('EditMemberForm — affecter un membre a un service', () => {
   it("changer le role d'un service via le VRAI composant ne touche pas le role deja choisi d'un autre service", async () => {
     const fetchMock = buildFetchMock([
       routeSoignants,
+      routeRoles,
       routeServices(),
       {
         match: (url, method) =>
@@ -253,8 +283,16 @@ describe('EditMemberForm — affecter un membre a un service', () => {
     const body = JSON.parse(String(patchCall?.[1]?.body))
     expect(body.services).toEqual(
       expect.arrayContaining([
-        { serviceId: 'svcA', role: 'COORDINATEUR', soignantId: null },
-        { serviceId: 'svcB', role: 'SECRETARIAT', soignantId: null },
+        {
+          serviceId: 'svcA',
+          roleId: R('svcA', 'COORDINATEUR'),
+          soignantId: null,
+        },
+        {
+          serviceId: 'svcB',
+          roleId: R('svcB', 'SECRETARIAT'),
+          soignantId: null,
+        },
       ]),
     )
     expect(body.services).toHaveLength(2)
@@ -263,6 +301,7 @@ describe('EditMemberForm — affecter un membre a un service', () => {
   it("soumettre sans rien changer renvoie EXACTEMENT les affectations existantes (aucune n'est effacee)", async () => {
     const fetchMock = buildFetchMock([
       routeSoignants,
+      routeRoles,
       routeServices(),
       {
         match: (url, method) =>
@@ -300,8 +339,16 @@ describe('EditMemberForm — affecter un membre a un service', () => {
     const body = JSON.parse(String(patchCall?.[1]?.body))
     expect(body.services).toEqual(
       expect.arrayContaining([
-        { serviceId: 'svcA', role: 'COORDINATEUR', soignantId: null },
-        { serviceId: 'svcB', role: 'INTERVENANT', soignantId: null },
+        {
+          serviceId: 'svcA',
+          roleId: R('svcA', 'COORDINATEUR'),
+          soignantId: null,
+        },
+        {
+          serviceId: 'svcB',
+          roleId: R('svcB', 'INTERVENANT'),
+          soignantId: null,
+        },
       ]),
     )
     expect(body.services).toHaveLength(2)
@@ -317,11 +364,12 @@ describe('EditMemberForm — affecter un membre a un service', () => {
       ...memberFixture,
       serviceMemberships: [
         ...memberFixture.serviceMemberships,
-        { serviceId: 'svc-disparu', role: 'LECTURE' },
+        { serviceId: 'svc-disparu', roleId: 'role-disparu' },
       ],
     }
     const fetchMock = buildFetchMock([
       routeSoignants,
+      routeRoles,
       routeServices(), // ne contient PAS 'svc-disparu'
       {
         match: (url, method) =>
@@ -358,7 +406,9 @@ describe('EditMemberForm — affecter un membre a un service', () => {
     )
     const body = JSON.parse(String(patchCall?.[1]?.body))
     expect(body.services).toEqual(
-      expect.arrayContaining([{ serviceId: 'svc-disparu', role: 'LECTURE' }]),
+      expect.arrayContaining([
+        { serviceId: 'svc-disparu', roleId: 'role-disparu' },
+      ]),
     )
   })
 
@@ -393,7 +443,7 @@ describe('EditMemberForm — affecter un membre a un service', () => {
   })
 
   it('etat vide distinct : aucun service dans cet etablissement', async () => {
-    renderForm(buildFetchMock([routeSoignants, routeServices([])]))
+    renderForm(buildFetchMock([routeSoignants, routeRoles, routeServices([])]))
     await ouvrir()
 
     expect(
@@ -432,8 +482,8 @@ describe('buildServiceAssignments (fonction pure)', () => {
     })
     expect(result).toEqual(
       expect.arrayContaining([
-        { serviceId: 'svcA', role: 'COORDINATEUR' },
-        { serviceId: 'svcC', role: 'LECTURE' },
+        { serviceId: 'svcA', roleId: 'COORDINATEUR' },
+        { serviceId: 'svcC', roleId: 'LECTURE' },
       ]),
     )
     expect(result).toHaveLength(2)
@@ -453,22 +503,28 @@ describe('buildServiceAssignments (fonction pure)', () => {
     expect(before.find((a) => a.serviceId === 'svcA')).toEqual(
       after.find((a) => a.serviceId === 'svcA'),
     )
-    expect(after.find((a) => a.serviceId === 'svcB')?.role).toBe('SECRETARIAT')
+    expect(after.find((a) => a.serviceId === 'svcB')?.roleId).toBe(
+      'SECRETARIAT',
+    )
   })
 
   it('preserve telles quelles les affectations a des services absents de la liste montree', () => {
     const result = buildServiceAssignments({
       services: [{ id: 'svcA' }],
       serviceRoles: { svcA: 'NONE' },
-      existingMemberships: [{ serviceId: 'svc-disparu', role: 'LECTURE' }],
+      existingMemberships: [
+        { serviceId: 'svc-disparu', roleId: 'role-disparu' },
+      ],
     })
-    expect(result).toEqual([{ serviceId: 'svc-disparu', role: 'LECTURE' }])
+    expect(result).toEqual([
+      { serviceId: 'svc-disparu', roleId: 'role-disparu' },
+    ])
   })
 })
 
 describe('EditMemberForm — description du rôle sous chaque champ', () => {
-  it('décrit le rôle choisi, relié au champ, et suit le changement de rôle', async () => {
-    renderForm(buildFetchMock([routeSoignants, routeServices()]))
+  it('décrit le rôle d établissement choisi, relié au champ', async () => {
+    renderForm(buildFetchMock([routeSoignants, routeRoles, routeServices()]))
     await ouvrir()
 
     await waitFor(() => {
@@ -478,21 +534,10 @@ describe('EditMemberForm — description du rôle sous chaque champ', () => {
     expect(
       screen.getByLabelText('Rôle établissement'),
     ).toHaveAccessibleDescription(ESTABLISHMENT_ROLE_DESCRIPTION.MEMBER)
-    expect(screen.getByLabelText('Neurologie')).toHaveAccessibleDescription(
-      SERVICE_ROLE_DESCRIPTION.INTERVENANT,
-    )
-
-    await userEvent.click(screen.getByLabelText('Neurologie'))
-    await userEvent.click(
-      await screen.findByRole('option', { name: 'Secrétariat' }),
-    )
-    expect(screen.getByLabelText('Neurologie')).toHaveAccessibleDescription(
-      SERVICE_ROLE_DESCRIPTION.SECRETARIAT,
-    )
   })
 
   it("Chef d'établissement : chaque service affiche un champ désactivé, sans rôle à choisir", async () => {
-    renderForm(buildFetchMock([routeSoignants, routeServices()]))
+    renderForm(buildFetchMock([routeSoignants, routeRoles, routeServices()]))
     await ouvrir()
 
     await waitFor(() => {

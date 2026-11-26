@@ -25,3 +25,7 @@ export const tenantApiUrl = () => {
 
 export const establishmentApiUrl = () =>
   `${apiUrl}/e/${requireContext().establishmentId}/admin`
+
+// Un service désigné comme une donnée, dans l'établissement courant (écran d'administration).
+export const establishmentServiceApiUrl = (serviceId: string) =>
+  `${apiUrl}/e/${requireContext().establishmentId}/s/${serviceId}`

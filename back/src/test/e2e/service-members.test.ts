@@ -4,6 +4,7 @@ import {
   createEstablishment,
   createService,
   createUser,
+  roleIdOf,
   signIn,
   tenantUrl,
 } from './setup/fixtures'
@@ -35,6 +36,8 @@ describe('l equipe d un service, geree par son coordinateur', () => {
   let B: string
   let coordA: { access_token: string }
   let interA: { access_token: string }
+  const R: Record<string, string> = {}
+  let interB: string
 
   const call = (
     cookies: { access_token: string },
@@ -64,6 +67,15 @@ describe('l equipe d un service, geree par son coordinateur', () => {
     E2 = (await createEstablishment('CH Libourne')).id
     A = (await createService(E, 'Cardiologie')).id
     B = (await createService(E, 'Pneumologie')).id
+    for (const preset of [
+      'COORDINATEUR',
+      'INTERVENANT',
+      'SECRETARIAT',
+      'LECTURE',
+    ] as const) {
+      R[preset] = await roleIdOf(A, preset)
+    }
+    interB = await roleIdOf(B, 'INTERVENANT')
     await createUser({
       email: 'coord-a@test.fr',
       memberships: [
@@ -112,10 +124,10 @@ describe('l equipe d un service, geree par son coordinateur', () => {
     const refus = await Promise.all([
       call(interA, 'POST', tenantUrl(E, A, '/membres'), {
         email: 'quelquun@test.fr',
-        role: 'LECTURE',
+        roleId: R.LECTURE,
       }),
       call(interA, 'PATCH', tenantUrl(E, A, `/membres/${cible.id}`), {
-        role: 'LECTURE',
+        roleId: R.LECTURE,
       }),
       call(interA, 'DELETE', tenantUrl(E, A, `/membres/${cible.id}`)),
     ])
@@ -128,7 +140,7 @@ describe('l equipe d un service, geree par son coordinateur', () => {
       email: 'neuve@test.fr',
       firstName: 'Camille',
       lastName: 'Roux',
-      role: 'SECRETARIAT',
+      roleId: R.SECRETARIAT,
     })
     expect(res.statusCode).toBe(201)
     const corps = res.json()
@@ -144,12 +156,12 @@ describe('l equipe d un service, geree par son coordinateur', () => {
     expect(rattachement.serviceMemberships).toHaveLength(1)
     expect(rattachement.serviceMemberships[0]).toMatchObject({
       serviceId: A,
-      role: 'SECRETARIAT',
+      roleId: R.SECRETARIAT,
     })
   })
 
   it('invite un compte deja rattache ici : aucun lien, et son autre service survit', async () => {
-    const res = await inviter({ email: 'polyvalent@test.fr', role: 'LECTURE' })
+    const res = await inviter({ email: 'polyvalent@test.fr', roleId: R.LECTURE })
     expect(res.statusCode).toBe(201)
     expect(res.json().accessLink).toBeNull()
 
@@ -157,17 +169,17 @@ describe('l equipe d un service, geree par son coordinateur', () => {
       where: {
         establishmentMembership: { user: { email: 'polyvalent@test.fr' } },
       },
-      select: { serviceId: true, role: true },
+      select: { serviceId: true, roleId: true },
       orderBy: { createdAt: 'asc' },
     })
     expect(services).toEqual([
-      { serviceId: B, role: 'INTERVENANT' },
-      { serviceId: A, role: 'LECTURE' },
+      { serviceId: B, roleId: interB },
+      { serviceId: A, roleId: R.LECTURE },
     ])
   })
 
   it('refuse une seconde invitation de la meme adresse dans le meme service', async () => {
-    const res = await inviter({ email: 'polyvalent@test.fr', role: 'LECTURE' })
+    const res = await inviter({ email: 'polyvalent@test.fr', roleId: R.LECTURE })
     expect(res.statusCode).toBe(409)
     expect(res.json().message).toMatch(/already a member of this service/)
   })
@@ -178,11 +190,11 @@ describe('l equipe d un service, geree par son coordinateur', () => {
   it('refuse un compte super-admin et rattache sans jeton un compte en poste ailleurs', async () => {
     const superAdmin = await inviter({
       email: 'super@test.fr',
-      role: 'LECTURE',
+      roleId: R.LECTURE,
     })
     const ailleurs = await inviter({
       email: 'ailleurs@test.fr',
-      role: 'LECTURE',
+      roleId: R.LECTURE,
     })
     expect([superAdmin.statusCode, ailleurs.statusCode]).toEqual([400, 201])
     expect(ailleurs.json().accessLink).toBeNull()
@@ -210,11 +222,11 @@ describe('l equipe d un service, geree par son coordinateur', () => {
       coordA,
       'PATCH',
       tenantUrl(E, A, `/membres/${cible.id}`),
-      { role: 'COORDINATEUR' },
+      { roleId: R.COORDINATEUR },
     )
     expect(res.statusCode).toBe(200)
     expect(res.json()).toMatchObject({
-      role: 'COORDINATEUR',
+      role: { id: R.COORDINATEUR, name: 'Coordinateur' },
       user: { email: 'polyvalent@test.fr' },
     })
   })
@@ -223,26 +235,26 @@ describe('l equipe d un service, geree par son coordinateur', () => {
     const soi = await affectation('coord-a@test.fr', A)
     const [retrogradation, retrait] = await Promise.all([
       call(coordA, 'PATCH', tenantUrl(E, A, `/membres/${soi.id}`), {
-        role: 'LECTURE',
+        roleId: R.LECTURE,
       }),
       call(coordA, 'DELETE', tenantUrl(E, A, `/membres/${soi.id}`)),
     ])
     expect([retrogradation.statusCode, retrait.statusCode]).toEqual([409, 409])
-    expect((await affectation('coord-a@test.fr', A)).role).toBe('COORDINATEUR')
+    expect((await affectation('coord-a@test.fr', A)).roleId).toBe(
+      R.COORDINATEUR,
+    )
   })
 
   it('ne touche pas une affectation d un autre service, ni en ecriture ni en retrait', async () => {
     const dansB = await affectation('polyvalent@test.fr', B)
     const refus = await Promise.all([
       call(coordA, 'PATCH', tenantUrl(E, A, `/membres/${dansB.id}`), {
-        role: 'LECTURE',
+        roleId: R.LECTURE,
       }),
       call(coordA, 'DELETE', tenantUrl(E, A, `/membres/${dansB.id}`)),
     ])
     expect(refus.map((r) => r.statusCode)).toEqual([404, 404])
-    expect((await affectation('polyvalent@test.fr', B)).role).toBe(
-      'INTERVENANT',
-    )
+    expect((await affectation('polyvalent@test.fr', B)).roleId).toBe(interB)
   })
 
   it('retire du SERVICE seulement : le compte, son rattachement et son autre service restent', async () => {

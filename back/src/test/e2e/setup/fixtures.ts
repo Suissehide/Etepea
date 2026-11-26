@@ -97,7 +97,6 @@ export const createUser = async (params: {
           create: await Promise.all(
             (m.services ?? []).map(async (s) => ({
               serviceId: s.serviceId,
-              role: s.role,
               roleId: s.roleId ?? (await roleIdOf(s.serviceId, s.role)),
               soignantId: s.soignantId ?? null,
               establishmentId: m.establishmentId,

@@ -374,7 +374,7 @@ describe('effectiveMemberships', () => {
     ).toEqual([])
   })
 
-  it('un membre reel recoit les permissions de son role, archive ou non, et le prereglage comme role', () => {
+  it('un membre reel recoit les permissions de son role, archive ou non, et le prereglage (ou null) comme role', () => {
     const service = {
       id: 's1',
       establishmentId: 'e1',
@@ -407,7 +407,6 @@ describe('effectiveMemberships', () => {
               establishmentMembershipId: 'em1',
               serviceId: 's1',
               establishmentId: 'e1',
-              role: 'INTERVENANT',
               roleId: 'r9',
               roleDef: {
                 id: 'r9',
@@ -430,7 +429,7 @@ describe('effectiveMemberships', () => {
     ).toEqual([
       {
         id: 's1',
-        role: 'INTERVENANT',
+        role: null,
         roleId: 'r9',
         roleName: 'Accueil',
         permissions: ['agenda:read'],

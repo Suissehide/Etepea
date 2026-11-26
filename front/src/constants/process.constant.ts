@@ -39,6 +39,11 @@ export const SERVICE_MEMBER = {
   REMOVE: 'remove_service_member',
 }
 
+export const ROLE = {
+  GET_ALL: 'get_all_roles',
+  GET_FOR_SERVICE: 'get_roles_for_service',
+}
+
 export const SOIGNANT = {
   GET_ALL: 'get_all_soignants',
   GET_ALL_OF_SERVICE: 'get_all_soignants_of_service',

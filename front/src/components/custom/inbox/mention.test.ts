@@ -8,7 +8,7 @@ const m = (
   id: string,
   firstName: string,
   lastName: string,
-  role: ServiceMember['role'] = 'INTERVENANT',
+  role: ServiceMember['role'] = { id: 'r-inter', name: 'Intervenant' },
   deactivatedAt: string | null = null,
 ) =>
   ({
@@ -34,12 +34,11 @@ describe('mention', () => {
     )
   })
 
-  it('propose les membres actifs hors LECTURE, filtres sur le nom', () => {
+  it('propose les membres actifs, filtres sur le nom', () => {
     const members = [
       m('u1', 'Léo', 'Couffinhal'),
       m('u2', 'Claire', 'Leroy'),
-      m('u3', 'Clément', 'Roux', 'LECTURE'),
-      m('u4', 'Clara', 'Petit', 'INTERVENANT', '2026-01-01'),
+      m('u4', 'Clara', 'Petit', undefined, '2026-01-01'),
     ]
     expect(
       mentionCandidates(members, [], 'cl', [], []).map(
