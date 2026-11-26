@@ -65,7 +65,7 @@ const diagnosticEducatifTemplateRouter: FastifyPluginAsync = (fastify) => {
         body: createDiagnosticEducatifTemplateSchema,
         response: { 201: diagnosticEducatifTemplateResponseSchema },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'diagnostic-templates:write' },
     },
     async (request, reply) => {
       const template = await diagnosticEducatifTemplateDomain.create(
@@ -87,7 +87,7 @@ const diagnosticEducatifTemplateRouter: FastifyPluginAsync = (fastify) => {
         ...updateDiagnosticEducatifTemplateSchema,
         response: { 200: diagnosticEducatifTemplateResponseSchema },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'diagnostic-templates:write' },
     },
     (request) => {
       return diagnosticEducatifTemplateDomain.update(
@@ -105,7 +105,7 @@ const diagnosticEducatifTemplateRouter: FastifyPluginAsync = (fastify) => {
         params: diagnosticTemplateParamsSchema,
         response: { 204: z.null() },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'diagnostic-templates:write' },
     },
     async (request, reply) => {
       await diagnosticEducatifTemplateDomain.update(request.params.templateId, {
@@ -128,7 +128,7 @@ const diagnosticEducatifTemplateRouter: FastifyPluginAsync = (fastify) => {
           409: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'diagnostic-templates:write' },
     },
     async (request, reply) => {
       await diagnosticEducatifTemplateDomain.deleteForever(

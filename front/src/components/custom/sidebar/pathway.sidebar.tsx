@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
+import { useCan } from '@/hooks/useCan.ts'
 import { hexToRGBA } from '../../../libs/color.ts'
 import {
   usePathwayTemplateMutations,
@@ -24,6 +25,7 @@ import PathwayTemplatesSummary from '../popup/pathwayTemplatesSummary.tsx'
 import PathwayTemplateSheet from '../sheet/pathwayTemplateSheet.tsx'
 
 function SidebarPathway() {
+  const canEditTemplates = useCan('pathway-templates:write')
   const containerRef = useRef<HTMLDivElement>(null)
   const [openSheetId, setOpenSheetId] = useState('')
 
@@ -41,6 +43,9 @@ function SidebarPathway() {
   const viewStart = usePlanningStore((state) => state.viewStart)
 
   const handleEditPathwayTemplate = (pathwayTemplate: PathwayTemplate) => {
+    if (!canEditTemplates) {
+      return
+    }
     if (currentPathwayTemplate?.id === pathwayTemplate.id) {
       clearPathwayTemplate()
     } else {
@@ -82,16 +87,18 @@ function SidebarPathway() {
         <div className="flex items-center gap-1">
           <PathwayTemplatesSummary
             onShowInPlanning={(template) =>
-              setPathwayTemplate(template, viewStart)
+              canEditTemplates && setPathwayTemplate(template, viewStart)
             }
           />
-          <AddPathwayForm
-            trigger={
-              <Button variant="gradient" size="icon">
-                <Plus className="w-5 h-5" />
-              </Button>
-            }
-          />
+          {canEditTemplates && (
+            <AddPathwayForm
+              trigger={
+                <Button variant="gradient" size="icon">
+                  <Plus className="w-5 h-5" />
+                </Button>
+              }
+            />
+          )}
         </div>
       </div>
       <div
@@ -173,46 +180,48 @@ function SidebarPathway() {
                       </div>
                     </button>
 
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {index > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleMove(index, 'up')
-                          }}
-                          className="flex-shrink-0 h-6 w-6 text-text-dark"
-                        >
-                          <ChevronUp className="w-4 h-4" />
-                        </Button>
-                      )}
-                      {pathwayTemplates &&
-                        index < pathwayTemplates.length - 1 && (
+                    {canEditTemplates && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {index > 0 && (
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleMove(index, 'down')
+                              handleMove(index, 'up')
                             }}
                             className="flex-shrink-0 h-6 w-6 text-text-dark"
                           >
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronUp className="w-4 h-4" />
                           </Button>
                         )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenSheetId(pathwayTemplate.id)
-                        }}
-                        className="flex-shrink-0 h-6 w-6 text-text-dark"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                    </div>
+                        {pathwayTemplates &&
+                          index < pathwayTemplates.length - 1 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleMove(index, 'down')
+                              }}
+                              className="flex-shrink-0 h-6 w-6 text-text-dark"
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </Button>
+                          )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenSheetId(pathwayTemplate.id)
+                          }}
+                          className="flex-shrink-0 h-6 w-6 text-text-dark"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </li>
               )

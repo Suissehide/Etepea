@@ -67,7 +67,7 @@ const locationReadRouter: FastifyPluginAsync = (fastify) => {
 }
 
 // Ecriture, sous le prefixe de service comme la lecture : les locations sont propres a chaque
-// service depuis le 2026-09-29, et leur gestion revient au coordinateur (`referentials:write`,
+// service depuis le 2026-09-29, et leur gestion revient au coordinateur (`locations:write`,
 // le droit qui gere deja les thematiques et les modeles de diagnostic).
 const locationWriteRouter: FastifyPluginAsync = (fastify) => {
   const { locationDomain, logger } = fastify.iocContainer
@@ -82,7 +82,7 @@ const locationWriteRouter: FastifyPluginAsync = (fastify) => {
           201: locationResponseSchema,
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'locations:write' },
     },
     async (request, reply) => {
       const location = await locationDomain.create(request.body)
@@ -102,7 +102,7 @@ const locationWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'locations:write' },
     },
     async (request) => {
       const { locationID } = request.params
@@ -126,7 +126,7 @@ const locationWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'locations:write' },
     },
     async (request, reply) => {
       const { locationID } = request.params
@@ -154,7 +154,7 @@ const locationWriteRouter: FastifyPluginAsync = (fastify) => {
           409: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'locations:write' },
     },
     async (request, reply) => {
       await locationDomain.deleteForever(request.params.locationID)

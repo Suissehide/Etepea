@@ -14,7 +14,6 @@ export const SERVICE_PERMISSION_KEYS = [
   'planning:read',
   'planning:write',
   'referentials:read',
-  'referentials:write',
   'patient:read',
   'patient:write',
   'patient:delete',
@@ -37,7 +36,7 @@ export const SERVICE_PERMISSION_KEYS = [
   // etablissement — sur la seule APPARTENANCE de la chaine a l'un des deux ensembles, avant
   // meme de regarder les roles de l'appelant. Une chaine presente dans les DEUX ensembles
   // prendrait toujours la branche service, y compris pour un appelant d'administration
-  // d'etablissement dont `serviceRole` est `null` — la route d'administration echouerait donc
+  // d'etablissement dont `servicePermissions` est `null` — la route d'administration echouerait donc
   // TOUJOURS, quel que soit son `establishmentRole`. Verifie par execution en ecrivant d'abord
   // ce test faux.
   //
@@ -136,7 +135,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<
   COORDINATEUR: [
     ...READ_ALL,
     'planning:write',
-    'referentials:write',
     'pathway-templates:write',
     'thematics:write',
     'soignants:write',

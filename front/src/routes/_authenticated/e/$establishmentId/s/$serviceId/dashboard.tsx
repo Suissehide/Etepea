@@ -51,10 +51,12 @@ import { useSoignantStore } from '@/store/useSoignantStore.ts'
 import type { CreateAppointmentParams } from '@/types/appointment.ts'
 import type { Slot, SlotDateRange } from '@/types/slot.ts'
 import type { Soignant } from '@/types/soignant.ts'
+import { dailyTabGuard } from '@/utils/tab-guard.ts'
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/dashboard',
 )({
+  beforeLoad: dailyTabGuard('dashboard:read'),
   component: Dashboard,
 })
 

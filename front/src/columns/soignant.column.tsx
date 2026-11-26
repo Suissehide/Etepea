@@ -28,7 +28,7 @@ type SoignantColumnOptions = {
   thematicOptions: { value: string; label: string }[]
   // Membres du service et le soignant que chacun incarne (2026-09-29).
   members: ServiceMember[]
-  // L'écran reste consultable par lecture seule ; sans `referentials:write`,
+  // L'écran reste consultable par lecture seule ; sans `soignants:write`,
   // les actions d'écriture ne doivent pas apparaître (le menu n'est pas la
   // seule barrière, une URL se tape à la main).
   canManage: boolean

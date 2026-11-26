@@ -23,11 +23,11 @@ import {
 // donc se regler que depuis le service, ou les deux sont lisibles (l'administration
 // d'etablissement n'a pas de service en contexte, et le garde-fou de tenant lui refuse toute
 // lecture d'un modele de service). La lecture suit `members:read` (tout membre du service voit
-// qui y travaille), le rattachement a un soignant `referentials:write` (le coordinateur, comme
+// qui y travaille), le rattachement a un soignant `soignants:write` (le coordinateur, comme
 // pour les soignants eux-memes).
 //
 // L'equipe elle-meme — inviter, changer le role de service, retirer — suit
-// `service-members:manage`, une permission a part : `referentials:write` vaut pour le
+// `service-members:manage`, une permission a part : `soignants:write` vaut pour le
 // parametrage, celle-ci accorde des DROITS, et il faut pouvoir l'oter sans oter l'autre. Son
 // perimetre s'arrete au service courant ; les comptes et les rattachements d'etablissement
 // restent a `members:manage`.
@@ -138,7 +138,7 @@ const serviceMembersRouter: FastifyPluginAsync = (fastify) => {
         body: setServiceSoignantSchema,
         response: { 200: serviceMemberResponseSchema },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'service-members:manage' },
     },
     async (request) =>
       (

@@ -199,7 +199,7 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
           201: patientResponseSchema,
         },
       },
-      config: { permission: 'patient:write' },
+      config: { permission: 'patient:create' },
     },
     async (request, reply) => {
       const patient = await patientDomain.create(

@@ -391,10 +391,7 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
         }
         const { servicePermissions, establishmentRole } = request.tenant
         if (
-          !hasPermission(
-            { servicePermissions, establishmentRole },
-            permission,
-          )
+          !hasPermission({ servicePermissions, establishmentRole }, permission)
         ) {
           throw Boom.forbidden('Insufficient permission')
         }

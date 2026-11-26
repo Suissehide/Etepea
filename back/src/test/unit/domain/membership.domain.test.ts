@@ -405,7 +405,11 @@ describe('MembershipDomain', () => {
   // une autre.
   it('autorise l utilisateur courant a vider sa propre liste de services', async () => {
     const { domain, ctx, calls } = build(
-      [row({ serviceMemberships: [{ serviceId: 's1', roleId: 'r-intervenant' }] })],
+      [
+        row({
+          serviceMemberships: [{ serviceId: 's1', roleId: 'r-intervenant' }],
+        }),
+      ],
       2,
     )
     await asAdmin(ctx, () => domain.update('em1', { services: [] }))

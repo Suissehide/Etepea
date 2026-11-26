@@ -22,7 +22,7 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'referentials:write')) {
+    if (!can(tenant, 'pdf-design:write')) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,

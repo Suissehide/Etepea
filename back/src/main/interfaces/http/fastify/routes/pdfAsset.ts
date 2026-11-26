@@ -69,7 +69,7 @@ const pdfAssetWriteRouter: FastifyPluginAsync = (fastify) => {
         body: createPdfAssetSchema,
         response: { 201: pdfAssetSummarySchema },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'pdf-design:write' },
     },
     async (request, reply) => {
       const asset = await pdfAssetDomain.create(request.body)
@@ -91,7 +91,7 @@ const pdfAssetWriteRouter: FastifyPluginAsync = (fastify) => {
           409: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'pdf-design:write' },
     },
     async (request, reply) => {
       await pdfAssetDomain.remove(request.params.assetID)

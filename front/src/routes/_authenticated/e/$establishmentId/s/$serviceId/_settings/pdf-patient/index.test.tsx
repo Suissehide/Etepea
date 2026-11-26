@@ -453,7 +453,7 @@ describe('ecran des designs de PDF patient', () => {
 })
 
 describe('garde de l ecran des designs', () => {
-  it('renvoie au tableau de bord un role sans referentials:write', async () => {
+  it('renvoie au tableau de bord un role sans pdf-design:write', async () => {
     const intervenant: User = {
       ...user,
       establishments: [

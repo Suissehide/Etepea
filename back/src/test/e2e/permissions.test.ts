@@ -67,13 +67,13 @@ const probes: {
     heldStatus: 200,
   },
   {
-    permission: 'referentials:write',
+    permission: 'thematics:write',
     method: 'POST',
     path: '/thematic',
     payload: { name: 'X', soignantIDs: [] },
   },
   {
-    permission: 'referentials:write',
+    permission: 'thematics:write',
     method: 'PATCH',
     path: `/thematic/${FAKE_ID}`,
     payload: { role: null },
@@ -85,10 +85,21 @@ const probes: {
     heldStatus: 200,
   },
   {
-    permission: 'referentials:write',
+    permission: 'patient-form:write',
     method: 'POST',
     path: '/service-field-categories',
     payload: { label: 'X' },
+  },
+  {
+    permission: 'pathway-templates:write',
+    method: 'POST',
+    path: '/pathway-template',
+    payload: {
+      name: 'X',
+      color: '#000000',
+      mainTag: 'X',
+      slotTemplateIDs: [],
+    },
   },
   {
     permission: 'patient:read',
@@ -97,7 +108,7 @@ const probes: {
     heldStatus: 200,
   },
   {
-    permission: 'patient:write',
+    permission: 'patient:create',
     method: 'POST',
     path: '/patient',
     payload: { firstName: 'A', lastName: 'B' },
@@ -269,5 +280,123 @@ describe('permissions par role de service', () => {
         }
       },
     )
+  })
+})
+
+describe("permissions d'un rôle personnalisé", () => {
+  let t: TestApp
+  let establishmentId: string
+  let serviceId: string
+  let patientId: string
+  const cookies: Record<string, { access_token: string }> = {}
+
+  const asRole = async (name: string, permissions: ServicePermission[]) => {
+    const role = await testDb.serviceRoleDef.create({
+      data: { establishmentId, serviceId, name, permissions },
+    })
+    const email = `${name}@test.fr`
+    await createUser({
+      email,
+      memberships: [
+        {
+          establishmentId,
+          services: [{ serviceId, role: 'LECTURE', roleId: role.id }],
+        },
+      ],
+    })
+    cookies[name] = await signIn(t.app, email)
+  }
+  const call = (
+    name: string,
+    method: 'POST' | 'PATCH',
+    path: string,
+    payload: unknown,
+  ) =>
+    t.app.inject({
+      method,
+      url: tenantUrl(establishmentId, serviceId, path),
+      cookies: cookies[name],
+      payload: payload as never,
+    })
+
+  beforeAll(async () => {
+    t = await buildTestApp()
+    await truncateAll()
+    const est = await createEstablishment()
+    const service = await createService(est.id)
+    establishmentId = est.id
+    serviceId = service.id
+    patientId = (
+      await testDb.patient.create({
+        data: {
+          establishmentId,
+          firstName: 'A',
+          lastName: 'B',
+          createDate: new Date(),
+        },
+      })
+    ).id
+    await testDb.patientServiceFile.create({
+      data: { establishmentId, serviceId, patientId },
+    })
+    await asRole('planning', ['planning:read', 'planning:write'])
+    await asRole('modif', ['patient:read', 'patient:write'])
+    await asRole('rdv', ['patient:read', 'appointment:write'])
+  })
+
+  afterAll(async () => {
+    await t.close()
+    await testDb.$disconnect()
+  })
+
+  it('planning:write ne suffit pas pour un parcours théorique', async () => {
+    expect(
+      (
+        await call('planning', 'POST', '/forbidden-week', {
+          date: '2026-01-05',
+        })
+      ).statusCode,
+    ).not.toBe(403)
+    expect(
+      (
+        await call('planning', 'POST', '/pathway-template', {
+          name: 'X',
+          color: '#000000',
+          mainTag: 'X',
+          slotTemplateIDs: [],
+        })
+      ).statusCode,
+    ).toBe(403)
+  })
+
+  it('patient:write sans patient:create modifie mais ne crée pas', async () => {
+    expect(
+      (
+        await call('modif', 'POST', '/patient', {
+          firstName: 'A',
+          lastName: 'B',
+        })
+      ).statusCode,
+    ).toBe(403)
+    expect(
+      (
+        await call('modif', 'PATCH', `/patient/${patientId}`, {
+          firstName: 'C',
+        })
+      ).statusCode,
+    ).toBe(200)
+  })
+
+  it('appointment:write sans appointment:create ne crée pas de rendez-vous', async () => {
+    expect(
+      (
+        await call('rdv', 'POST', '/appointment', {
+          slotID: FAKE_ID,
+          patientIDs: [],
+          startDate: '2026-01-05T09:00:00.000Z',
+          endDate: '2026-01-05T10:00:00.000Z',
+        })
+      ).statusCode,
+    ).toBe(403)
   })
 })

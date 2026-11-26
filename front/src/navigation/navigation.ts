@@ -23,7 +23,8 @@ export type NavItem = {
   // Absente : visible par tout membre de l'echelle. La plateforme n'en porte aucune : son
   // layout (`super-admin.tsx`) n'admet que le drapeau `isSuperAdmin`, qu'aucune permission de
   // la matrice ne represente.
-  permission?: Permission
+  // Une liste : visible des qu'une des permissions est detenue.
+  permission?: Permission | readonly Permission[]
   // Regroupement par nature du travail : un separateur vertical fin est dessine entre deux
   // groupes consecutifs. Un groupe de `MENU_GROUPS` sort des onglets : il devient un bouton a
   // droite de la barre, dont le menu deroulant presente ses ecrans en sous-categories decalees.
@@ -60,22 +61,26 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
     {
       label: 'Dashboard',
       to: '/e/$establishmentId/s/$serviceId/dashboard',
+      permission: 'dashboard:read',
       group: 'Quotidien',
     },
     {
       label: 'Agenda',
       to: '/e/$establishmentId/s/$serviceId/agenda',
+      permission: 'agenda:read',
       group: 'Quotidien',
     },
     {
       label: 'Patients',
       to: '/e/$establishmentId/s/$serviceId/patient',
+      permission: 'patients:read',
       group: 'Quotidien',
       matchPrefix: true,
     },
     {
       label: 'Suivi',
       to: '/e/$establishmentId/s/$serviceId/suivi',
+      permission: 'suivi:read',
       group: 'Quotidien',
     },
     // La MEME permission que le `beforeLoad` de chaque ecran.
@@ -96,7 +101,7 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
     {
       label: 'Planning',
       to: '/e/$establishmentId/s/$serviceId/planning',
-      permission: 'planning:write',
+      permission: ['planning:write', 'pathway-templates:write'],
       group: 'Administration',
       description: 'Semaines types et créneaux des parcours',
     },
@@ -112,7 +117,7 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
     {
       label: 'Thématiques',
       to: '/e/$establishmentId/s/$serviceId/thematic',
-      permission: 'referentials:write',
+      permission: 'thematics:write',
       group: 'Administration',
       description: "Ateliers d'éducation et soignants habilités",
     },
@@ -121,35 +126,35 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
     {
       label: 'Soignants',
       to: '/e/$establishmentId/s/$serviceId/soignant',
-      permission: 'referentials:write',
+      permission: 'soignants:write',
       group: 'Administration',
       description: 'Métiers qui interviennent dans le service',
     },
     {
       label: 'Salles',
       to: '/e/$establishmentId/s/$serviceId/location',
-      permission: 'referentials:write',
+      permission: 'locations:write',
       group: 'Administration',
       description: 'Lieux où se tiennent les séances',
     },
     {
       label: 'Diagnostics éducatifs',
       to: '/e/$establishmentId/s/$serviceId/diagnostic-template',
-      permission: 'referentials:write',
+      permission: 'diagnostic-templates:write',
       group: 'Administration',
       description: 'Modèles de bilan du service',
     },
     {
       label: 'Document patient',
       to: '/e/$establishmentId/s/$serviceId/pdf-patient',
-      permission: 'referentials:write',
+      permission: 'pdf-design:write',
       group: 'Administration',
       description: 'Mise en page du programme remis au patient',
     },
     {
       label: 'Fiche patient',
       to: '/e/$establishmentId/s/$serviceId/fiche-patient',
-      permission: 'referentials:write',
+      permission: 'patient-form:write',
       group: 'Administration',
       description: 'Champs des onglets Parcours et Sortie',
     },

@@ -33,10 +33,12 @@ import {
 } from '@/queries/useServiceField.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import type { PatientWithTags } from '@/types/patient.ts'
+import { dailyTabGuard } from '@/utils/tab-guard.ts'
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/patient/',
 )({
+  beforeLoad: dailyTabGuard('patients:read'),
   component: PatientList,
 })
 

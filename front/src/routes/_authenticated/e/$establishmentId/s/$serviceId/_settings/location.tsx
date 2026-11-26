@@ -22,7 +22,7 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'referentials:write')) {
+    if (!can(tenant, 'locations:write')) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,
@@ -33,10 +33,10 @@ export const Route = createFileRoute(
 })
 
 function LocationSettings() {
-  // Le menu ne montre cette page qu'aux détenteurs de `referentials:write` (le coordinateur),
+  // Le menu ne montre cette page qu'aux détenteurs de `locations:write` (le coordinateur),
   // mais l'URL se tape à la main : les actions d'écriture se gardent aussi
   // ici, indépendamment du menu.
-  const canManage = useCan('referentials:write')
+  const canManage = useCan('locations:write')
   const [showArchived, setShowArchived] = useState(false)
   const { locations, isPending } = useLocationQueries(showArchived)
   const { archiveLocation, restoreLocation, deleteForeverLocation } =

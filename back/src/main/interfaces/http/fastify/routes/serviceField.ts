@@ -44,7 +44,7 @@ const serviceFieldRouter: FastifyPluginAsync = (fastify) => {
         body: createServiceFieldSchema,
         response: { 201: serviceFieldResponseSchema },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request, reply) => {
       const created = await serviceFieldDomain.create(request.body)
@@ -67,7 +67,7 @@ const serviceFieldRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request) => {
       const { fieldID } = request.params
@@ -91,7 +91,7 @@ const serviceFieldRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request, reply) => {
       const { fieldID } = request.params
@@ -118,7 +118,7 @@ const serviceFieldRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request) => {
       const { fieldID, choiceID } = request.params
@@ -136,7 +136,7 @@ const serviceFieldRouter: FastifyPluginAsync = (fastify) => {
         body: reorderServiceFieldsSchema,
         response: { 204: z.null() },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request, reply) => {
       await serviceFieldDomain.reorderFields(
@@ -158,7 +158,7 @@ const serviceFieldRouter: FastifyPluginAsync = (fastify) => {
         ...reorderServiceFieldChoicesByIdSchema,
         response: { 204: z.null() },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request, reply) => {
       const { fieldID } = request.params

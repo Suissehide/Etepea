@@ -9,7 +9,7 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 
 // Membres du service courant (2026-09-29). Lecture pour tout membre du service
 // (`members:read`) ; le rattachement a un soignant, pour le coordinateur
-// (`referentials:write`). Sous le prefixe de service : c'est le seul endroit ou les
+// (`service-members:manage`). Sous le prefixe de service : c'est le seul endroit ou les
 // soignants, propres a chaque service, sont lisibles.
 //
 // Inviter, changer le role et retirer suivent `service-members:manage` (MDS-17) : le perimetre

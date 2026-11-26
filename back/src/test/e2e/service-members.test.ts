@@ -182,7 +182,10 @@ describe('l equipe d un service, geree par son coordinateur', () => {
   })
 
   it('invite un compte deja rattache ici : aucun lien, et son autre service survit', async () => {
-    const res = await inviter({ email: 'polyvalent@test.fr', roleId: R.LECTURE })
+    const res = await inviter({
+      email: 'polyvalent@test.fr',
+      roleId: R.LECTURE,
+    })
     expect(res.statusCode).toBe(201)
     expect(res.json().accessLink).toBeNull()
 
@@ -200,7 +203,10 @@ describe('l equipe d un service, geree par son coordinateur', () => {
   })
 
   it('refuse une seconde invitation de la meme adresse dans le meme service', async () => {
-    const res = await inviter({ email: 'polyvalent@test.fr', roleId: R.LECTURE })
+    const res = await inviter({
+      email: 'polyvalent@test.fr',
+      roleId: R.LECTURE,
+    })
     expect(res.statusCode).toBe(409)
     expect(res.json().message).toMatch(/already a member of this service/)
   })

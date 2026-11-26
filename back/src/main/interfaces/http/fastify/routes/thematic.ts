@@ -73,7 +73,7 @@ const thematicRouter: FastifyPluginAsync = (fastify) => {
           201: thematicResponseSchema,
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'thematics:write' },
     },
     async (request, reply) => {
       const thematic = await thematicDomain.create(request.body)
@@ -93,7 +93,7 @@ const thematicRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'thematics:write' },
     },
     async (request) => {
       const { thematicID } = request.params
@@ -116,7 +116,7 @@ const thematicRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'thematics:write' },
     },
     async (request, reply) => {
       const { thematicID } = request.params
@@ -144,7 +144,7 @@ const thematicRouter: FastifyPluginAsync = (fastify) => {
           409: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'thematics:write' },
     },
     async (request, reply) => {
       await thematicDomain.deleteForever(request.params.thematicID)

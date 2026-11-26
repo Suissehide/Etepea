@@ -19,10 +19,10 @@ import { Button } from '../../ui/button.tsx'
 import { ConfirmDeleteForm } from '../popup/confirmDeleteForm.tsx'
 
 function SidebarDiagnosticTemplate() {
-  // Le menu ne montre cet écran qu'aux détenteurs de `referentials:write`,
+  // Le menu ne montre cet écran qu'aux détenteurs de `diagnostic-templates:write`,
   // mais l'URL se tape à la main : les actions d'écriture se gardent aussi
   // ici, indépendamment du menu.
-  const canManage = useCan('referentials:write')
+  const canManage = useCan('diagnostic-templates:write')
   const { selectedId, setSelectedId } = useDiagnosticTemplateStore()
   const [showArchived, setShowArchived] = useState(false)
   const [purgeTargetId, setPurgeTargetId] = useState<string | null>(null)

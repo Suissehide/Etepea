@@ -1,11 +1,14 @@
 import { type AnyRoute, createRouter } from '@tanstack/react-router'
 import { describe, expect, it } from 'vitest'
 
+import { can } from '@/hooks/useCan.ts'
 import { routeTree } from '@/routeTree.gen.ts'
+import type { TenantContext } from '@/types/auth.ts'
 import {
   isEstablishmentPermission,
   isServicePermission,
   type Permission,
+  type ServicePermission,
 } from '@/utils/permissions.ts'
 import { HORS_ONGLETS, NAVIGATION, SCALE_ROOTS } from './navigation.ts'
 
@@ -73,8 +76,10 @@ describe('table de navigation', () => {
   // vivre a l'echelle du service (ni l'inverse), ou un administrateur sans service ne
   // l'atteindrait pas.
   it('garde chaque echelle par des permissions de sa propre echelle', () => {
-    const permissions = (items: readonly { permission?: Permission }[]) =>
-      items.flatMap((item) => (item.permission ? [item.permission] : []))
+    const permissions = (
+      items: readonly { permission?: Permission | readonly Permission[] }[],
+    ) =>
+      items.flatMap((item) => (item.permission ? [item.permission].flat() : []))
 
     expect(permissions(NAVIGATION.service).every(isServicePermission)).toBe(
       true,
@@ -83,5 +88,46 @@ describe('table de navigation', () => {
       permissions(NAVIGATION.establishment).every(isEstablishmentPermission),
     ).toBe(true)
     expect(permissions(NAVIGATION.platform)).toEqual([])
+  })
+})
+
+describe('visibilite des entrees par permission', () => {
+  const contexte = (
+    servicePermissions: ServicePermission[],
+  ): TenantContext => ({
+    establishmentId: 'e',
+    serviceId: 's',
+    establishmentRole: 'MEMBER',
+    servicePermissions,
+    hiddenSoignantIds: [],
+    soignantId: null,
+  })
+
+  const visibles = (...permissions: ServicePermission[]) =>
+    NAVIGATION.service
+      .filter(
+        (item) =>
+          !item.permission || can(contexte(permissions), item.permission),
+      )
+      .map((item) => item.label)
+
+  it("cache l'onglet Suivi sans suivi:read", () => {
+    const labels = visibles('dashboard:read', 'agenda:read')
+    expect(labels).toContain('Dashboard')
+    expect(labels).not.toContain('Suivi')
+  })
+
+  it("ne montre qu'un ecran d'administration avec diagnostic-templates:write", () => {
+    const admin = NAVIGATION.service
+      .filter((item) => item.group === 'Administration')
+      .map((item) => item.label)
+    const ouverts = visibles('diagnostic-templates:write').filter((label) =>
+      admin.includes(label),
+    )
+    expect(ouverts).toEqual(['Diagnostics éducatifs'])
+  })
+
+  it('ouvre Planning avec pathway-templates:write seul', () => {
+    expect(visibles('pathway-templates:write')).toContain('Planning')
   })
 })

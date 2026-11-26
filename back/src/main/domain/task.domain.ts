@@ -56,10 +56,7 @@ class TaskDomain implements TaskDomainInterface {
     if (requestedAssignees.length > 0) {
       const eligible = new Set(
         members
-          .filter(
-            (m) =>
-              m.establishmentMembership.user.deactivatedAt === null,
-          )
+          .filter((m) => m.establishmentMembership.user.deactivatedAt === null)
           .map((m) => m.establishmentMembership.user.id),
       )
       if (requestedAssignees.some((id) => !eligible.has(id))) {

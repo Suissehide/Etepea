@@ -70,7 +70,7 @@ const pathwayTemplateRouter: FastifyPluginAsync = (fastify) => {
           201: pathwayTemplateResponseSchema,
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request, reply) => {
       const pathwayTemplate = await pathwayTemplateDomain.create(request.body)
@@ -90,7 +90,7 @@ const pathwayTemplateRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request, reply) => {
       const copy = await pathwayTemplateDomain.duplicate(
@@ -115,7 +115,7 @@ const pathwayTemplateRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request) => {
       const { pathwayTemplateID } = request.params
@@ -140,7 +140,7 @@ const pathwayTemplateRouter: FastifyPluginAsync = (fastify) => {
           204: z.null(),
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request, reply) => {
       await pathwayTemplateDomain.reorder(request.body.orderedIds)
@@ -159,7 +159,7 @@ const pathwayTemplateRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'planning:write' },
+      config: { permission: 'pathway-templates:write' },
     },
     async (request, reply) => {
       const { pathwayTemplateID } = request.params

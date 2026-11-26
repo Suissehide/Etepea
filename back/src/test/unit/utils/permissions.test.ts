@@ -17,7 +17,6 @@ describe('permissions', () => {
         'planning:read',
         'planning:write',
         'referentials:read',
-        'referentials:write',
         'patient:read',
         'patient:write',
         'clinical:read',
@@ -293,7 +292,7 @@ describe('permissions', () => {
     for (const cle of Object.values(DEFAULT_ROLE_PERMISSIONS).flat()) {
       expect(catalogue).toContain(cle)
     }
-    expect(SERVICE_PERMISSION_KEYS).toHaveLength(35)
+    expect(SERVICE_PERMISSION_KEYS).toHaveLength(34)
   })
 
   it('est identique a la copie du front', () => {

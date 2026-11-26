@@ -67,7 +67,7 @@ const soignantReadRouter: FastifyPluginAsync = (fastify) => {
 }
 
 // Ecriture, sous le prefixe de service comme la lecture : les soignants sont propres a chaque
-// service depuis le 2026-09-29, et leur gestion revient au coordinateur (`referentials:write`,
+// service depuis le 2026-09-29, et leur gestion revient au coordinateur (`soignants:write`,
 // le droit qui gere deja les thematiques et les modeles de diagnostic).
 const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
   const { soignantDomain, logger } = fastify.iocContainer
@@ -82,7 +82,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
           201: soignantDetailResponseSchema,
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'soignants:write' },
     },
     async (request, reply) => {
       const soignant = await soignantDomain.create(request.body)
@@ -102,7 +102,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'soignants:write' },
     },
     async (request) => {
       const { soignantID } = request.params
@@ -126,7 +126,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'soignants:write' },
     },
     async (request, reply) => {
       const { soignantID } = request.params
@@ -154,7 +154,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
           409: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'soignants:write' },
     },
     async (request, reply) => {
       await soignantDomain.deleteForever(request.params.soignantID)

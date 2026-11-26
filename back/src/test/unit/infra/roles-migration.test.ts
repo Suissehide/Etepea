@@ -32,7 +32,7 @@ describe('migration roles_configurables', () => {
   const ajout = readFileSync(AJOUT, 'utf8')
   const ajoutes = (preset: string) =>
     ajout.includes(`"preset" = '${preset}'`) &&
-    ajout.includes("array_append(\"permissions\", 'dashboard:write')")
+    ajout.includes('array_append("permissions", \'dashboard:write\')')
 
   for (const [preset, perms] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
     it(`la migration écrit exactement les droits de ${preset}`, () => {

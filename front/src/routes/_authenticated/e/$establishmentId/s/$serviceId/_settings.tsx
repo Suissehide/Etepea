@@ -11,7 +11,13 @@ import { resolveTenantContext } from '@/utils/tenant-context.ts'
 // /e/:id/admin.
 const SETTINGS_PERMISSIONS: Permission[] = [
   'planning:write',
-  'referentials:write',
+  'pathway-templates:write',
+  'thematics:write',
+  'soignants:write',
+  'locations:write',
+  'diagnostic-templates:write',
+  'pdf-design:write',
+  'patient-form:write',
   'stats:write',
 ]
 

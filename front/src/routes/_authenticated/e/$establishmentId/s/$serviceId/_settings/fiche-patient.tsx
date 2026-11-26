@@ -55,7 +55,7 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'referentials:write')) {
+    if (!can(tenant, 'patient-form:write')) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,
@@ -295,7 +295,7 @@ function FieldRow({ canManage, ...props }: FieldRowProps) {
 
 function FichePatientSettings() {
   // L'URL se tape a la main : les actions d'ecriture se gardent aussi ici, pas que dans le menu.
-  const canManage = useCan('referentials:write')
+  const canManage = useCan('patient-form:write')
   const [showDeleted, setShowDeleted] = useState(false)
   const { fields } = useServiceFieldsQuery()
   const { categories } = useServiceFieldCategoriesQuery()

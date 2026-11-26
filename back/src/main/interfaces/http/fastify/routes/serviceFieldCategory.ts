@@ -36,7 +36,7 @@ const serviceFieldCategoryRouter: FastifyPluginAsync = (fastify) => {
         body: createServiceFieldCategorySchema,
         response: { 201: serviceFieldCategoryResponseSchema },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request, reply) => {
       const created = await serviceFieldCategoryDomain.create(
@@ -61,7 +61,7 @@ const serviceFieldCategoryRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request) => {
       const { categoryID } = request.params
@@ -79,7 +79,7 @@ const serviceFieldCategoryRouter: FastifyPluginAsync = (fastify) => {
         body: reorderServiceFieldCategoriesSchema,
         response: { 204: z.null() },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'patient-form:write' },
     },
     async (request, reply) => {
       await serviceFieldCategoryDomain.reorder(request.body.ids)

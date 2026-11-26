@@ -80,7 +80,7 @@ const appointmentRouter: FastifyPluginAsync = (fastify) => {
           201: appointmentWithConflictsResponseSchema,
         },
       },
-      config: { permission: 'appointment:write' },
+      config: { permission: 'appointment:create' },
     },
     async (request, reply) => {
       const appointment = await appointmentDomain.create(

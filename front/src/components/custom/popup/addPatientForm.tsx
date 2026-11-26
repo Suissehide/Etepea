@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { GENDER_OPTIONS } from '../../../constants/patient.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { useCan } from '../../../hooks/useCan.ts'
 import {
   usePatientIdentitySearch,
   usePatientMutations,
@@ -35,6 +36,7 @@ interface AddPatientFormProps {
 }
 
 function AddPatientForm({ trigger }: AddPatientFormProps) {
+  const canCreate = useCan('patient:create')
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(1)
   const navigate = useNavigate()
@@ -159,6 +161,10 @@ function AddPatientForm({ trigger }: AddPatientFormProps) {
     await attachExistingPatient.mutateAsync(match.id)
     setOpen(false)
     await goToPatient(match.id)
+  }
+
+  if (!canCreate) {
+    return null
   }
 
   return (

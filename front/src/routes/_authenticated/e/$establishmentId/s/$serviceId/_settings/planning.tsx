@@ -125,13 +125,11 @@ import { cycleWeekNumber } from '@/utils/weekCycle.ts'
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/planning',
 )({
-  // Cet écran, lui, exige spécifiquement `planning:write` (il ne contient
-  // que des actions d'écriture de planning : créneaux, modèles, parcours,
-  // semaines interdites, cycle). Vu le nombre de contrôles concernés, on
-  // garde l'écran entier plutôt que chaque bouton un par un.
+  // L'écran s'ouvre avec `planning:write` ou `pathway-templates:write` ; l'édition des
+  // parcours théoriques (volet Parcours) n'est offerte qu'à `pathway-templates:write`.
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'planning:write')) {
+    if (!can(tenant, ['planning:write', 'pathway-templates:write'])) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,

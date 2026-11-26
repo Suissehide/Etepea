@@ -20,14 +20,14 @@ import type { Soignant } from '@/types/soignant.ts'
 import { resolveTenantContext } from '@/utils/tenant-context.ts'
 
 // Soignants du SERVICE (2026-09-29) : un soignant est un metier qui intervient ici, pas une
-// personne unique de l'etablissement. Le coordinateur (`referentials:write`) les gere, leurs
+// personne unique de l'etablissement. Le coordinateur (`soignants:write`) les gere, leurs
 // thematiques, et les comptes qui les incarnent dans ce service.
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/soignant',
 )({
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'referentials:write')) {
+    if (!can(tenant, 'soignants:write')) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,
@@ -38,10 +38,10 @@ export const Route = createFileRoute(
 })
 
 function SoignantSettings() {
-  // Le menu ne montre cette page qu'aux détenteurs de `referentials:write` (le coordinateur),
+  // Le menu ne montre cette page qu'aux détenteurs de `soignants:write` (le coordinateur),
   // mais l'URL se tape à la main : les actions d'écriture se gardent aussi
   // ici, indépendamment du menu.
-  const canManage = useCan('referentials:write')
+  const canManage = useCan('soignants:write')
   const [showArchived, setShowArchived] = useState(false)
   const { allSoignants: soignants, isPending } =
     useSoignantQueries(showArchived)

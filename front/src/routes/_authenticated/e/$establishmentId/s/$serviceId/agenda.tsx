@@ -21,6 +21,7 @@ import WeekDayStrip from '@/components/custom/weekDayStrip.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { Etiquette } from '@/components/table/etiquette.tsx'
 import ReactTable from '@/components/table/reactTable.tsx'
+import { useCan } from '@/hooks/useCan.ts'
 import { styleSoignant } from '@/libs/color.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import { getFreeIntervals } from '@/libs/slotAvailability.ts'
@@ -38,11 +39,13 @@ import {
 import { useSoignantQueries } from '@/queries/useSoignant.ts'
 import { useSoignantStore } from '@/store/useSoignantStore.ts'
 import type { Slot } from '@/types/slot.ts'
+import { dailyTabGuard } from '@/utils/tab-guard.ts'
 import { libelleSemaineDu, plageSemaine } from '@/utils/weekCycle.ts'
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/agenda',
 )({
+  beforeLoad: dailyTabGuard('agenda:read'),
   // `date` (YYYY-MM-DD) : lien « Voir l'agenda »/« Ouvrir le RDV » du panneau de notifications.
   validateSearch: (search: Record<string, unknown>): { date?: string } => ({
     date: typeof search.date === 'string' ? search.date : undefined,
@@ -197,9 +200,11 @@ function Agenda() {
     !!addPatientTarget &&
     !addPatientTarget.isIndividual &&
     (!!addPatientTarget.appointmentId || addPatientTarget.patients.length === 0)
-  const newAppointment = editPatients
-    ? null
-    : getNewAppointmentProps(addPatientTarget, addPatientSlot)
+  const canCreateAppointment = useCan('appointment:create')
+  const newAppointment =
+    editPatients || !canCreateAppointment
+      ? null
+      : getNewAppointmentProps(addPatientTarget, addPatientSlot)
 
   const columns = useMemo(
     () =>

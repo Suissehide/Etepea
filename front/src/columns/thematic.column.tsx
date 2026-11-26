@@ -18,7 +18,7 @@ type ThematicActions = {
   // changent, une archivee ne se reedite pas.
   archived: boolean
   soignantOptions: { value: string; label: string }[]
-  // L'écran reste consultable par lecture seule ; sans `referentials:write`,
+  // L'écran reste consultable par lecture seule ; sans `thematics:write`,
   // les actions d'écriture ne doivent pas apparaître (le menu n'est pas la
   // seule barrière, une URL se tape à la main).
   canManage: boolean

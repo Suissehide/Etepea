@@ -1374,7 +1374,8 @@ class PatientDomain implements PatientDomainInterface {
     // permission, sans quoi un compte SECRETARIAT ou LECTURE écrirait dans
     // une transmission clinique par la porte de service. Calculé une fois et
     // appliqué aux trois écritures ci-dessous.
-    const { servicePermissions, establishmentRole } = this.tenantContext.current()
+    const { servicePermissions, establishmentRole } =
+      this.tenantContext.current()
     const canWriteClinical = hasPermission(
       { servicePermissions, establishmentRole },
       'clinical:write',

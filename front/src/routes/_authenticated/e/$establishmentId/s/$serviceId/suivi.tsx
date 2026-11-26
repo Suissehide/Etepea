@@ -36,10 +36,12 @@ import {
 } from '@/libs/suiviDay.ts'
 import { usePresenceStatusMutation } from '@/queries/useAppointment.ts'
 import { usePathwayTrackingQuery } from '@/queries/usePathway.ts'
+import { dailyTabGuard } from '@/utils/tab-guard.ts'
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/suivi',
 )({
+  beforeLoad: dailyTabGuard('suivi:read'),
   component: SuiviPage,
 })
 

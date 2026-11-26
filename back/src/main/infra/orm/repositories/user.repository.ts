@@ -1,11 +1,11 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
+  MembershipRole,
   UserCreateEntityRepo,
   UserEntityRepo,
   UserProfileUpdateRepo,
   UserRepositoryInterface,
-  MembershipRole,
   UserWithMemberships,
 } from '../../../types/infra/orm/repositories/user.repository.interface'
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'

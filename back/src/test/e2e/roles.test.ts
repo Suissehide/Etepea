@@ -290,7 +290,10 @@ describe('roles de service : liste et attribution par roleId', () => {
         method: 'PATCH',
         url: adminUrl(E, `/members/${membershipId}`),
         cookies: admin,
-        payload: { role: 'MEMBER', services: [{ serviceId: A, roleId: archive }] },
+        payload: {
+          role: 'MEMBER',
+          services: [{ serviceId: A, roleId: archive }],
+        },
       })
       expect(garde.statusCode).toBe(200)
       expect(garde.json().serviceMemberships).toEqual([

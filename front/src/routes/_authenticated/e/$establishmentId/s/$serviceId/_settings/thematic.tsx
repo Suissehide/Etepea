@@ -23,7 +23,7 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'referentials:write')) {
+    if (!can(tenant, 'thematics:write')) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,
@@ -34,10 +34,10 @@ export const Route = createFileRoute(
 })
 
 function ThematicSettings() {
-  // Le menu ne montre cette page qu'aux détenteurs de `referentials:write`,
+  // Le menu ne montre cette page qu'aux détenteurs de `thematics:write`,
   // mais l'URL se tape à la main : les actions d'écriture se gardent aussi
   // ici, indépendamment du menu.
-  const canManage = useCan('referentials:write')
+  const canManage = useCan('thematics:write')
   const [showArchived, setShowArchived] = useState(false)
   const { thematics, isPending } = useThematicQueries(showArchived)
   const { soignants } = useSoignantQueries()

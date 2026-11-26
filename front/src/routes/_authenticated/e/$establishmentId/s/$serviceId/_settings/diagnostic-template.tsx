@@ -21,7 +21,7 @@ export const Route = createFileRoute(
 )({
   beforeLoad: ({ context, params }) => {
     const tenant = resolveTenantContext(context.authState.user, params)
-    if (!can(tenant, 'referentials:write')) {
+    if (!can(tenant, 'diagnostic-templates:write')) {
       throw redirect({
         to: '/e/$establishmentId/s/$serviceId/dashboard',
         params,
@@ -32,10 +32,10 @@ export const Route = createFileRoute(
 })
 
 function DiagnosticTemplateSettings() {
-  // Le menu ne montre cet écran qu'aux détenteurs de `referentials:write`,
+  // Le menu ne montre cet écran qu'aux détenteurs de `diagnostic-templates:write`,
   // mais l'URL se tape à la main : les contrôles d'édition se désactivent
   // aussi ici, indépendamment du menu.
-  const canManage = useCan('referentials:write')
+  const canManage = useCan('diagnostic-templates:write')
   const { selectedId } = useDiagnosticTemplateStore()
   const { templates } = useDiagnosticTemplatesQuery()
   const { updateTemplate } = useDiagnosticTemplateMutations()

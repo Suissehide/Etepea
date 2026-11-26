@@ -35,7 +35,7 @@ const pdfDesignReadRouter: FastifyPluginAsync = (fastify) => {
   return Promise.resolve()
 }
 
-// Ecriture sous le meme prefixe, sur `referentials:write` comme les autres referentiels du
+// Ecriture sous le meme prefixe, sur `pdf-design:write`, comme les autres referentiels du
 // service : c'est le coordinateur qui compose les designs.
 const pdfDesignWriteRouter: FastifyPluginAsync = (fastify) => {
   const { pdfDesignDomain } = fastify.iocContainer
@@ -51,7 +51,7 @@ const pdfDesignWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'pdf-design:write' },
     },
     async (request, reply) => {
       const design = await pdfDesignDomain.create(request.body)
@@ -71,7 +71,7 @@ const pdfDesignWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'pdf-design:write' },
     },
     (request) => pdfDesignDomain.update(request.params.designID, request.body),
   )
@@ -87,7 +87,7 @@ const pdfDesignWriteRouter: FastifyPluginAsync = (fastify) => {
           404: z.object({ message: z.string() }),
         },
       },
-      config: { permission: 'referentials:write' },
+      config: { permission: 'pdf-design:write' },
     },
     async (request, reply) => {
       await pdfDesignDomain.archive(request.params.designID)

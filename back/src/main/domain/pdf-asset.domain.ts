@@ -108,7 +108,7 @@ class PdfAssetDomain implements PdfAssetDomainInterface {
     }
   }
 
-  // `referentials:write` suffit a supprimer une image, mais pas a casser un design : la
+  // `pdf-design:write` suffit a supprimer une image, mais pas a casser un design : la
   // suppression est refusee tant qu'un contenu porte l'identifiant, et la reponse NOMME les
   // designs pour que l'utilisateur sache ou aller les corriger.
   //
