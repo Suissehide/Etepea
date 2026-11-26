@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { NotificationPrefsApi } from '@/api/notificationPrefs.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import type { NotificationPrefs as Prefs } from '@/types/notificationPrefs.ts'
 import { NotificationPrefs } from './notificationPrefs.tsx'
@@ -26,9 +27,14 @@ const user: User = {
       name: 'CHU',
       role: 'MEMBER',
       services: [
-        { id: 's1', name: 'Cardio', role: 'INTERVENANT', affecte: true },
-        { id: 's2', name: 'Diabeto', role: 'INTERVENANT', affecte: true },
-        { id: 's3', name: 'Implicite', role: 'COORDINATEUR', affecte: false },
+        { id: 's1', name: 'Cardio', ...svcRole('INTERVENANT'), affecte: true },
+        { id: 's2', name: 'Diabeto', ...svcRole('INTERVENANT'), affecte: true },
+        {
+          id: 's3',
+          name: 'Implicite',
+          ...svcRole('COORDINATEUR'),
+          affecte: false,
+        },
       ],
     },
   ],

@@ -121,7 +121,6 @@ describe('toMeResponse', () => {
             {
               id: 's1',
               name: 'Svc s1',
-              role: 'COORDINATEUR',
               ...administrateur,
               soignantId: 'so1',
               affecte: true,
@@ -129,7 +128,6 @@ describe('toMeResponse', () => {
             {
               id: 's3',
               name: 'Svc s3',
-              role: 'COORDINATEUR',
               ...administrateur,
               soignantId: null,
               affecte: false,
@@ -178,7 +176,6 @@ describe('toMeResponse', () => {
       {
         id: 's1',
         name: 'Svc s1',
-        role: null,
         roleId: 'r9',
         roleName: 'Agenda seul',
         permissions: ['agenda:read'],

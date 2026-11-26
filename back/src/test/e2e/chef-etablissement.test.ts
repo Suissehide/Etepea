@@ -64,7 +64,6 @@ describe('chef d etablissement', () => {
       {
         id: serviceId,
         name: 'Non affecte',
-        role: 'COORDINATEUR',
         roleId: null,
         roleName: 'Administrateur',
         permissions: ALL_SERVICE_PERMISSIONS,

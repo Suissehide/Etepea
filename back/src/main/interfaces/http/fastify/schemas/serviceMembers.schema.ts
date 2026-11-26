@@ -20,7 +20,10 @@ export const serviceMemberResponseSchema = z.object({
     invitationResendableAt: z.coerce.date().nullable(),
   }),
 })
-export const serviceMembersResponseSchema = z.array(serviceMemberResponseSchema)
+// `canTasks` : le rôle porte `tasks:read`, seuls ces membres se mentionnent dans une tâche.
+export const serviceMembersResponseSchema = z.array(
+  serviceMemberResponseSchema.extend({ canTasks: z.boolean() }),
+)
 
 export const serviceMemberParamsSchema = z.object({
   serviceMembershipId: z.string().min(1),

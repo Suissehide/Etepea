@@ -106,7 +106,6 @@ describe('routes services', () => {
       expect.objectContaining({
         id: service.id,
         name: 'Cardiologie',
-        role: 'COORDINATEUR',
         soignantId: null,
         affecte: true,
       }),
@@ -468,7 +467,6 @@ describe('routes services', () => {
         expect.objectContaining({
           id: serviceD.id,
           name: 'D-focus',
-          role: 'LECTURE',
           soignantId: null,
           affecte: true,
         }),
@@ -538,7 +536,6 @@ describe('routes services', () => {
         expect.objectContaining({
           id: serviceD.id,
           name: 'D-focus',
-          role: 'LECTURE',
           soignantId: null,
           affecte: true,
         }),

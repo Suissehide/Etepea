@@ -34,11 +34,12 @@ export const mentionCandidates = (
     .filter((s) => !excludeSoignantIds.includes(s.id))
     .filter((s) => fold(s.name).includes(fold(query)))
     .map((soignant) => ({ kind: 'soignant', soignant }))
-  // ponytail: aucun filtre par rôle (le back refuse sans `tasks:read`), à filtrer sur `/roles` en tâche 5.
   const memberMatches: MentionCandidate[] = members
     .filter(
       (x) =>
-        x.user.deactivatedAt === null && !excludeUserIds.includes(x.user.id),
+        x.canTasks &&
+        x.user.deactivatedAt === null &&
+        !excludeUserIds.includes(x.user.id),
     )
     .filter((x) =>
       fold(`${x.user.firstName ?? ''} ${x.user.lastName ?? ''}`).includes(

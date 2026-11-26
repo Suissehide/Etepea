@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ACTIVITY_DEFINITIONS } from '@/constants/activity.constant.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { ActivityReport } from '@/types/activity.ts'
 import type { AuthState, User } from '@/types/auth.ts'
 import { Route as serviceLayoutRoute } from '../$serviceId.tsx'
@@ -44,7 +45,7 @@ const avecRole = (
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole(role) }],
     },
   ],
 })
@@ -236,7 +237,7 @@ beforeEach(() => {
       establishmentId: 'e1',
       serviceId: 's1',
       establishmentRole: 'MEMBER',
-      serviceRole: 'COORDINATEUR',
+      ...ctxRole('COORDINATEUR'),
       soignantId: null,
     },
   })

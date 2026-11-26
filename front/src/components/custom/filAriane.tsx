@@ -23,7 +23,6 @@ import {
   PopoverSubGroup,
   PopoverTrigger,
 } from '@/components/ui/popover.tsx'
-import { SERVICE_ROLE_LABEL } from '@/constants/member.constant.ts'
 import { cn } from '@/libs/utils.ts'
 import { type CurrentScale, useCurrentScale } from '@/navigation/navigation.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
@@ -308,7 +307,7 @@ const MenuDesServices = ({
                           {destination.service.name}
                         </span>
                         <span className="ml-auto text-xs font-normal text-text-light whitespace-nowrap">
-                          {SERVICE_ROLE_LABEL[destination.service.role]}
+                          {destination.service.roleName}
                         </span>
                         {estCourant && (
                           <Check className="w-4 h-4 shrink-0 text-primary" />

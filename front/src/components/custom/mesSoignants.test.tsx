@@ -19,13 +19,13 @@ vi.mock('@/hooks/useToast.ts', () => ({ useToast: () => ({ toast }) }))
 const aff = (
   establishmentId: string,
   serviceId: string,
-  role: Affectation['role'] = 'INTERVENANT',
+  roleName = 'Intervenant',
 ): Affectation => ({
   establishmentId,
   establishmentName: `Etab ${establishmentId}`,
   serviceId,
   serviceName: `Service ${serviceId}`,
-  role,
+  roleName,
   soignantId: null,
 })
 
@@ -72,7 +72,7 @@ describe('MesSoignants', () => {
   })
 
   it('l accès est une pastille en lecture seule, sans bouton Enregistrer', () => {
-    monter([aff('a', 's1', 'COORDINATEUR')])
+    monter([aff('a', 's1', 'Coordinateur')])
     expect(screen.getByText('Coordinateur')).toHaveAttribute(
       'title',
       'Attribué par un administrateur',

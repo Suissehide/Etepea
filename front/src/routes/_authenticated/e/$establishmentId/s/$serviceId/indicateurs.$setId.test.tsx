@@ -23,6 +23,7 @@ import utc from 'dayjs/plugin/utc'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { AuthState, User } from '@/types/auth.ts'
 import { Route as serviceLayoutRoute } from '../$serviceId.tsx'
 import { Route as jeuRoute } from './indicateurs.$setId.tsx'
@@ -48,7 +49,7 @@ const avecRole = (id: string, role: 'COORDINATEUR' | 'INTERVENANT'): User => ({
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole(role) }],
     },
   ],
 })
@@ -323,7 +324,7 @@ beforeEach(() => {
       establishmentId: 'e1',
       serviceId: 's1',
       establishmentRole: 'MEMBER',
-      serviceRole: 'COORDINATEUR',
+      ...ctxRole('COORDINATEUR'),
       soignantId: null,
     },
   })
@@ -760,7 +761,7 @@ describe('écran d un jeu d indicateurs', () => {
 
     act(() =>
       useAuthStore.setState((etat) => ({
-        context: etat.context && { ...etat.context, serviceRole: 'LECTURE' },
+        context: etat.context && { ...etat.context, ...ctxRole('LECTURE') },
       })),
     )
 

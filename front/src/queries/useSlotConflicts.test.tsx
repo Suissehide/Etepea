@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import { useSlotConflictsQuery } from './useSlot.ts'
 
 const wrapper = () => {
@@ -32,7 +33,7 @@ describe('useSlotConflictsQuery', () => {
         establishmentId: 'e1',
         serviceId: 's1',
         establishmentRole: 'ADMIN',
-        serviceRole: 'COORDINATEUR',
+        ...ctxRole('COORDINATEUR'),
         soignantId: null,
       },
     })

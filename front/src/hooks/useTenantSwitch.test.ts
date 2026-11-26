@@ -21,6 +21,7 @@ import { useDiagnosticTemplateStore } from '@/store/useDiagnosticTemplateStore.t
 import { usePathwayTemplateEditStore } from '@/store/usePathwayTemplateEditStore.ts'
 import { usePlanningStore } from '@/store/usePlanningStore.ts'
 import { useSoignantStore } from '@/store/useSoignantStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { TenantContext } from '@/types/auth.ts'
 import type { Soignant } from '@/types/soignant.ts'
 
@@ -28,7 +29,7 @@ const serviceA: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 const serviceB: TenantContext = { ...serviceA, serviceId: 's2' }
@@ -36,7 +37,8 @@ const serviceB: TenantContext = { ...serviceA, serviceId: 's2' }
 const sansService: TenantContext = {
   ...serviceA,
   serviceId: null,
-  serviceRole: null,
+  servicePermissions: null,
+  hiddenSoignantIds: [],
 }
 
 const soignantDuServiceA: Soignant = { id: 'so1', name: 'Dupont' }

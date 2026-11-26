@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { PathwayEnrollment, Patient } from '@/types/patient.ts'
 import { AddPatientToPathwayForm } from './addPatientToPathwayForm.tsx'
 
@@ -18,7 +19,7 @@ const context = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN' as const,
-  serviceRole: 'COORDINATEUR' as const,
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 

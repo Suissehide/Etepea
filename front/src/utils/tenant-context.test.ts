@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import {
   accessibleCouples,
@@ -24,15 +25,20 @@ const user: User = {
       name: 'CHU',
       role: 'ADMIN',
       services: [
-        { id: 's1', name: 'Cardio', role: 'COORDINATEUR', soignantId: 'so1' },
-        { id: 's2', name: 'Pneumo', role: 'LECTURE' },
+        {
+          id: 's1',
+          name: 'Cardio',
+          ...svcRole('COORDINATEUR'),
+          soignantId: 'so1',
+        },
+        { id: 's2', name: 'Pneumo', ...svcRole('LECTURE') },
       ],
     },
     {
       id: 'e2',
       name: 'Clinique',
       role: 'MEMBER',
-      services: [{ id: 's3', name: 'Reeduc', role: 'INTERVENANT' }],
+      services: [{ id: 's3', name: 'Reeduc', ...svcRole('INTERVENANT') }],
     },
   ],
 }
@@ -57,7 +63,7 @@ describe('resolveTenantContext', () => {
       establishmentId: 'e1',
       serviceId: 's2',
       establishmentRole: 'ADMIN',
-      serviceRole: 'LECTURE',
+      ...ctxRole('LECTURE'),
       soignantId: null,
       serviceName: 'Pneumo',
     })
@@ -100,7 +106,8 @@ describe('resolveEstablishmentContext', () => {
       establishmentId: 'e1',
       serviceId: null,
       establishmentRole: 'ADMIN',
-      serviceRole: null,
+      servicePermissions: null,
+      hiddenSoignantIds: [],
       soignantId: null,
     })
   })
@@ -128,7 +135,7 @@ describe('defaultTenantContext', () => {
       establishmentId: 'e1',
       serviceId: 's1',
       establishmentRole: 'ADMIN',
-      serviceRole: 'COORDINATEUR',
+      ...ctxRole('COORDINATEUR'),
       soignantId: 'so1',
       serviceName: 'Cardio',
     })

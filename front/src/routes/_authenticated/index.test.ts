@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { redirection } from '../../test/redirection.ts'
 import { Route } from './index.tsx'
@@ -15,7 +16,7 @@ const userAvecService: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
   ],
 }
@@ -71,7 +72,7 @@ const superAdminAvecService: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
   ],
 }

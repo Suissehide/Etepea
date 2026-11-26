@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useThematicQueries } from '@/queries/useThematic.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { TenantContext } from '@/types/auth.ts'
 import AddThematicForm from './addThematicForm.tsx'
 
@@ -13,7 +14,7 @@ const service: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 

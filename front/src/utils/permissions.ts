@@ -7,7 +7,6 @@ export type RolePreset =
   | 'INTERVENANT'
   | 'SECRETARIAT'
   | 'LECTURE'
-export type ServiceRole = RolePreset
 export type EstablishmentRole = 'ADMIN' | 'MEMBER'
 
 // Catalogue exhaustif des clés de service : le type `ServicePermission` en dérive.
@@ -228,12 +227,6 @@ export type RoleSet = {
   servicePermissions: readonly ServicePermission[] | null
   establishmentRole: EstablishmentRole | null
 }
-
-// Transitoire (front) : rôle figé vers liste de permissions, tant que `/me` porte un `role`.
-export const presetPermissions = (
-  role: RolePreset | null,
-): readonly ServicePermission[] | null =>
-  role === null ? null : DEFAULT_ROLE_PERMISSIONS[role]
 
 export const hasPermission = (
   roles: RoleSet,

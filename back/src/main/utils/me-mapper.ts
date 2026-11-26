@@ -1,4 +1,4 @@
-import type { EstablishmentRole, ServiceRole } from '../../generated/enums'
+import type { EstablishmentRole } from '../../generated/enums'
 import { effectiveMemberships } from '../domain/accessGrant.domain'
 import type {
   EffectiveService,
@@ -19,7 +19,6 @@ export type MeResponse = {
     services: {
       id: string
       name: string
-      role: ServiceRole | null
       roleId: string | null
       roleName: string
       permissions: string[]
@@ -37,7 +36,6 @@ export type MeResponse = {
 }
 
 const roleFields = (service: EffectiveService) => ({
-  role: service.role,
   roleId: service.roleId,
   roleName: service.roleName,
   permissions: [...service.permissions],

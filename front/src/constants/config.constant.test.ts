@@ -5,15 +5,21 @@ import {
   tenantApiUrl,
 } from '@/constants/config.constant.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 
 const withService = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN' as const,
-  serviceRole: 'COORDINATEUR' as const,
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
-const withoutService = { ...withService, serviceId: null, serviceRole: null }
+const withoutService = {
+  ...withService,
+  serviceId: null,
+  servicePermissions: null,
+  hiddenSoignantIds: [],
+}
 
 describe('fabriques d URL', () => {
   beforeEach(() => {

@@ -429,7 +429,6 @@ describe('taches partagees et mentions', () => {
     expect(me.json().establishments[0].services).toEqual([
       expect.objectContaining({
         id: A,
-        role: null,
         roleId: agendaRole,
         roleName: 'Agenda seul',
         permissions: ['agenda:read'],

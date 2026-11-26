@@ -5,6 +5,7 @@ import utc from 'dayjs/plugin/utc'
 import type React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { ctxRole } from '@/test/roles.ts'
 import { useAuthStore } from '../../../../store/useAuthStore.ts'
 import type { Patient } from '../../../../types/patient.ts'
 import ProgrammePDFModal from './programme-pdf-modal.tsx'
@@ -136,7 +137,7 @@ describe('ProgrammePDFModal', () => {
         serviceId: 's1',
         serviceName: 'Cardio',
         establishmentRole: 'MEMBER',
-        serviceRole: 'COORDINATEUR',
+        ...ctxRole('COORDINATEUR'),
         soignantId: null,
       },
     })

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { LAST_CONTEXT_KEY } from '@/utils/tenant-context.ts'
 import { Route } from './$serviceId.tsx'
@@ -17,7 +18,12 @@ const user: User = {
       name: 'CHU',
       role: 'ADMIN',
       services: [
-        { id: 's1', name: 'Cardio', role: 'COORDINATEUR', soignantId: 'so1' },
+        {
+          id: 's1',
+          name: 'Cardio',
+          ...svcRole('COORDINATEUR'),
+          soignantId: 'so1',
+        },
       ],
     },
   ],
@@ -67,7 +73,7 @@ describe('beforeLoad du layout de service — effets de bord reserves a la navig
       establishmentId: 'e1',
       serviceId: 's1',
       establishmentRole: 'ADMIN',
-      serviceRole: 'COORDINATEUR',
+      ...ctxRole('COORDINATEUR'),
       soignantId: 'so1',
       serviceName: 'Cardio',
     })

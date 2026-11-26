@@ -21,6 +21,7 @@ import {
   useTenantQueryClient,
 } from '@/hooks/useTenantSwitch.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { AuthState, User } from '@/types/auth.ts'
 import { Route as adminRoute } from './admin.tsx'
 import { Route as serviceRoute } from './s/$serviceId.tsx'
@@ -60,8 +61,8 @@ const user: User = {
       name: 'CHU',
       role: 'ADMIN',
       services: [
-        { id: 's1', name: 'Cardio', role: 'COORDINATEUR' },
-        { id: 's2', name: 'Neuro', role: 'INTERVENANT' },
+        { id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') },
+        { id: 's2', name: 'Neuro', ...svcRole('INTERVENANT') },
       ],
     },
     {

@@ -8,6 +8,7 @@ import { act, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { TenantContext } from '@/types/auth.ts'
 import { PatientAccessLogButton } from './patientAccessLogButton.tsx'
 
@@ -24,13 +25,13 @@ const contextCoordinateur: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'MEMBER',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: 'so1',
 }
 
 const contextIntervenant: TenantContext = {
   ...contextCoordinateur,
-  serviceRole: 'INTERVENANT',
+  ...ctxRole('INTERVENANT'),
 }
 
 // Le routeur rend apres son premier chargement : sans l'attendre, une absence serait vraie a vide.

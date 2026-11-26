@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { InboxApi } from '@/api/inbox.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import type { Notification, NotificationType, Task } from '@/types/task.ts'
 import { Inbox } from './inbox.tsx'
@@ -95,8 +96,8 @@ const user: User = {
       name: 'CHU',
       role: 'MEMBER',
       services: [
-        { id: 's1', name: 'Cardio', role: 'INTERVENANT', affecte: true },
-        { id: 's2', name: 'Diabeto', role: 'LECTURE', affecte: true },
+        { id: 's1', name: 'Cardio', ...svcRole('INTERVENANT'), affecte: true },
+        { id: 's2', name: 'Diabeto', ...svcRole('LECTURE'), affecte: true },
       ],
     },
   ],
@@ -135,6 +136,7 @@ describe('Inbox', () => {
           id: 'm1',
           role: { id: 'r-inter', name: 'Intervenant' },
           soignantId: null,
+          canTasks: true,
           user: {
             id: 'u1',
             email: 'a@b.fr',
@@ -149,6 +151,7 @@ describe('Inbox', () => {
           id: 'm2',
           role: { id: 'r-inter', name: 'Intervenant' },
           soignantId: null,
+          canTasks: true,
           user: {
             id: 'u2',
             email: 'c@t.fr',
@@ -209,7 +212,12 @@ describe('Inbox', () => {
           {
             ...user.establishments[0],
             services: [
-              { id: 's2', name: 'Diabeto', role: 'LECTURE', affecte: true },
+              {
+                id: 's2',
+                name: 'Diabeto',
+                ...svcRole('LECTURE'),
+                affecte: true,
+              },
             ],
           },
         ],
@@ -294,11 +302,16 @@ describe('Inbox', () => {
               {
                 id: 's1',
                 name: 'Cardio',
-                role: 'INTERVENANT',
+                ...svcRole('INTERVENANT'),
                 affecte: true,
                 soignantId: 'so1',
               },
-              { id: 's2', name: 'Diabeto', role: 'LECTURE', affecte: true },
+              {
+                id: 's2',
+                name: 'Diabeto',
+                ...svcRole('LECTURE'),
+                affecte: true,
+              },
             ],
           },
         ],

@@ -10,10 +10,12 @@ const m = (
   lastName: string,
   role: ServiceMember['role'] = { id: 'r-inter', name: 'Intervenant' },
   deactivatedAt: string | null = null,
+  canTasks = true,
 ) =>
   ({
     id,
     role,
+    canTasks,
     user: { id, firstName, lastName, email: `${id}@t.fr`, deactivatedAt },
   }) as ServiceMember
 
@@ -32,6 +34,18 @@ describe('mention', () => {
     expect(stripMention('Vérifier les ordonnances @cl')).toBe(
       'Vérifier les ordonnances ',
     )
+  })
+
+  it('ne propose pas un membre dont le rôle n a pas tasks:read', () => {
+    const members = [
+      m('u1', 'Claire', 'Un'),
+      m('u2', 'Clara', 'Deux', undefined, null, false),
+    ]
+    expect(
+      mentionCandidates(members, [], 'cl', [], []).map(
+        (c) => c.kind === 'member' && c.member.user.id,
+      ),
+    ).toEqual(['u1'])
   })
 
   it('propose les membres actifs, filtres sur le nom', () => {

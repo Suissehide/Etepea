@@ -1,4 +1,5 @@
 import type { TenantContext, User } from '@/types/auth.ts'
+import { parsePermissions } from './permissions.ts'
 
 // Le dernier contexte visité est retenu par utilisateur : sur un poste
 // partagé, le favori de l'un ne doit pas être proposé à l'autre.
@@ -60,7 +61,8 @@ export const resolveTenantContext = (
     establishmentId: establishment.id,
     serviceId: service.id,
     establishmentRole: establishment.role,
-    serviceRole: service.role,
+    servicePermissions: parsePermissions(service.permissions),
+    hiddenSoignantIds: service.hiddenSoignantIds,
     // Porté par l'affectation de service depuis le 2026-09-29 (soignants propres à chaque service).
     soignantId: service.soignantId ?? null,
     serviceName: service.name,
@@ -81,7 +83,8 @@ export const resolveEstablishmentContext = (
     establishmentId: establishment.id,
     serviceId: null,
     establishmentRole: establishment.role,
-    serviceRole: null,
+    servicePermissions: null,
+    hiddenSoignantIds: [],
     // Aucun service, donc aucun soignant : ils sont propres à chaque service.
     soignantId: null,
   }

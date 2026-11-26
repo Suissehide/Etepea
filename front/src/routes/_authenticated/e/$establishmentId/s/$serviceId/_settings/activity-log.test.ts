@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { activityLogColumns } from '@/columns/activityLog.column.tsx'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { redirection } from '../../../../../../../test/redirection.ts'
 import { Route } from './activity-log.tsx'
@@ -16,7 +17,7 @@ const membre = (role: 'COORDINATEUR' | 'INTERVENANT'): User => ({
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole(role) }],
     },
   ],
 })

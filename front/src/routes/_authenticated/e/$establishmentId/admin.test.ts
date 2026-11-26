@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { LAST_CONTEXT_KEY } from '@/utils/tenant-context.ts'
 import { redirection } from '../../../../test/redirection.ts'
@@ -36,7 +37,7 @@ const member: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
   ],
 }
@@ -88,7 +89,8 @@ describe('beforeLoad du layout d etablissement', () => {
       establishmentId: 'e1',
       serviceId: null,
       establishmentRole: 'ADMIN',
-      serviceRole: null,
+      servicePermissions: null,
+      hiddenSoignantIds: [],
       soignantId: null,
     })
     // Un contexte sans service ne designe aucun service : il ne doit jamais

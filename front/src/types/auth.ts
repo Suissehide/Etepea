@@ -1,8 +1,5 @@
-export type ServiceRole =
-  | 'COORDINATEUR'
-  | 'INTERVENANT'
-  | 'SECRETARIAT'
-  | 'LECTURE'
+import type { ServicePermission } from '@/utils/permissions.ts'
+
 export type EstablishmentRole = 'ADMIN' | 'MEMBER'
 
 export type User = {
@@ -22,7 +19,11 @@ export type User = {
     services: {
       id: string
       name: string
-      role: ServiceRole
+      // Null pour ADMIN et octroi : toutes les permissions, aucun rôle en base.
+      roleId: string | null
+      roleName: string
+      permissions: string[]
+      hiddenSoignantIds: string[]
       soignantId?: string | null
       // Vraie affectation : faux pour le coordinateur implicite ou un octroi.
       affecte?: boolean
@@ -39,7 +40,7 @@ export type User = {
 }
 
 // Contexte établissement/service courant, lu dans l'URL par le layout
-// correspondant. `serviceId` et `serviceRole` sont nuls sur les écrans
+// correspondant. `serviceId` et `servicePermissions` sont nuls sur les écrans
 // d'administration d'établissement, qui vivent sous une URL sans service.
 export type TenantContext = {
   establishmentId: string
@@ -50,7 +51,8 @@ export type TenantContext = {
   // une absence se lit exactement comme un contexte sans service.
   serviceName?: string | null
   establishmentRole: EstablishmentRole
-  serviceRole: ServiceRole | null
+  servicePermissions: readonly ServicePermission[] | null
+  hiddenSoignantIds: string[]
   soignantId: string | null
 }
 

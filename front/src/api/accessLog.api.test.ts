@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { PatientAccessLogResponse } from '@/types/accessLog.ts'
 import { AccessLogApi } from './accessLog.api.ts'
 
@@ -8,7 +9,7 @@ const context = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'MEMBER' as const,
-  serviceRole: 'COORDINATEUR' as const,
+  ...ctxRole('COORDINATEUR'),
   soignantId: 'so1',
 }
 

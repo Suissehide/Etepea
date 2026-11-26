@@ -18,6 +18,7 @@ import { InboxApi } from '@/api/inbox.api.ts'
 import { Route as adminRoute } from '@/routes/_authenticated/e/$establishmentId/admin.tsx'
 import { Route as serviceRoute } from '@/routes/_authenticated/e/$establishmentId/s/$serviceId.tsx'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { AuthState, TenantContext, User } from '@/types/auth.ts'
 import Navbar from './navbar.tsx'
 import { TeteDuTiroir } from './navigationMobile.tsx'
@@ -56,7 +57,7 @@ const utilisateur: User = {
       id: 'e1',
       name: 'CHU',
       role: 'ADMIN',
-      services: [{ id: 's1', name: 'Cardio', role: 'COORDINATEUR' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') }],
     },
   ],
 }
@@ -67,7 +68,7 @@ const dernierContexteVisite: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: 'so1',
 }
 
@@ -258,7 +259,7 @@ const avecRoles = (
       ...utilisateur.establishments[0],
       role: establishmentRole,
       services: serviceRole
-        ? [{ id: 's1', name: 'Cardio', role: serviceRole }]
+        ? [{ id: 's1', name: 'Cardio', ...svcRole(serviceRole) }]
         : [],
     },
   ],

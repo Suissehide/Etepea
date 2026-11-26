@@ -142,6 +142,11 @@ class MembershipDomain implements MembershipDomainInterface {
     return this.membershipRepository.findServiceMembers()
   }
 
+  // Les membres du service dont le rôle porte `tasks:read` (mentions de tâches).
+  findTaskMembers(): Promise<ServiceMemberRowDomain[]> {
+    return this.membershipRepository.findTaskMembers()
+  }
+
   async setServiceSoignant(
     serviceMembershipId: string,
     soignantId: string | null,

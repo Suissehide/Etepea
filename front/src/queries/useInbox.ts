@@ -9,7 +9,6 @@ import { useMemo } from 'react'
 import { InboxApi, type ServiceRef } from '@/api/inbox.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import type { CreateTaskInput, Notification, Task } from '@/types/task.ts'
-import { DEFAULT_ROLE_PERMISSIONS } from '@/utils/permissions.ts'
 
 export type InboxService = ServiceRef & {
   name: string
@@ -39,7 +38,7 @@ export const useInboxServices = (): InboxService[] => {
             establishmentId: e.id,
             serviceId: s.id,
             name: s.name,
-            canTasks: DEFAULT_ROLE_PERMISSIONS[s.role].includes('tasks:read'),
+            canTasks: s.permissions.includes('tasks:read'),
             soignantId: s.soignantId ?? null,
           })),
       ),

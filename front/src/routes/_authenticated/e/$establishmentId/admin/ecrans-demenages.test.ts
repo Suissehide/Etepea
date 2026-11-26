@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { redirection } from '../../../../../test/redirection.ts'
 import { Route as journal } from './activity-log.tsx'
@@ -27,7 +28,7 @@ const coordinateur: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'COORDINATEUR' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') }],
     },
   ],
 }

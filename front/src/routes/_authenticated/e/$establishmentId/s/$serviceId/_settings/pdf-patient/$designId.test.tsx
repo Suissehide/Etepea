@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { AuthState, User } from '@/types/auth.ts'
 import type { PdfDesignContent } from '@/types/pdfDesign.ts'
 import { Route as serviceLayoutRoute } from '../../../$serviceId.tsx'
@@ -40,7 +41,7 @@ const user: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'COORDINATEUR' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') }],
     },
   ],
 }
@@ -255,7 +256,7 @@ beforeEach(() => {
       establishmentId: 'e1',
       serviceId: 's1',
       establishmentRole: 'MEMBER',
-      serviceRole: 'COORDINATEUR',
+      ...ctxRole('COORDINATEUR'),
       soignantId: null,
     },
   })

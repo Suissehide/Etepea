@@ -7,6 +7,8 @@ export type ServiceMember = {
   id: string
   role: { id: string; name: string }
   soignantId: string | null
+  // Le rôle porte `tasks:read` : seuls ces membres se mentionnent dans une tâche.
+  canTasks: boolean
   user: {
     id: string
     email: string

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { redirection } from '../../test/redirection.ts'
 import { Route as ancienJournal } from './settings/activity-log.tsx'
@@ -32,7 +33,7 @@ const admin: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
     { id: 'e2', name: 'Clinique', role: 'ADMIN', services: [] },
   ],

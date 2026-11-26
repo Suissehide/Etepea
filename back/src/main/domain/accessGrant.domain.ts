@@ -10,7 +10,6 @@ import { ALL_SERVICE_PERMISSIONS, parsePermissions } from '../utils/permissions'
 // ADMIN d'établissement et octroi : toutes les permissions, sans ligne de rôle.
 const commeAdministrateur = (id: string): EffectiveService => ({
   id,
-  role: 'COORDINATEUR',
   roleId: null,
   roleName: 'Administrateur',
   permissions: ALL_SERVICE_PERMISSIONS,
@@ -94,7 +93,6 @@ const appartenancesReelles = (
               )
               .map(({ serviceId, roleDef }) => ({
                 id: serviceId,
-                role: roleDef.preset,
                 roleId: roleDef.id,
                 roleName: roleDef.name,
                 permissions: parsePermissions(roleDef.permissions),

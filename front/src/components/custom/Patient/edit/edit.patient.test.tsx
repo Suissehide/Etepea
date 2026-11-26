@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { Patient } from '@/types/patient.ts'
 import type {
   ServiceField,
@@ -31,7 +32,7 @@ const context = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN' as const,
-  serviceRole: 'COORDINATEUR' as const,
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 
@@ -1268,7 +1269,7 @@ describe('EditPatient — champs configurables du service', () => {
 
   it('ne rend pas un champ clinique sans clinical:read', async () => {
     useAuthStore.setState({
-      context: { ...context, serviceRole: 'SECRETARIAT' as const },
+      context: { ...context, ...ctxRole('SECRETARIAT') },
     })
     renderConfigured()
     await screen.findByLabelText('HbA1c (%)')
@@ -1319,7 +1320,7 @@ describe('EditPatient — champs configurables du service', () => {
 
   it('sans clinical:read, l’enregistrement n’envoie aucune clé clinicalData', async () => {
     useAuthStore.setState({
-      context: { ...context, serviceRole: 'SECRETARIAT' as const },
+      context: { ...context, ...ctxRole('SECRETARIAT') },
     })
     const bodies: Record<string, unknown>[] = []
     renderConfigured(bodies)
@@ -1417,7 +1418,7 @@ describe('EditPatient — un onglet par catégorie', () => {
       }),
     ]
     useAuthStore.setState({
-      context: { ...context, serviceRole: 'SECRETARIAT' as const },
+      context: { ...context, ...ctxRole('SECRETARIAT') },
     })
     renderConfigured([], configuredFile, fields, categories)
     await screen.findByLabelText('Poids')

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { DiagnosticEducatifTemplateApi } from '@/api/diagnosticEducatif.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { TenantContext } from '@/types/auth.ts'
 import SidebarDiagnosticTemplate from './diagnosticTemplate.sidebar.tsx'
 
@@ -12,7 +13,7 @@ const service: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'MEMBER',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 

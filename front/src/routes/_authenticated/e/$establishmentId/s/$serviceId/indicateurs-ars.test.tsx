@@ -12,6 +12,7 @@ import { render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { AuthState, User } from '@/types/auth.ts'
 import { Route as serviceLayoutRoute } from '../$serviceId.tsx'
 import { Route as ancienneRoute } from './indicateurs-ars.tsx'
@@ -32,7 +33,7 @@ const coordinateur: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'COORDINATEUR' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') }],
     },
   ],
 }

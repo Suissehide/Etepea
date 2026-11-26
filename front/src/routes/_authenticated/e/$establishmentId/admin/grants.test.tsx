@@ -14,6 +14,7 @@ import utc from 'dayjs/plugin/utc'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { AuthState, User } from '@/types/auth.ts'
 import { redirection } from '../../../../../test/redirection.ts'
 import { Route as adminRoute } from '../admin.tsx'
@@ -204,7 +205,7 @@ describe('beforeLoad de l ecran des acces temporaires — garde members:manage',
         id: 'e1',
         name: 'CHU',
         role: 'MEMBER',
-        services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+        services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
       },
     ],
   }

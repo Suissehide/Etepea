@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { redirection } from '../../../test/redirection.ts'
 import { Route } from './user.tsx'
@@ -15,7 +16,7 @@ const user: User = {
       id: 'e1',
       name: 'CHU',
       role: 'ADMIN',
-      services: [{ id: 's1', name: 'Cardio', role: 'COORDINATEUR' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') }],
     },
   ],
 }
@@ -49,7 +50,7 @@ const membreIciAdministrateurLaBas: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
     { id: 'e2', name: 'Clinique', role: 'ADMIN', services: [] },
   ],
@@ -70,7 +71,7 @@ const administrateurDeDeux: User = {
       id: 'e2',
       name: 'Clinique',
       role: 'ADMIN',
-      services: [{ id: 's2', name: 'Neuro', role: 'COORDINATEUR' }],
+      services: [{ id: 's2', name: 'Neuro', ...svcRole('COORDINATEUR') }],
     },
   ],
 }
@@ -88,7 +89,7 @@ const membrePartout: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
   ],
 }

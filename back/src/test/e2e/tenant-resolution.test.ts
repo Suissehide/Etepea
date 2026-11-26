@@ -300,7 +300,7 @@ describe('resolution du tenant', () => {
       establishments: [
         {
           id: est.id,
-          services: [{ id: serviceA.id, role: 'COORDINATEUR' }],
+          services: [{ id: serviceA.id, roleId: expect.any(String) }],
           origine: 'reelle',
         },
       ],
@@ -335,7 +335,9 @@ describe('resolution du tenant', () => {
           name: est.name,
           role: 'ADMIN',
           origine: 'octroi',
-          services: [{ id: service.id, role: 'COORDINATEUR' }],
+          services: [
+            { id: service.id, roleId: null, roleName: 'Administrateur' },
+          ],
         },
       ],
     })

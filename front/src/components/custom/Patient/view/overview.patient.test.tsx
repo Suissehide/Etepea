@@ -12,6 +12,7 @@ import utc from 'dayjs/plugin/utc'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { Patient } from '@/types/patient.ts'
 import OverviewPatient from './overview.patient.tsx'
 
@@ -24,7 +25,7 @@ const context = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'MEMBER' as const,
-  serviceRole: 'COORDINATEUR' as const,
+  ...ctxRole('COORDINATEUR'),
   soignantId: 'so1',
 }
 

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildAccessLinkUrl } from '@/libs/accessLink.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole, svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import InviteServiceMemberForm from './inviteServiceMemberForm.tsx'
 
@@ -33,7 +34,9 @@ const coordinateur: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 'svcA', name: 'Cardiologie', role: 'COORDINATEUR' }],
+      services: [
+        { id: 'svcA', name: 'Cardiologie', ...svcRole('COORDINATEUR') },
+      ],
     },
   ],
 }
@@ -107,7 +110,7 @@ beforeEach(() => {
       establishmentId: 'e1',
       serviceId: 'svcA',
       establishmentRole: 'MEMBER',
-      serviceRole: 'COORDINATEUR',
+      ...ctxRole('COORDINATEUR'),
       soignantId: null,
     },
   })

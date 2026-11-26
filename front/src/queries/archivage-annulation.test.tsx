@@ -9,6 +9,7 @@ import { SoignantApi } from '@/api/soignant.api.ts'
 import { ThematicApi } from '@/api/thematic.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { TenantContext } from '@/types/auth.ts'
 import { useDiagnosticTemplateMutations } from './useDiagnosticEducatif.ts'
 import { useLocationMutations } from './useLocation.ts'
@@ -19,7 +20,7 @@ const service: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 

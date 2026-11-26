@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { LAST_CONTEXT_KEY } from '@/utils/tenant-context.ts'
 import { FilAriane } from './filAriane.tsx'
@@ -29,7 +30,7 @@ const intervenantUnService: User = {
       id: 'e1',
       name: 'CHU',
       role: 'MEMBER',
-      services: [{ id: 's1', name: 'Cardio', role: 'INTERVENANT' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('INTERVENANT') }],
     },
   ],
 }
@@ -43,8 +44,8 @@ const deuxEtablissements: User = {
       name: 'CHU',
       role: 'ADMIN',
       services: [
-        { id: 's1', name: 'Cardio', role: 'COORDINATEUR' },
-        { id: 's2', name: 'Pneumo', role: 'INTERVENANT' },
+        { id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') },
+        { id: 's2', name: 'Pneumo', ...svcRole('INTERVENANT') },
       ],
     },
     {
@@ -52,7 +53,7 @@ const deuxEtablissements: User = {
       name: 'Clinique du Parc',
       role: 'MEMBER',
       origine: 'octroi',
-      services: [{ id: 's3', name: 'Diabéto', role: 'LECTURE' }],
+      services: [{ id: 's3', name: 'Diabéto', ...svcRole('LECTURE') }],
     },
   ],
 }

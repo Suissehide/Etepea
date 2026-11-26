@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { InboxApi } from '@/api/inbox.api.ts'
 import type { InboxService } from '@/queries/useInbox.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import type { Task } from '@/types/task.ts'
 import { TasksPanel } from './tasksPanel.tsx'
@@ -67,7 +68,7 @@ const user: User = {
       name: 'CHU',
       role: 'MEMBER',
       services: [
-        { id: 's1', name: 'Cardio', role: 'INTERVENANT', affecte: true },
+        { id: 's1', name: 'Cardio', ...svcRole('INTERVENANT'), affecte: true },
       ],
     },
   ],
@@ -95,6 +96,7 @@ describe('TasksPanel', () => {
           id: 'm1',
           role: { id: 'r-inter', name: 'Intervenant' },
           soignantId: null,
+          canTasks: true,
           user: {
             id: 'u1',
             email: 'a@b.fr',
@@ -109,6 +111,7 @@ describe('TasksPanel', () => {
           id: 'm2',
           role: { id: 'r-inter', name: 'Intervenant' },
           soignantId: null,
+          canTasks: true,
           user: {
             id: 'u2',
             email: 'c@t.fr',

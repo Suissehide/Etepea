@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { InboxApi } from '@/api/inbox.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { useInboxServices, useNotifications, useTasks } from './useInbox.ts'
 
@@ -27,12 +28,17 @@ const user: User = {
         {
           id: 's1',
           name: 'Cardio',
-          role: 'INTERVENANT',
+          ...svcRole('INTERVENANT'),
           affecte: true,
           soignantId: 'soi1',
         },
-        { id: 's2', name: 'Diabeto', role: 'LECTURE', affecte: true },
-        { id: 's3', name: 'Implicite', role: 'COORDINATEUR', affecte: false },
+        { id: 's2', name: 'Diabeto', ...svcRole('LECTURE'), affecte: true },
+        {
+          id: 's3',
+          name: 'Implicite',
+          ...svcRole('COORDINATEUR'),
+          affecte: false,
+        },
       ],
     },
   ],

@@ -52,6 +52,7 @@ export type ServiceInviteResult = { accessLink: { token: string } | null }
 
 export interface MembershipDomainInterface {
   findServiceMembers: () => Promise<ServiceMemberRowDomain[]>
+  findTaskMembers: () => Promise<ServiceMemberRowDomain[]>
   setServiceSoignant: (
     serviceMembershipId: string,
     soignantId: string | null,

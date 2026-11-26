@@ -6,7 +6,6 @@ import { ALL_SERVICE_PERMISSIONS } from '../../../main/utils/permissions'
 // ADMIN et octroi : toutes les permissions, sans ligne de rôle.
 const admin = (id: string) => ({
   id,
-  role: 'COORDINATEUR',
   roleId: null,
   roleName: 'Administrateur',
   permissions: ALL_SERVICE_PERMISSIONS,
@@ -374,7 +373,7 @@ describe('effectiveMemberships', () => {
     ).toEqual([])
   })
 
-  it('un membre reel recoit les permissions de son role, archive ou non, et le prereglage (ou null) comme role', () => {
+  it('un membre reel recoit les permissions de son role, archive ou non', () => {
     const service = {
       id: 's1',
       establishmentId: 'e1',
@@ -429,16 +428,11 @@ describe('effectiveMemberships', () => {
     ).toEqual([
       {
         id: 's1',
-        role: null,
         roleId: 'r9',
         roleName: 'Accueil',
         permissions: ['agenda:read'],
         hiddenSoignantIds: ['so1'],
       },
     ])
-    expect(
-      effectiveMemberships(membre('SECRETARIAT', []), [], maintenant)[0]
-        ?.services[0]?.role,
-    ).toBe('SECRETARIAT')
   })
 })

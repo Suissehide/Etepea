@@ -25,6 +25,7 @@ const claire: ServiceMember = {
   id: 'm1',
   role: { id: 'r-inter', name: 'Intervenant' },
   soignantId: null,
+  canTasks: true,
   user: {
     id: 'u2',
     email: 'c@t.fr',

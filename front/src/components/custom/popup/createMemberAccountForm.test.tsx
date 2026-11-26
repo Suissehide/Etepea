@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildAccessLinkUrl } from '@/libs/accessLink.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import CreateMemberAccountForm from './createMemberAccountForm.tsx'
 
@@ -43,7 +44,9 @@ const adminMembreDUnSeulService: User = {
       id: 'e1',
       name: 'CHU',
       role: 'ADMIN',
-      services: [{ id: 'svcA', name: 'Cardiologie', role: 'COORDINATEUR' }],
+      services: [
+        { id: 'svcA', name: 'Cardiologie', ...svcRole('COORDINATEUR') },
+      ],
     },
   ],
 }
@@ -121,7 +124,8 @@ beforeEach(() => {
       establishmentId: 'e1',
       serviceId: null,
       establishmentRole: 'ADMIN',
-      serviceRole: null,
+      servicePermissions: null,
+      hiddenSoignantIds: [],
       soignantId: null,
     },
   })

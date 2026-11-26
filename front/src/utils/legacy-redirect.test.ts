@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { svcRole } from '@/test/roles.ts'
 import type { User } from '@/types/auth.ts'
 import { redirectToDefaultService } from '@/utils/legacy-redirect.ts'
 import { redirection } from '../test/redirection.ts'
@@ -15,7 +16,7 @@ const user: User = {
       id: 'e1',
       name: 'CHU',
       role: 'ADMIN',
-      services: [{ id: 's1', name: 'Cardio', role: 'COORDINATEUR' }],
+      services: [{ id: 's1', name: 'Cardio', ...svcRole('COORDINATEUR') }],
     },
   ],
 }

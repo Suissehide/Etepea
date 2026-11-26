@@ -86,6 +86,15 @@ describe('l equipe d un service, geree par son coordinateur', () => {
       ],
     })
     await createUser({
+      email: 'lecteur-a@test.fr',
+      memberships: [
+        {
+          establishmentId: E,
+          services: [{ serviceId: A, role: 'LECTURE' }],
+        },
+      ],
+    })
+    await createUser({
       email: 'inter-a@test.fr',
       memberships: [
         {
@@ -117,6 +126,18 @@ describe('l equipe d un service, geree par son coordinateur', () => {
   afterAll(async () => {
     await t.close()
     await testDb.$disconnect()
+  })
+
+  it('signale les membres dont le role porte tasks:read', async () => {
+    const lignes = (await membres(interA)).json() as {
+      canTasks: boolean
+      user: { email: string }
+    }[]
+    const canTasks = Object.fromEntries(
+      lignes.map((l) => [l.user.email, l.canTasks]),
+    )
+    expect(canTasks['inter-a@test.fr']).toBe(true)
+    expect(canTasks['lecteur-a@test.fr']).toBe(false)
   })
 
   it('refuse les trois ecritures a un intervenant, qui garde la lecture', async () => {

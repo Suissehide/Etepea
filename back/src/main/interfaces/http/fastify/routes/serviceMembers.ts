@@ -48,7 +48,13 @@ const serviceMembersRouter: FastifyPluginAsync = (fastify) => {
       schema: { response: { 200: serviceMembersResponseSchema } },
       config: { permission: 'members:read' },
     },
-    async () => await project(await membershipDomain.findServiceMembers()),
+    async () => {
+      const taskIds = new Set(
+        (await membershipDomain.findTaskMembers()).map((row) => row.id),
+      )
+      const members = await project(await membershipDomain.findServiceMembers())
+      return members.map((m) => ({ ...m, canTasks: taskIds.has(m.id) }))
+    },
   )
 
   fastify.post<{ Body: InviteServiceMemberBody }>(

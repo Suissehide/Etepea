@@ -3,12 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 
 import { AuthApi } from '../../api/auth.api.ts'
 import { ServiceMembersApi } from '../../api/serviceMembers.api.ts'
-import { SERVICE_ROLE_LABEL } from '../../constants/member.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
 import { cn } from '../../libs/utils.ts'
 import { useAuthStore } from '../../store/useAuthStore.ts'
-import type { ServiceRole, User } from '../../types/auth.ts'
+import type { User } from '../../types/auth.ts'
 import { defaultTenantContext } from '../../utils/tenant-context.ts'
 import { SoignantDuServiceSelect } from './soignantDuServiceSelect.tsx'
 
@@ -17,7 +16,7 @@ export type Affectation = {
   establishmentName: string
   serviceId: string
   serviceName: string
-  role: ServiceRole
+  roleName: string
   soignantId: string | null
 }
 
@@ -31,15 +30,10 @@ export const affectationsDe = (user: User | null | undefined): Affectation[] =>
         establishmentName: e.name,
         serviceId: s.id,
         serviceName: s.name,
-        role: s.role,
+        roleName: s.roleName,
         soignantId: s.soignantId ?? null,
       })),
   )
-
-const ROLE_CLASS: Partial<Record<ServiceRole, string>> = {
-  COORDINATEUR: 'bg-[#dbeafe] text-[#1147bb]',
-  INTERVENANT: 'bg-[#dcfce7] text-[#15803d]',
-}
 
 const GRILLE =
   'sm:grid sm:grid-cols-[minmax(0,1fr)_150px_minmax(0,1.3fr)] sm:gap-4'
@@ -158,12 +152,11 @@ export function MesSoignants({
                 <span
                   title="Attribué par un administrateur"
                   className={cn(
-                    'justify-self-start h-[26px] px-2.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5',
-                    ROLE_CLASS[a.role] ?? 'bg-muted text-muted-foreground',
+                    'justify-self-start h-[26px] px-2.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5 bg-muted text-muted-foreground',
                   )}
                 >
                   <Lock className="h-[13px] w-[13px]" />
-                  {SERVICE_ROLE_LABEL[a.role]}
+                  {a.roleName}
                 </span>
                 <div className="flex items-center gap-2 min-w-0 basis-full">
                   <div className="flex-1 min-w-0">

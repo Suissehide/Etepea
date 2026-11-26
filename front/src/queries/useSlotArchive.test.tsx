@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SlotApi } from '@/api/slot.api.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { Slot } from '@/types/slot.ts'
 import { useSlotMutations } from './useSlot.ts'
 
@@ -27,7 +28,7 @@ describe('archiveSlots', () => {
         establishmentId: 'e1',
         serviceId: 's1',
         establishmentRole: 'ADMIN',
-        serviceRole: 'COORDINATEUR',
+        ...ctxRole('COORDINATEUR'),
         soignantId: null,
       },
     })

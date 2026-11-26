@@ -171,7 +171,8 @@ beforeEach(() => {
       establishmentId: 'e1',
       serviceId: null,
       establishmentRole: 'ADMIN',
-      serviceRole: null,
+      servicePermissions: null,
+      hiddenSoignantIds: [],
       soignantId: null,
     },
   })

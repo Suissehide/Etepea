@@ -7,6 +7,7 @@ import { PatientApi } from '@/api/patient.api.ts'
 import { PATIENT } from '@/constants/process.constant.ts'
 import { useAuthStore } from '@/store/useAuthStore.ts'
 import { useToastStore } from '@/store/useToastStore.ts'
+import { ctxRole } from '@/test/roles.ts'
 import type { TenantContext } from '@/types/auth.ts'
 import type { CreatePatientParams, Patient } from '@/types/patient.ts'
 import { usePatientMutations } from './usePatient.tsx'
@@ -15,7 +16,7 @@ const serviceA: TenantContext = {
   establishmentId: 'e1',
   serviceId: 's1',
   establishmentRole: 'ADMIN',
-  serviceRole: 'COORDINATEUR',
+  ...ctxRole('COORDINATEUR'),
   soignantId: null,
 }
 const serviceB: TenantContext = { ...serviceA, serviceId: 's2' }
