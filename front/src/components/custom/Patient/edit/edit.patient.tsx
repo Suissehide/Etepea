@@ -113,6 +113,7 @@ export default function EditPatient({ patient }: PatientParam) {
   const { categories, isPending: isCategoriesPending } =
     useServiceFieldCategoriesQuery()
   const canReadClinical = useCan('clinical:read')
+  const canWrite = useCan('patient:write')
   // Une catégorie supprimée, ou sans date ni champ visible, n'a pas d'onglet ; tri par `order` car les fixtures de test ne le sont pas forcément.
   const shownCategories = categories
     .filter(
@@ -327,7 +328,9 @@ export default function EditPatient({ patient }: PatientParam) {
   // pour ce que « l'un après l'autre » veut dire réellement).
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    void handleSave()
+    if (canWrite) {
+      void handleSave()
+    }
   }
 
   return (
@@ -350,38 +353,41 @@ export default function EditPatient({ patient }: PatientParam) {
         </ToggleGroup>
       </div>
 
-      <Section show={selected === 'identity'}>
-        <IdentityFields form={patientForm} />
-      </Section>
-      <Section show={selected === 'profile'}>
-        {/* `patient` (pas `patientSnapshot`, qui ne sert qu'à figer les défauts du
+      {/* Sans patient:write, tous les champs sont figés (fieldset natif). */}
+      <fieldset disabled={!canWrite} className="contents">
+        <Section show={selected === 'identity'}>
+          <IdentityFields form={patientForm} />
+        </Section>
+        <Section show={selected === 'profile'}>
+          {/* `patient` (pas `patientSnapshot`, qui ne sert qu'à figer les défauts du
             formulaire) porte `followedElsewhere` — champ non éditable, jamais dans
             `patientFormOpts`. Aucun appel réseau supplémentaire : c'est la même lecture qui a
             déjà rempli cet écran. */}
-        <IdentiteFields
-          form={patientForm}
-          followedElsewhere={patient?.followedElsewhere}
-        />
-        {serviceFileReady && <DetailsFields form={serviceFileForm} />}
-      </Section>
-      {shownCategories.map((category) => (
-        <Section key={category.id} show={selected === category.id}>
-          {serviceFileReady && (
-            <CategoryFields
-              form={serviceFileForm}
-              category={category}
-              fields={fields}
-            />
-          )}
+          <IdentiteFields
+            form={patientForm}
+            followedElsewhere={patient?.followedElsewhere}
+          />
+          {serviceFileReady && <DetailsFields form={serviceFileForm} />}
         </Section>
-      ))}
+        {shownCategories.map((category) => (
+          <Section key={category.id} show={selected === category.id}>
+            {serviceFileReady && (
+              <CategoryFields
+                form={serviceFileForm}
+                category={category}
+                fields={fields}
+              />
+            )}
+          </Section>
+        ))}
+      </fieldset>
 
       <patientForm.Subscribe selector={(state) => state.isDirty}>
         {(isPatientDirty) => (
           <serviceFileForm.Subscribe selector={(state) => state.isDirty}>
             {(isServiceFileDirty) => (
               <FixedBar
-                open={isPatientDirty || isServiceFileDirty}
+                open={canWrite && (isPatientDirty || isServiceFileDirty)}
                 leftSlot={
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
                 }

@@ -23,6 +23,8 @@ type ServiceMemberColumnOptions = {
   onRemove: (member: ServiceMember) => void
   // Aligne le rôle du membre sur le rôle par défaut de son soignant.
   onApplyDefaultRole: (member: ServiceMember, roleId: string) => void
+  // Le rôle est inclus dans les droits du compte connecté (règle du back).
+  attribuable: (roleId: string) => boolean
 }
 
 // Membres du service courant. Le role DANS CE SERVICE et le retrait du service se gerent ici par
@@ -34,6 +36,7 @@ export const getServiceMemberColumns = ({
   soiMeme,
   onRemove,
   onApplyDefaultRole,
+  attribuable,
 }: ServiceMemberColumnOptions) => [
   ...(avecIdentifiant
     ? [
@@ -60,25 +63,25 @@ export const getServiceMemberColumns = ({
     cell: ({ row }) => {
       const membre = row.original
       const soignant = soignants.find((s) => s.id === membre.soignantId)
-      const ecart =
-        soignant?.defaultRoleId && soignant.defaultRoleId !== membre.role.id
+      const defaut = soignant?.defaultRoleId
+      const ecart = soignant && defaut && defaut !== membre.role.id
       return (
         <div className="flex items-center gap-2">
           <Etiquette>{membre.role.name}</Etiquette>
-          {ecart && soignant.defaultRoleId && (
+          {ecart && (
             <>
               <Etiquette ton="alerte">
                 Rôle différent de {soignant.name}
               </Etiquette>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  onApplyDefaultRole(membre, soignant.defaultRoleId as string)
-                }
-              >
-                Appliquer le rôle par défaut
-              </Button>
+              {membre.user.id !== soiMeme && attribuable(defaut) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onApplyDefaultRole(membre, defaut)}
+                >
+                  Appliquer le rôle par défaut
+                </Button>
+              )}
             </>
           )}
         </div>

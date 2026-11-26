@@ -201,6 +201,7 @@ function Agenda() {
     !addPatientTarget.isIndividual &&
     (!!addPatientTarget.appointmentId || addPatientTarget.patients.length === 0)
   const canCreateAppointment = useCan('appointment:create')
+  const canWriteAppointment = useCan('appointment:write')
   const newAppointment =
     editPatients || !canCreateAppointment
       ? null
@@ -210,12 +211,12 @@ function Agenda() {
     () =>
       getDayAppointmentColumns({
         onOpen: (row) => setOpenedRow(row),
-        onDelete: (row) => setDeleteTarget(row),
+        onDelete: canWriteAppointment ? setDeleteTarget : undefined,
         onAddPatient: (row) => setAddPatientTargetId(row.id),
         soignantIDs,
         conflictLabels,
       }),
-    [soignantIDs, conflictLabels],
+    [soignantIDs, conflictLabels, canWriteAppointment],
   )
 
   return (
@@ -305,7 +306,9 @@ function Agenda() {
 
         {editPatients &&
           addPatientTarget &&
-          (addPatientTarget.appointmentId || canCreateAppointment) && (
+          (addPatientTarget.appointmentId
+            ? canWriteAppointment
+            : canCreateAppointment) && (
             <AddPatientToAppointmentForm
               open
               setOpen={(open) => {

@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react'
 
 import { APPOINTMENT_TYPE_OPTIONS } from '../../../constants/appointment.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { useCan } from '../../../hooks/useCan.ts'
 import {
   appointmentRange,
   clampTime,
@@ -360,6 +361,8 @@ function SlotThematicTypeFields({
   // La sous-thématique, rendue juste sous la thématique.
   children: ReactNode
 }) {
+  // Thématique et type se modifient sur le créneau (PATCH /slot) : lecture seule sans planning:write.
+  const canEditSlot = useCan('planning:write')
   // La thématique actuelle reste proposée, même si aucun soignant du créneau ne la pratique.
   const currentId = slot?.slotTemplate?.thematicId
   const options =
@@ -391,6 +394,7 @@ function SlotThematicTypeFields({
           placeholder="Aucune thématique"
           value={thematicId}
           onValueChange={onThematicChange}
+          disabled={!canEditSlot}
         />
       </FormField>
 
@@ -403,6 +407,7 @@ function SlotThematicTypeFields({
           placeholder="Non renseigné"
           value={type}
           onValueChange={onTypeChange}
+          disabled={!canEditSlot}
         />
       </FormField>
     </>

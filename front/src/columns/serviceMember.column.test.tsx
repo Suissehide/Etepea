@@ -27,14 +27,22 @@ const membre = (soignantId: string | null): ServiceMember => ({
   },
 })
 
-const rendreRole = (m: ServiceMember, soignants: Soignant[]) => {
+const rendreRole = (
+  m: ServiceMember,
+  soignants: Soignant[],
+  {
+    soiMeme,
+    attribuable = true,
+  }: { soiMeme?: string; attribuable?: boolean } = {},
+) => {
   const onApplyDefaultRole = vi.fn()
   const colonne = getServiceMemberColumns({
     soignants,
     avecIdentifiant: false,
-    soiMeme: undefined,
+    soiMeme,
     onRemove: vi.fn(),
     onApplyDefaultRole,
+    attribuable: () => attribuable,
   }).find((c) => c.id === 'role')
   const cell = colonne?.cell as (
     c: CellContext<Features, ServiceMember, unknown>,
@@ -65,5 +73,20 @@ describe('colonne Rôle des membres du service', () => {
     expect(screen.queryByText(/Rôle différent/)).toBeNull()
     rendreRole(membre(null), [])
     expect(screen.queryByText(/Rôle différent/)).toBeNull()
+  })
+
+  it.each([
+    ['sur sa propre ligne', { soiMeme: 'u1' }],
+    ['pour un rôle hors de ses droits', { attribuable: false }],
+  ])('ne propose pas d’appliquer le rôle par défaut %s', (_, options) => {
+    rendreRole(
+      membre('s1'),
+      [{ id: 's1', name: 'IDE SMCP', defaultRoleId: 'r-equipe' }],
+      options,
+    )
+    expect(screen.getByText('Rôle différent de IDE SMCP')).toBeTruthy()
+    expect(
+      screen.queryByRole('button', { name: 'Appliquer le rôle par défaut' }),
+    ).toBeNull()
   })
 })

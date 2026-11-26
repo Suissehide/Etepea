@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { InvitationSent } from '@/components/custom/invitationSent.tsx'
 import { useAppForm } from '@/hooks/formConfig.tsx'
 import { buildAccessLinkUrl } from '@/libs/accessLink.ts'
-import { useRolesQuery } from '@/queries/useRoles.ts'
+import { useGrantableRoles } from '@/queries/useRoles.ts'
 import { useServiceMemberMutations } from '@/queries/useServiceMembers.ts'
 import { useSoignantQueries } from '@/queries/useSoignant.ts'
 import { Button } from '../../ui/button.tsx'
@@ -31,7 +31,8 @@ function InviteServiceMemberForm() {
   const [open, setOpen] = useState(false)
   const { inviteMember } = useServiceMemberMutations()
   const { soignants } = useSoignantQueries()
-  const { roles } = useRolesQuery()
+  // Seuls les rôles inclus dans les droits de l'appelant (règle du back).
+  const { roles } = useGrantableRoles()
   const roleOptions = roles.map((r) => ({ value: r.id, label: r.name }))
   // Pré-sélection : le rôle issu du préréglage Intervenant, s'il existe encore.
   const defaultRoleId =
@@ -189,7 +190,7 @@ function InviteServiceMemberForm() {
                       const roleId = soignants?.find(
                         (s) => s.id === value,
                       )?.defaultRoleId
-                      if (roleId) {
+                      if (roleId && roles.some((r) => r.id === roleId)) {
                         form.setFieldValue('roleId', roleId)
                       }
                     },

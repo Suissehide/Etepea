@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { Plus, X } from 'lucide-react'
+import { Copy, Plus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
@@ -45,19 +45,31 @@ const explicationRefus = (n: number) =>
 
 function RoleEditor({
   role,
+  copie,
   autres,
   soignants,
+  onCreated,
+  onDuplicate,
 }: {
   role: Role | null
+  // Rôle dont un nouveau rôle reprend les droits (« Dupliquer »).
+  copie: Role | null
   autres: Role[]
   soignants: { id: string; name: string }[]
+  onCreated: (role: Role) => void
+  onDuplicate: (role: Role) => void
 }) {
   const { createRole, updateRole } = useRoleMutations()
-  const [name, setName] = useState(role?.name ?? '')
-  const [permissions, setPermissions] = useState<string[]>(
-    role?.permissions ?? [],
+  const modele = role ?? copie
+  const [name, setName] = useState(
+    role?.name ?? (copie ? `Copie de ${copie.name}` : ''),
   )
-  const [hidden, setHidden] = useState<string[]>(role?.hiddenSoignantIds ?? [])
+  const [permissions, setPermissions] = useState<string[]>(
+    modele?.permissions ?? [],
+  )
+  const [hidden, setHidden] = useState<string[]>(
+    modele?.hiddenSoignantIds ?? [],
+  )
 
   const conflit = findNameConflict(name, autres, undefined, role?.id)
   const input = { name: name.trim(), permissions, hiddenSoignantIds: hidden }
@@ -71,7 +83,7 @@ function RoleEditor({
         if (role) {
           updateRole.mutate({ id: role.id, ...input })
         } else {
-          createRole.mutate(input)
+          createRole.mutate(input, { onSuccess: onCreated })
         }
       }}
     >
@@ -98,14 +110,23 @@ function RoleEditor({
           {SERVICE_PERMISSION_KEYS.filter(
             (k: ServicePermission) => PERMISSION_LABELS[k].group === group,
           ).map((key) => (
-            <label key={key} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={permissions.includes(key)}
-                onChange={() => setPermissions(toggle(permissions, key))}
-              />
-              {PERMISSION_LABELS[key].label}
-            </label>
+            <div key={key} className="flex flex-col">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={permissions.includes(key)}
+                  onChange={() => setPermissions(toggle(permissions, key))}
+                />
+                {PERMISSION_LABELS[key].label}
+              </label>
+              {key === 'service-members:manage' &&
+                permissions.includes(key) &&
+                !permissions.includes('members:read') && (
+                  <p className="ml-6 text-xs text-a-saisir-texte">
+                    Nécessite aussi : {PERMISSION_LABELS['members:read'].label}
+                  </p>
+                )}
+            </div>
           ))}
         </fieldset>
       ))}
@@ -126,10 +147,20 @@ function RoleEditor({
         ))}
       </fieldset>
 
-      <div>
+      <div className="flex gap-3">
         <Button type="submit" disabled={!input.name || !!conflit || pending}>
           Enregistrer
         </Button>
+        {role && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onDuplicate(role)}
+          >
+            <Copy className="w-4 h-4" />
+            Dupliquer
+          </Button>
+        )}
       </div>
     </form>
   )
@@ -142,6 +173,11 @@ function RolesSettings() {
   const { soignants } = useSoignantQueries()
   const { deleteRole, restoreRole } = useRoleMutations()
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [copie, setCopie] = useState<Role | null>(null)
+  const choisir = (id: string | null) => {
+    setSelectedId(id)
+    setCopie(null)
+  }
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null)
 
   const soignantOptions = useMemo(
@@ -164,12 +200,12 @@ function RolesSettings() {
               showDeleted={showDeleted}
               onShowDeletedChange={(v) => {
                 setShowDeleted(v)
-                setSelectedId(null)
+                choisir(null)
               }}
               label="Rôles à afficher"
             />
             {!showDeleted && (
-              <Button onClick={() => setSelectedId(NOUVEAU)}>
+              <Button onClick={() => choisir(NOUVEAU)}>
                 <Plus className="w-4 h-4" />
                 Nouveau rôle
               </Button>
@@ -201,7 +237,7 @@ function RolesSettings() {
                     <button
                       type="button"
                       className={`flex-1 text-left rounded-md px-2 py-1 text-sm cursor-pointer hover:bg-card ${selectedId === role.id ? 'bg-card font-semibold' : ''}`}
-                      onClick={() => setSelectedId(role.id)}
+                      onClick={() => choisir(role.id)}
                     >
                       {role.name}
                       <span className="block text-xs text-text-light">
@@ -231,10 +267,16 @@ function RolesSettings() {
 
           {!showDeleted && (selectedId === NOUVEAU || selected) && (
             <RoleEditor
-              key={selectedId}
+              key={`${selectedId}-${copie?.id ?? ''}`}
               role={selected ?? null}
+              copie={copie}
               autres={actifs}
               soignants={soignantOptions}
+              onCreated={(cree) => choisir(cree.id)}
+              onDuplicate={(source) => {
+                setSelectedId(NOUVEAU)
+                setCopie(source)
+              }}
             />
           )}
         </div>
@@ -250,7 +292,7 @@ function RolesSettings() {
             if (deleteTarget) {
               deleteRole.mutate(deleteTarget.id)
               if (selectedId === deleteTarget.id) {
-                setSelectedId(null)
+                choisir(null)
               }
             }
             setDeleteTarget(null)

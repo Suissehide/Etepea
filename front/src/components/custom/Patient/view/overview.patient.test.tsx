@@ -307,6 +307,18 @@ describe('retrait d’un parcours', () => {
   })
 })
 
+describe('lecture seule', () => {
+  it('sans appointment:write ni patient:write : parcours lisibles, ni retrait ni glisser', async () => {
+    useAuthStore.setState({ context: { ...context, ...ctxRole('LECTURE') } })
+    monter()
+    expect(await screen.findByText('PSY')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Retirer du parcours' }),
+    ).toBeNull()
+    expect(screen.queryByText(/Glisser pour changer/)).toBeNull()
+  })
+})
+
 describe('priorité des parcours', () => {
   // Une requête par survol se chevauchait côté back (delete + create) : clé primaire en double.
   it('n’envoie l’ordre qu’une fois, au lâcher', async () => {

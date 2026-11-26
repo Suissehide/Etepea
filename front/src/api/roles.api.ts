@@ -26,7 +26,7 @@ const write = async (
   method: string,
   defaultMessage: string,
   body?: unknown,
-): Promise<void> => {
+): Promise<Response> => {
   const response = await fetchWithAuth(url, {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
@@ -40,6 +40,7 @@ const write = async (
       defaultMessage,
     )
   }
+  return response
 }
 
 // Rôles d'un service (`members:read`) ; `archived` : ceux qui ont été supprimés.
@@ -51,13 +52,15 @@ export const RolesApi = {
   getForService: (serviceId: string): Promise<Role[]> =>
     fetchRoles(`${establishmentServiceApiUrl(serviceId)}/roles`),
 
-  create: (input: RoleInput) =>
-    write(
-      `${tenantApiUrl()}/roles`,
-      'POST',
-      'Impossible de créer le rôle',
-      input,
-    ),
+  create: async (input: RoleInput): Promise<Role> =>
+    (
+      await write(
+        `${tenantApiUrl()}/roles`,
+        'POST',
+        'Impossible de créer le rôle',
+        input,
+      )
+    ).json(),
 
   update: ({ id, ...input }: Partial<RoleInput> & { id: string }) =>
     write(

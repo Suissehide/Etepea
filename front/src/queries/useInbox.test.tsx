@@ -67,6 +67,7 @@ describe('useInbox', () => {
         serviceId: 's1',
         name: 'Cardio',
         canTasks: true,
+        canWriteTasks: true,
         soignantId: 'soi1',
       },
       {
@@ -74,6 +75,7 @@ describe('useInbox', () => {
         serviceId: 's2',
         name: 'Diabeto',
         canTasks: false,
+        canWriteTasks: false,
         soignantId: null,
       },
     ])

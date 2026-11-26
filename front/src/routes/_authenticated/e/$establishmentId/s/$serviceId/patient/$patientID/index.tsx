@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
-import { ArrowLeft, Ellipsis, FileDown, Trash2 } from 'lucide-react'
+import { ArrowLeft, FileDown } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import EditPatient from '@/components/custom/Patient/edit/edit.patient.tsx'
-import { PatientAccessLogButton } from '@/components/custom/Patient/patientAccessLogButton.tsx'
+import { PatientMoreActions } from '@/components/custom/Patient/patientMoreActions.tsx'
 import ProgrammePDFModal from '@/components/custom/Patient/pdf/programme-pdf-modal.tsx'
 import DiagnosticPatient from '@/components/custom/Patient/view/diagnostic.patient.tsx'
 import OverviewPatient from '@/components/custom/Patient/view/overview.patient.tsx'
@@ -14,13 +14,6 @@ import AddPatientToSlotForm from '@/components/custom/popup/addPatientToSlotForm
 import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import {
-  PopoverContent,
-  PopoverMenuItem,
-  PopoverRoot,
-  PopoverSeparator,
-  PopoverTrigger,
-} from '@/components/ui/popover.tsx'
 import {
   Tabs,
   TabsContent,
@@ -66,7 +59,7 @@ function PatientDetails() {
   // (export généré dans le navigateur), gardée ici, seul endroit où elle
   // s'utilise.
   const canExportPdf = useCan('pdf:export')
-  const canReadAccessLog = useCan('consultations:read')
+  const canEnroll = useCan('appointment:write')
   const [selected, setSelected] = useState<string>('overview')
   const [showPDF, setShowPDF] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
@@ -166,33 +159,15 @@ function PatientDetails() {
                   Générer le programme
                 </Button>
               )}
-              {patient && <AddPatientToPathwayForm patient={patient} />}
-              <PopoverRoot>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label="Plus d'actions"
-                  >
-                    <Ellipsis className="w-4 h-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-[250px]">
-                  <PatientAccessLogButton
-                    establishmentId={establishmentId}
-                    serviceId={serviceId}
-                    patientID={patientID}
-                  />
-                  {canReadAccessLog && <PopoverSeparator />}
-                  <PopoverMenuItem
-                    variant="destructive"
-                    icon={<Trash2 className="w-4 h-4" />}
-                    onClick={() => setShowDelete(true)}
-                  >
-                    Supprimer le patient
-                  </PopoverMenuItem>
-                </PopoverContent>
-              </PopoverRoot>
+              {patient && canEnroll && (
+                <AddPatientToPathwayForm patient={patient} />
+              )}
+              <PatientMoreActions
+                establishmentId={establishmentId}
+                serviceId={serviceId}
+                patientID={patientID}
+                onDelete={() => setShowDelete(true)}
+              />
             </div>
           </div>
 

@@ -234,4 +234,43 @@ describe('InviteServiceMemberForm', () => {
     )
     expect(within(roleBouton()).getByText('Intervenant')).toBeTruthy()
   })
+
+  it('ne propose que les rôles inclus dans les droits de l appelant', async () => {
+    useAuthStore.setState((state) => ({
+      context: state.context && {
+        ...state.context,
+        servicePermissions: ['service-members:manage'],
+      },
+    }))
+    const roles = [
+      { id: 'role-coord', name: 'Coordinateur', permissions: ['roles:x'] },
+      {
+        id: 'role-gestion',
+        name: 'Gestion',
+        permissions: ['service-members:manage'],
+      },
+    ].map((r) => ({
+      ...r,
+      preset: null,
+      hiddenSoignantIds: [],
+      memberCount: 0,
+      archivedAt: null,
+    }))
+    vi.stubGlobal(
+      'fetch',
+      buildFetchMock([
+        {
+          ...routeRoles,
+          respond: () => ({ ok: true, status: 200, json: async () => roles }),
+        },
+      ]),
+    )
+    renderForm()
+    await userEvent.click(screen.getByRole('button', { name: /^inviter$/i }))
+    await userEvent.click(
+      screen.getByRole('combobox', { name: /rôle dans le service/i }),
+    )
+    expect(await screen.findByRole('option', { name: 'Gestion' })).toBeTruthy()
+    expect(screen.queryByRole('option', { name: 'Coordinateur' })).toBeNull()
+  })
 })

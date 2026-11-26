@@ -12,6 +12,7 @@ import type React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 
 import { PatientApi } from '../../../../api/patient.api.ts'
+import { useCan } from '../../../../hooks/useCan.ts'
 import { patientOverlaps } from '../../../../libs/planningConflicts.ts'
 import {
   ecartEnJours,
@@ -144,7 +145,8 @@ function EnrollmentIssueRow({
   loading,
 }: {
   issue: EnrollmentIssue
-  onDismiss: (issue: EnrollmentIssue) => void
+  // Absent sans appointment:write.
+  onDismiss?: (issue: EnrollmentIssue) => void
   loading: boolean
 }) {
   const startDate = dayjs.utc(issue.startDate).format('DD/MM/YYYY')
@@ -157,15 +159,17 @@ function EnrollmentIssueRow({
           <span className="font-semibold">{startDate}</span>
         </span>
       </div>
-      <button
-        type="button"
-        onClick={() => onDismiss(issue)}
-        disabled={loading}
-        className="cursor-pointer flex-shrink-0 rounded p-0.5 text-a-saisir-texte/70 hover:bg-amber-100 hover:text-a-saisir-texte disabled:opacity-40 transition-colors"
-        aria-label="Ignorer ce problème"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={() => onDismiss(issue)}
+          disabled={loading}
+          className="cursor-pointer flex-shrink-0 rounded p-0.5 text-a-saisir-texte/70 hover:bg-amber-100 hover:text-a-saisir-texte disabled:opacity-40 transition-colors"
+          aria-label="Ignorer ce problème"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 }
@@ -179,6 +183,7 @@ function PathwayRow({
   onDragStart,
   onDragOver,
   onDragEnd,
+  draggable,
   onRemove,
 }: {
   pathway: PatientPathway
@@ -189,7 +194,9 @@ function PathwayRow({
   onDragStart: (index: number) => void
   onDragOver: (e: React.DragEvent, index: number) => void
   onDragEnd: () => void
-  onRemove: (pathwayID: string) => void
+  // Absents sans patient:write (priorités) ou appointment:write (retrait).
+  draggable: boolean
+  onRemove?: (pathwayID: string) => void
 }) {
   const couleur = pathway.templateColor ?? HORS_PARCOURS
   const label = pathway.templateMainTag ?? pathway.templateName ?? 'Parcours'
@@ -197,7 +204,7 @@ function PathwayRow({
 
   return (
     <li
-      draggable
+      draggable={draggable}
       onDragStart={() => onDragStart(index)}
       onDragOver={(e) => onDragOver(e, index)}
       onDragEnd={onDragEnd}
@@ -205,7 +212,11 @@ function PathwayRow({
         isDragged ? 'opacity-50' : 'opacity-100'
       }`}
     >
-      <GripVertical className="h-4 w-4 text-border-dark cursor-grab" />
+      {draggable ? (
+        <GripVertical className="h-4 w-4 text-border-dark cursor-grab" />
+      ) : (
+        <span />
+      )}
 
       <div className="flex flex-col gap-2 min-w-0">
         <div className="flex items-center justify-between gap-2.5">
@@ -242,14 +253,16 @@ function PathwayRow({
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => onRemove(pathway.pathwayID)}
-        className="cursor-pointer size-7 flex items-center justify-center rounded-md text-text-light hover:bg-red-50 hover:text-destructive transition-colors"
-        aria-label="Retirer du parcours"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={() => onRemove(pathway.pathwayID)}
+          className="cursor-pointer size-7 flex items-center justify-center rounded-md text-text-light hover:bg-red-50 hover:text-destructive transition-colors"
+          aria-label="Retirer du parcours"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
     </li>
   )
 }
@@ -327,6 +340,8 @@ export default function OverviewPatient({
   const { slots } = usePatientSlotsQuery(patient?.id)
   const { dismissEnrollmentIssue, removeFromPathway, reorderPathways } =
     usePatientMutations()
+  const canReorder = useCan('patient:write')
+  const canWriteAppointment = useCan('appointment:write')
   const { pathways: savedPathways = [] } = usePatientPathwaysQuery(
     patient?.id ?? '',
   )
@@ -511,7 +526,9 @@ export default function OverviewPatient({
                 <EnrollmentIssueRow
                   key={issue.id}
                   issue={issue}
-                  onDismiss={handleDismissIssue}
+                  onDismiss={
+                    canWriteAppointment ? handleDismissIssue : undefined
+                  }
                   loading={dismissEnrollmentIssue.isPending}
                 />
               ))}
@@ -538,7 +555,7 @@ export default function OverviewPatient({
                   ({patientPathways.length})
                 </span>
               </h4>
-              {patientPathways.length > 1 && (
+              {canReorder && patientPathways.length > 1 && (
                 <span className="text-xs text-text-light">
                   Glisser pour changer la priorité
                 </span>
@@ -561,7 +578,10 @@ export default function OverviewPatient({
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
-                    onRemove={handleRemoveClick}
+                    draggable={canReorder}
+                    onRemove={
+                      canWriteAppointment ? handleRemoveClick : undefined
+                    }
                   />
                 ))
               ) : (

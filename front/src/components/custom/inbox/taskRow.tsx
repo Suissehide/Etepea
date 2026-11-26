@@ -28,7 +28,8 @@ export function TaskRow({
   highlighted: boolean
   showService: boolean
   done: boolean
-  onToggle: () => void
+  // Absent sans tasks:write : la case reste visible, figée.
+  onToggle?: () => void
 }) {
   const me = useAuthStore((state) => state.user?.id)
   const members = useServiceMembers(task.service)
@@ -51,6 +52,7 @@ export function TaskRow({
           type="checkbox"
           checked={done}
           onChange={onToggle}
+          disabled={!onToggle}
           aria-label={task.text}
           className={`cursor-pointer appearance-none w-5 h-5 rounded-md border-[1.5px] ${done ? 'bg-[#16a34a] border-[#16a34a]' : 'border-[#cbd5e1] bg-white'}`}
         />

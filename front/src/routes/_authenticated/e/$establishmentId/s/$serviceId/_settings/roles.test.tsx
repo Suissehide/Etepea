@@ -95,7 +95,14 @@ const reponse = (
   method: string,
   pathname: string,
   searchParams: URLSearchParams,
+  body: { name?: string } | undefined,
+  liste: Role[],
 ) => {
+  if (method === 'POST' && pathname.endsWith('/roles')) {
+    const cree = role(`cree-${liste.length}`, body?.name ?? '')
+    liste.push(cree)
+    return cree
+  }
   if (method !== 'GET') {
     return {}
   }
@@ -105,11 +112,12 @@ const reponse = (
   if (!pathname.endsWith('/roles')) {
     return []
   }
-  return searchParams.get('archived') === 'true' ? supprimes : actifs
+  return searchParams.get('archived') === 'true' ? supprimes : [...liste]
 }
 
 const monter = () => {
   const appels: Appel[] = []
+  const liste = [...actifs]
   vi.stubGlobal(
     'fetch',
     vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
@@ -118,7 +126,7 @@ const monter = () => {
       const { pathname, searchParams } = new URL(url)
       const body = init?.body ? JSON.parse(String(init.body)) : undefined
       appels.push({ url, method, body })
-      const data = reponse(method, pathname, searchParams)
+      const data = reponse(method, pathname, searchParams, body, liste)
       return Promise.resolve({
         ok: true,
         status: 200,
@@ -263,5 +271,56 @@ describe('écran Rôles', () => {
     await waitFor(() => expect(ecritures(appels)).toHaveLength(1))
     expect(ecritures(appels)[0]).toMatchObject({ method: 'POST' })
     expect(ecritures(appels)[0].url).toContain('/roles/r3/restore')
+  })
+
+  it('selectionne le role cree : un second enregistrement le modifie', async () => {
+    const appels = monter()
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Nouveau rôle/ }),
+    )
+    await userEvent.type(await screen.findByLabelText('Nom du rôle'), 'Diet')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+    await screen.findByRole('button', { name: 'Dupliquer' })
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    await waitFor(() => expect(ecritures(appels)).toHaveLength(2))
+    expect(ecritures(appels).map((a) => a.method)).toEqual(['POST', 'PATCH'])
+    expect(ecritures(appels)[1].url).toContain('/roles/cree-2')
+  })
+
+  it('duplique un role : nouveau role pre-rempli de ses droits', async () => {
+    const appels = monter()
+    await userEvent.click(await screen.findByText('Lecture seule'))
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Dupliquer' }),
+    )
+    expect(await screen.findByLabelText('Nom du rôle')).toHaveValue(
+      'Copie de Lecture seule',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    await waitFor(() => expect(ecritures(appels)).toHaveLength(1))
+    const [ecriture] = ecritures(appels)
+    expect(ecriture.method).toBe('POST')
+    expect(ecriture.body).toEqual({
+      name: 'Copie de Lecture seule',
+      permissions: [...DEFAULT_ROLE_PERMISSIONS.LECTURE],
+      hiddenSoignantIds: [],
+    })
+  })
+
+  it('signale que gerer l equipe demande aussi de voir les membres', async () => {
+    monter()
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Nouveau rôle/ }),
+    )
+    await userEvent.click(
+      await screen.findByLabelText("Gérer l'équipe du service"),
+    )
+    expect(screen.getByText(/Nécessite aussi/)).toBeInTheDocument()
+    await userEvent.click(
+      screen.getByLabelText('Voir la liste des membres du service'),
+    )
+    expect(screen.queryByText(/Nécessite aussi/)).toBeNull()
   })
 })

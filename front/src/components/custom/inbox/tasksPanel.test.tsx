@@ -41,6 +41,7 @@ const s1: InboxService = {
   serviceId: 's1',
   name: 'Cardio',
   canTasks: true,
+  canWriteTasks: true,
   soignantId: null,
 }
 
@@ -216,6 +217,22 @@ describe('TasksPanel', () => {
     expect(screen.queryByText('Tache t1')).toBeNull()
     await u.click(screen.getByRole('button', { name: /Terminées · 1/ }))
     expect(screen.getByText('Tache t1')).toHaveClass('line-through')
+  })
+
+  it('sans tasks:write : ni saisie ni case a cocher active, les taches restent lisibles', () => {
+    const lecteur = { ...s1, canWriteTasks: false }
+    render(
+      <TasksPanel
+        services={[lecteur]}
+        tasks={[{ ...task('t1', ['u1']), service: lecteur }]}
+        focus={null}
+        onFocusDone={() => undefined}
+      />,
+      { wrapper },
+    )
+    expect(screen.getByText('Tache t1')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ajouter' })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: /Tache t1/ })).toBeDisabled()
   })
 
   it('tache migree sans auteur : pas de "Par ..." devant le quand', () => {

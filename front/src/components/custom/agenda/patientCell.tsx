@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { MessageSquareTextIcon, Plus } from 'lucide-react'
 import { useState } from 'react'
 
+import { useCan } from '../../../hooks/useCan.ts'
 import type { DaySlotRow } from '../../../libs/utils.ts'
 import { useConvocationSentMutation } from '../../../queries/useAppointment.ts'
 import { useAuthStore } from '../../../store/useAuthStore.ts'
@@ -29,6 +30,7 @@ function ConvocationCheckbox({
   patientName: string
 }) {
   const { mutate, isPending, variables } = useConvocationSentMutation()
+  const canWrite = useCan('appointment:write')
   // Valeur envoyée affichée pendant l'enregistrement, pour que la case réagisse tout de suite.
   const checked = isPending ? !!variables?.convocationSent : convocationSent
 
@@ -37,7 +39,7 @@ function ConvocationCheckbox({
       aria-label={`Convocation envoyée à ${patientName}`}
       title="Convocation envoyée"
       checked={checked}
-      disabled={isPending}
+      disabled={isPending || !canWrite}
       onChange={(e) =>
         mutate({
           appointmentID,
@@ -71,11 +73,12 @@ export default function PatientCell({ row, onAddPatient }: PatientCellProps) {
   // vient du store, pose par le layout de service avant que cet ecran (agenda)
   // ne puisse se rendre.
   const context = useAuthStore((state) => state.context)
+  const canWrite = useCan('appointment:write')
 
   const { patients } = row
 
   // Rendez-vous collectif existant : on gère ses patients ; sinon on en crée un.
-  const canManage = !!row.appointmentId && !row.isIndividual
+  const canManage = !!row.appointmentId && !row.isIndividual && canWrite
   const addButton = (canManage || row.canBook) && (
     <Button
       variant="outline"

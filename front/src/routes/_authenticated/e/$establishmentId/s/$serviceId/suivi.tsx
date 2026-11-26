@@ -27,6 +27,7 @@ import {
   PopoverRoot,
 } from '@/components/ui/popover.tsx'
 import { Select } from '@/components/ui/select.tsx'
+import { useCan } from '@/hooks/useCan.ts'
 import { hexToRGBA } from '@/libs/color.ts'
 import {
   nextStatus,
@@ -184,6 +185,7 @@ function SuiviPage() {
   const [patientFilter, setPatientFilter] = useState('')
   const [pathwayFilter, setPathwayFilter] = useState('')
   const { mutate: setPresence } = usePresenceStatusMutation()
+  const canPoint = useCan('appointment:write')
 
   const { trackingPathways, isPending } = usePathwayTrackingQuery(
     date.year(),
@@ -299,11 +301,22 @@ function SuiviPage() {
           if (!day) {
             return null
           }
+          const libelle = `${day.count} rendez-vous : ${MARK_LABEL[day.mark].toLowerCase()}`
+          if (!canPoint) {
+            return (
+              <span
+                className="flex w-full h-full items-center justify-center"
+                title={libelle}
+              >
+                <SuiviMarkIcon mark={day.mark} />
+              </span>
+            )
+          }
           return (
             <button
               type="button"
               className="flex w-full h-full items-center justify-center cursor-pointer hover:bg-foreground/10"
-              title={`${day.count} rendez-vous : ${MARK_LABEL[day.mark].toLowerCase()} (cliquer pour changer)`}
+              title={`${libelle} (cliquer pour changer)`}
               onClick={(e) => {
                 e.stopPropagation()
                 setPresence({
@@ -318,7 +331,7 @@ function SuiviPage() {
         },
       })),
     ],
-    [days, setPresence],
+    [days, setPresence, canPoint],
   )
 
   const table = useTable({

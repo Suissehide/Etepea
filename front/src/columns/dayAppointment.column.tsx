@@ -47,7 +47,8 @@ const summarizeThematics = (row: DaySlotRow) => {
 
 type DayAppointmentActions = {
   onOpen: (row: DaySlotRow) => void
-  onDelete: (row: DaySlotRow) => void
+  // Absent sans appointment:write.
+  onDelete?: (row: DaySlotRow) => void
   onAddPatient: (row: DaySlotRow) => void
   soignantIDs: string[]
   conflictLabels: Map<string, string[]>
@@ -237,14 +238,16 @@ export const getDayAppointmentColumns = ({
               >
                 <Eye className="w-3 h-3" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Supprimer le rendez-vous"
-                onClick={() => onDelete(row.original)}
-              >
-                <Trash2 className="w-3 h-3 text-destructive" />
-              </Button>
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Supprimer le rendez-vous"
+                  onClick={() => onDelete(row.original)}
+                >
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </Button>
+              )}
             </div>
           )
         )

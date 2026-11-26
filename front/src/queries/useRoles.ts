@@ -5,12 +5,13 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
 import { RolesApi } from '../api/roles.api.ts'
 import { ROLE, SERVICE_MEMBER } from '../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAuthStore } from '../store/useAuthStore.ts'
 import type { Role } from '../types/role.ts'
 
 const AUCUN: Role[] = []
@@ -23,6 +24,25 @@ export const useRolesQuery = (archived = false) => {
     retry: 0,
   })
   return { roles: roles ?? AUCUN, isPending }
+}
+
+// Inclus dans les droits détenus ; `null` (administration) : tout est attribuable.
+export const estAttribuable = (
+  role: Pick<Role, 'permissions'>,
+  held: readonly string[] | null | undefined,
+): boolean => !held || role.permissions.every((p) => held.includes(p))
+
+// Rôles que le compte connecté peut attribuer dans ce service (règle du back).
+export const useGrantableRoles = () => {
+  const { roles, isPending } = useRolesQuery()
+  const held = useAuthStore((state) => state.context?.servicePermissions)
+  return {
+    roles: useMemo(
+      () => roles.filter((r) => estAttribuable(r, held)),
+      [roles, held],
+    ),
+    isPending,
+  }
 }
 
 // Écran d'établissement : une requête par service affiché, la clé portant le service demandé.

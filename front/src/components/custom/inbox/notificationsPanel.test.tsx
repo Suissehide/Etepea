@@ -30,6 +30,7 @@ const service: InboxService = {
   serviceId: 's1',
   name: 'Cardio',
   canTasks: true,
+  canWriteTasks: true,
   soignantId: null,
 }
 

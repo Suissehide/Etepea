@@ -106,7 +106,7 @@ export function TasksPanel({
       done={isDone(t)}
       highlighted={highlight === t.id}
       showService={serviceId === 'all'}
-      onToggle={() => toggle(t)}
+      onToggle={t.service.canWriteTasks ? () => toggle(t) : undefined}
     />
   )
 
@@ -129,7 +129,7 @@ export function TasksPanel({
           onChange={setScope}
         />
       </FilterBar>
-      {target && (
+      {target?.canWriteTasks && (
         <TaskComposer
           key={target.serviceId}
           service={target}

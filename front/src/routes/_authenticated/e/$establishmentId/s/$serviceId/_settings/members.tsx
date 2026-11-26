@@ -8,6 +8,7 @@ import InviteServiceMemberForm from '@/components/custom/popup/inviteServiceMemb
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import ReactTable from '@/components/table/reactTable.tsx'
 import { can } from '@/hooks/useCan.ts'
+import { useGrantableRoles } from '@/queries/useRoles.ts'
 import {
   useServiceMemberMutations,
   useServiceMembersQuery,
@@ -42,6 +43,7 @@ function ServiceMembers() {
   const superAdmin = useAuthStore((state) => state.user?.isSuperAdmin === true)
   const soiMeme = useAuthStore((state) => state.user?.id)
   const { removeMember, setRole } = useServiceMemberMutations()
+  const { roles: attribuables } = useGrantableRoles()
   const [cibleRetrait, setCibleRetrait] = useState<ServiceMember | null>(null)
 
   const sorted = useMemo(
@@ -60,8 +62,9 @@ function ServiceMembers() {
         onRemove: setCibleRetrait,
         onApplyDefaultRole: (member, roleId) =>
           setRole.mutate({ affectationId: member.id, roleId }),
+        attribuable: (roleId) => attribuables.some((r) => r.id === roleId),
       }),
-    [soignants, superAdmin, soiMeme, setRole],
+    [soignants, superAdmin, soiMeme, setRole, attribuables],
   )
 
   return (

@@ -1267,6 +1267,16 @@ describe('EditPatient — champs configurables du service', () => {
     expect(options).not.toContain('Autre ancien (supprimé)')
   })
 
+  it('fige les champs sans patient:write, qui restent lisibles', async () => {
+    useAuthStore.setState({
+      context: { ...context, ...ctxRole('LECTURE') },
+    })
+    renderConfigured()
+    const hba1c = await screen.findByLabelText('HbA1c (%)')
+    expect(hba1c).toBeDisabled()
+    expect(hba1c).toHaveValue(7)
+  })
+
   it('ne rend pas un champ clinique sans clinical:read', async () => {
     useAuthStore.setState({
       context: { ...context, ...ctxRole('SECRETARIAT') },

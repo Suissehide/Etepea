@@ -1,25 +1,15 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { can } from '@/hooks/useCan.ts'
+import { NAVIGATION } from '@/navigation/navigation.ts'
 import type { Permission } from '@/utils/permissions.ts'
 import { resolveTenantContext } from '@/utils/tenant-context.ts'
 
-// Permissions couvrant les ecrans d'organisation du service (Planning, Thematiques,
-// Diagnostics, et depuis le 2026-09-29 Soignants et Salles, propres a chaque service). La
-// branche admet quiconque detient au moins l'une d'elles ; chaque ecran se garde ensuite par la
-// sienne. Aucune permission d'etablissement n'y figure : celles de l'administration vivent sous
-// /e/:id/admin.
-const SETTINGS_PERMISSIONS: Permission[] = [
-  'planning:write',
-  'pathway-templates:write',
-  'thematics:write',
-  'soignants:write',
-  'locations:write',
-  'diagnostic-templates:write',
-  'pdf-design:write',
-  'patient-form:write',
-  'stats:write',
-]
+// Les ecrans de cette branche sont ceux du groupe Administration : on y entre avec la permission de
+// l'un d'eux, chaque ecran se garde ensuite par la sienne.
+const SETTINGS_PERMISSIONS: Permission[] = NAVIGATION.service
+  .filter((item) => item.group === 'Administration')
+  .flatMap((item) => [item.permission ?? []].flat())
 
 export const Route = createFileRoute(
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings',

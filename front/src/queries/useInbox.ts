@@ -13,6 +13,7 @@ import type { CreateTaskInput, Notification, Task } from '@/types/task.ts'
 export type InboxService = ServiceRef & {
   name: string
   canTasks: boolean
+  canWriteTasks: boolean
   // Le metier (Soignant) que je incarne dans ce service, pour « pour moi » et la pastille.
   soignantId: string | null
 }
@@ -39,6 +40,7 @@ export const useInboxServices = (): InboxService[] => {
             serviceId: s.id,
             name: s.name,
             canTasks: s.permissions.includes('tasks:read'),
+            canWriteTasks: s.permissions.includes('tasks:write'),
             soignantId: s.soignantId ?? null,
           })),
       ),

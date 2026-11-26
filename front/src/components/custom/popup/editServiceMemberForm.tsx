@@ -2,7 +2,7 @@ import { Check, Pencil, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { useRolesQuery } from '../../../queries/useRoles.ts'
+import { useGrantableRoles } from '../../../queries/useRoles.ts'
 import { useServiceMemberMutations } from '../../../queries/useServiceMembers.ts'
 import type { ServiceMember } from '../../../types/serviceMember.ts'
 import { Button } from '../../ui/button.tsx'
@@ -21,8 +21,8 @@ import {
 function EditServiceMemberForm({ member }: { member: ServiceMember }) {
   const [open, setOpen] = useState(false)
   const { setRole } = useServiceMemberMutations()
-  const { roles } = useRolesQuery()
-  // Le rôle actuel reste affiché même s'il a été supprimé depuis.
+  const { roles } = useGrantableRoles()
+  // Le rôle actuel reste affiché même supprimé ou hors des droits de l'appelant.
   const roleOptions = [
     ...roles.map((r) => ({ value: r.id, label: r.name })),
     ...(roles.some((r) => r.id === member.role.id)

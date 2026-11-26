@@ -58,7 +58,13 @@ describe('dailyTabGuard', () => {
     )
   })
 
-  it('renvoie au choix de contexte sans aucun onglet', () => {
+  it('renvoie vers un écran d administration sans onglet du quotidien', () => {
+    expect(redirectedTo(['planning:read', 'thematics:write'])).toBe(
+      '/e/$establishmentId/s/$serviceId/thematic',
+    )
+  })
+
+  it('renvoie au choix de contexte sans aucun écran', () => {
     expect(redirectedTo(['planning:read'])).toBe('/choose-context')
   })
 })
