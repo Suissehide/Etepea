@@ -11,7 +11,7 @@ import {
 } from './setup/fixtures'
 
 // Soignants et salles propres a chaque service (2026-09-29). Un soignant est un METIER du service,
-// une salle un lieu du service ; le coordinateur les gere (`referentials:write`) et regle, depuis
+// une salle un lieu du service ; le coordinateur les gere (`soignants:write` et `locations:write`) et regle, depuis
 // son service, quel membre incarne quel soignant (`ServiceMembership.soignantId`).
 //
 // Un seul scenario, monte une fois : la connexion est limitee en debit par instance

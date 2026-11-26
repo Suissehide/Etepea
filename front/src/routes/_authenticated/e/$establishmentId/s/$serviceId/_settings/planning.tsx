@@ -85,7 +85,7 @@ import {
 } from '@/components/ui/popover.tsx'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group.tsx'
 import { TOAST_SEVERITY } from '@/constants/ui.constant.ts'
-import { can } from '@/hooks/useCan.ts'
+import { can, useCan } from '@/hooks/useCan.ts'
 import { useToast } from '@/hooks/useToast.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
 import { getBookedPatientCount } from '@/libs/slotAvailability.ts'
@@ -201,6 +201,7 @@ function selectionTemplates(
 }
 
 function Planning() {
+  const canPlan = useCan('planning:write')
   // Plage connue seulement une fois le calendrier monté : la page s'affiche
   // d'abord, les créneaux suivent.
   const [visibleRange, setVisibleRange] = useState<SlotDateRange | null>(null)
@@ -415,6 +416,9 @@ function Planning() {
     pathwayTemplateID: string,
     startDate: string,
   ) => {
+    if (!canPlan) {
+      return
+    }
     instantiatePathway.mutate({
       pathwayTemplateID,
       startDate,
@@ -422,6 +426,9 @@ function Planning() {
   }
 
   const handleSelectSlot = (dateSelectArg: DateSelectInfo) => {
+    if (!canPlan) {
+      return
+    }
     setSelectedDate(dateSelectArg)
     setOpenCreateSlotModal(true)
   }
@@ -959,18 +966,22 @@ function Planning() {
   return (
     <DashboardLayout
       components={['pathway']}
-      quickActions={[
-        <ForbiddenWeekModeButton
-          key="forbidden-week-mode"
-          active={isForbiddenWeekMode}
-          onClick={() => {
-            if (view !== 'timeline') {
-              setView('timeline')
-            }
-            setIsForbiddenWeekMode((prev) => !prev)
-          }}
-        />,
-      ]}
+      quickActions={
+        canPlan
+          ? [
+              <ForbiddenWeekModeButton
+                key="forbidden-week-mode"
+                active={isForbiddenWeekMode}
+                onClick={() => {
+                  if (view !== 'timeline') {
+                    setView('timeline')
+                  }
+                  setIsForbiddenWeekMode((prev) => !prev)
+                }}
+              />,
+            ]
+          : []
+      }
     >
       <div className="relative flex-1 bg-background rounded-lg flex flex-col w-full">
         <div className="flex items-center gap-4 px-7 pt-[22px] pb-3.5">
@@ -1013,59 +1024,15 @@ function Planning() {
                 Exporter
               </Button>
 
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label="Plus d'actions"
-                    title="Plus d'actions"
-                    className="size-[38px] rounded-lg focus-visible:bg-muted focus-visible:ring-0 data-[state=open]:bg-muted"
-                  >
-                    <Ellipsis size={18} />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  {/* Les actions secondaires vont ici ; Exporter reste à part. */}
-                  <DropdownMenu.Content
-                    className="z-50 w-[310px] rounded-[10px] border border-border bg-primary-foreground p-1 shadow-[0_16px_40px_rgba(4,24,43,.18)]"
-                    align="end"
-                    sideOffset={6}
-                    collisionPadding={8}
-                  >
-                    <DropdownMenu.Item
-                      onSelect={() => setCycleOpen(true)}
-                      className={MORE_ITEM}
-                    >
-                      <Repeat size={16} className="mt-0.5 shrink-0" />
-                      <span className="flex flex-col gap-0.5">
-                        Configurer le cycle de semaines
-                        <span className="text-xs leading-snug text-text-light">
-                          S1, S2… au lieu des numéros de l'année
-                        </span>
-                      </span>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      onSelect={() => setRegenerateOpen(true)}
-                      className={MORE_ITEM}
-                    >
-                      <RefreshCw size={16} className="mt-0.5 shrink-0" />
-                      <span className="flex flex-col gap-0.5">
-                        Mettre à jour les parcours instanciés
-                        <span className="text-xs leading-snug text-text-light">
-                          Applique les changements des modèles aux parcours déjà
-                          créés
-                        </span>
-                      </span>
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+              <PlusActions
+                onCycle={() => setCycleOpen(true)}
+                onRegenerate={() => setRegenerateOpen(true)}
+              />
             </>
           )}
         </div>
 
-        {selectedSlotIds.size > 0 && (
+        {canPlan && selectedSlotIds.size > 0 && (
           <SelectionBar
             count={selectedSlotIds.size}
             onDelete={bulkActions.delete}
@@ -1142,7 +1109,7 @@ function Planning() {
                 handleClickEvent={handleClickSlot}
                 handleOpenEvent={setOpenEventId}
                 editMode={editMode}
-                editable={true}
+                editable={canPlan}
                 onDuplicate={handleDuplicateSlot}
                 onDelete={handleDeleteHoverSlot}
                 onToggleLock={handleToggleLock}
@@ -1353,6 +1320,65 @@ type PathwayDeleteTarget = {
 
 const MORE_ITEM =
   'flex cursor-pointer gap-2.5 rounded-md px-2.5 py-2 text-sm text-foreground outline-none select-none data-highlighted:bg-[#f8fafc]'
+
+// Cycle et régénération : écritures de planning, absentes sans `planning:write`.
+function PlusActions({
+  onCycle,
+  onRegenerate,
+}: {
+  onCycle: () => void
+  onRegenerate: () => void
+}) {
+  if (!useCan('planning:write')) {
+    return null
+  }
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Plus d'actions"
+          title="Plus d'actions"
+          className="size-[38px] rounded-lg focus-visible:bg-muted focus-visible:ring-0 data-[state=open]:bg-muted"
+        >
+          <Ellipsis size={18} />
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        {/* Les actions secondaires vont ici ; Exporter reste à part. */}
+        <DropdownMenu.Content
+          className="z-50 w-[310px] rounded-[10px] border border-border bg-primary-foreground p-1 shadow-[0_16px_40px_rgba(4,24,43,.18)]"
+          align="end"
+          sideOffset={6}
+          collisionPadding={8}
+        >
+          <DropdownMenu.Item onSelect={() => onCycle()} className={MORE_ITEM}>
+            <Repeat size={16} className="mt-0.5 shrink-0" />
+            <span className="flex flex-col gap-0.5">
+              Configurer le cycle de semaines
+              <span className="text-xs leading-snug text-text-light">
+                S1, S2… au lieu des numéros de l'année
+              </span>
+            </span>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onSelect={() => onRegenerate()}
+            className={MORE_ITEM}
+          >
+            <RefreshCw size={16} className="mt-0.5 shrink-0" />
+            <span className="flex flex-col gap-0.5">
+              Mettre à jour les parcours instanciés
+              <span className="text-xs leading-snug text-text-light">
+                Applique les changements des modèles aux parcours déjà créés
+              </span>
+            </span>
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  )
+}
 
 function ForbiddenWeekModeButton({
   active,

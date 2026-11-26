@@ -7,6 +7,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { AppointmentApi } from '../../../../api/appointment.api.ts'
 import { APPOINTMENT, SLOT } from '../../../../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../../../../constants/ui.constant.ts'
+import { useCan } from '../../../../hooks/useCan.ts'
 import { useToast } from '../../../../hooks/useToast.ts'
 import { getContrastTextColor } from '../../../../libs/color.ts'
 import { patientOverlaps } from '../../../../libs/planningConflicts.ts'
@@ -99,6 +100,7 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
 
   const queryClient = useQueryClient()
   const { createAppointment } = useAppointmentMutations()
+  const canCreateAppointment = useCan('appointment:create')
 
   const appointmentEvents: CalendarEvent[] = useMemo(() => {
     if (!slots || !patient) {
@@ -365,6 +367,9 @@ export default function PlanningPatient({ patient }: PlanningPatientProps) {
   }
 
   const openCreateAppointment = (slot: Slot) => {
+    if (!canCreateAppointment) {
+      return
+    }
     const isIndividual = slot.slotTemplate.isIndividual
     setSelectedSlotID(slot.id)
     setSelectedSlotSoignants(slot.slotTemplate?.soignants ?? [])

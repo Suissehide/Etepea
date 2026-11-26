@@ -42,6 +42,7 @@ function SoignantSettings() {
   // mais l'URL se tape à la main : les actions d'écriture se gardent aussi
   // ici, indépendamment du menu.
   const canManage = useCan('soignants:write')
+  const canLinkAccounts = useCan('service-members:manage')
   const [showArchived, setShowArchived] = useState(false)
   const { allSoignants: soignants, isPending } =
     useSoignantQueries(showArchived)
@@ -81,12 +82,14 @@ function SoignantSettings() {
         thematicOptions,
         members: members ?? [],
         canManage,
+        canLinkAccounts,
       }),
     [
       thematics,
       thematicOptions,
       members,
       canManage,
+      canLinkAccounts,
       showArchived,
       restoreSoignant,
       updateSoignant,

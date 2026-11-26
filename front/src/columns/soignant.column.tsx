@@ -32,6 +32,8 @@ type SoignantColumnOptions = {
   // les actions d'écriture ne doivent pas apparaître (le menu n'est pas la
   // seule barrière, une URL se tape à la main).
   canManage: boolean
+  // Le rattachement d'un compte passe par `service-members:manage`, pas par `soignants:write`.
+  canLinkAccounts: boolean
 }
 
 export const getSoignantColumns = ({
@@ -44,6 +46,7 @@ export const getSoignantColumns = ({
   thematicOptions,
   members,
   canManage,
+  canLinkAccounts,
 }: SoignantColumnOptions) => {
   const columns = [
     columnHelper.accessor('name', {
@@ -159,7 +162,9 @@ export const getSoignantColumns = ({
         }
         return (
           <div className="flex justify-end gap-2">
-            <EditSoignantAccountsForm soignant={soignant} members={members} />
+            {canLinkAccounts && (
+              <EditSoignantAccountsForm soignant={soignant} members={members} />
+            )}
             <EditSoignantThematicsForm
               soignant={soignant}
               thematics={thematics}

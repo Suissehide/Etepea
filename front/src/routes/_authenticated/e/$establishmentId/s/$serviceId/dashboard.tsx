@@ -207,7 +207,9 @@ function Dashboard() {
   const afficherVerrouilles = useAfficherVerrouilles((state) => state.afficher)
   const [exportOpen, setExportOpen] = useState(false)
   const canExportPdf = useCan('pdf:export')
-  const peutAjouter = useCan('dashboard:write')
+  const peutAjouterDashboard = useCan('dashboard:write')
+  const peutCreerRdv = useCan('appointment:create')
+  const peutAjouter = peutAjouterDashboard && peutCreerRdv
 
   // L'export part de ce que montre le tableau de bord : la sélection de soignants
   // ou de parcours devient le filtre de départ (pas d'équivalent pour les salles).

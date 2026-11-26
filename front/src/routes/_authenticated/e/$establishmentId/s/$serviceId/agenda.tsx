@@ -303,42 +303,44 @@ function Agenda() {
           soignants={openedRow?.soignants}
         />
 
-        {editPatients && addPatientTarget && (
-          <AddPatientToAppointmentForm
-            open
-            setOpen={(open) => {
-              if (!open) {
+        {editPatients &&
+          addPatientTarget &&
+          (addPatientTarget.appointmentId || canCreateAppointment) && (
+            <AddPatientToAppointmentForm
+              open
+              setOpen={(open) => {
+                if (!open) {
+                  setAddPatientTargetId(null)
+                }
+              }}
+              row={addPatientTarget}
+              isPending={
+                updateAppointment.isPending || createAppointment.isPending
+              }
+              onConfirm={(params) => {
+                if (addPatientTarget.appointmentId) {
+                  updateAppointment.mutate(params)
+                } else if (addPatientSlot) {
+                  createAppointment.mutate({
+                    startDate: addPatientSlot.startDate,
+                    endDate: addPatientSlot.endDate,
+                    slotID: addPatientSlot.id,
+                    thematicId: '',
+                    patientIDs: params.appointmentPatients.map(
+                      (p) => p.patientID,
+                    ),
+                  })
+                }
                 setAddPatientTargetId(null)
-              }
-            }}
-            row={addPatientTarget}
-            isPending={
-              updateAppointment.isPending || createAppointment.isPending
-            }
-            onConfirm={(params) => {
-              if (addPatientTarget.appointmentId) {
-                updateAppointment.mutate(params)
-              } else if (addPatientSlot) {
-                createAppointment.mutate({
-                  startDate: addPatientSlot.startDate,
-                  endDate: addPatientSlot.endDate,
-                  slotID: addPatientSlot.id,
-                  thematicId: '',
-                  patientIDs: params.appointmentPatients.map(
-                    (p) => p.patientID,
-                  ),
-                })
-              }
-              setAddPatientTargetId(null)
-            }}
-            onRequestDelete={() => {
-              if (addPatientTarget.appointmentId) {
-                setDeleteTarget(addPatientTarget)
-              }
-              setAddPatientTargetId(null)
-            }}
-          />
-        )}
+              }}
+              onRequestDelete={() => {
+                if (addPatientTarget.appointmentId) {
+                  setDeleteTarget(addPatientTarget)
+                }
+                setAddPatientTargetId(null)
+              }}
+            />
+          )}
 
         {newAppointment && (
           <AddAppointmentForm

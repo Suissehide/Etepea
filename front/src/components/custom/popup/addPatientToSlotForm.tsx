@@ -982,6 +982,11 @@ function AddPatientToSlotForm({
   onBooked,
 }: AddPatientToSlotFormProps) {
   const [open, setOpen] = useState(false)
+  const canCreate = useCan('appointment:create')
+
+  if (!canCreate) {
+    return null
+  }
 
   return (
     <Popup modal open={open} onOpenChange={setOpen}>
