@@ -13,6 +13,7 @@ import {
   listSoignantsQuerySchema,
   soignantDetailResponseSchema,
   soignantsResponseSchema,
+  soignantUpdateResponseSchema,
   type UpdateSoignantBody,
   type UpdateSoignantParams,
   updateSoignantByIdSchema,
@@ -98,7 +99,7 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
       schema: {
         ...updateSoignantByIdSchema,
         response: {
-          200: soignantDetailResponseSchema,
+          200: soignantUpdateResponseSchema,
           404: z.object({ message: z.string() }),
         },
       },
@@ -106,7 +107,10 @@ const soignantWriteRouter: FastifyPluginAsync = (fastify) => {
     },
     async (request) => {
       const { soignantID } = request.params
-      const updated = await soignantDomain.update(soignantID, request.body)
+      const updated = await soignantDomain.updateWithMembers(
+        soignantID,
+        request.body,
+      )
       if (!updated) {
         throw Boom.notFound('Soignant not found')
       }

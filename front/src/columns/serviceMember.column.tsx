@@ -21,6 +21,8 @@ type ServiceMemberColumnOptions = {
   // (`assertOtherServiceMember`), l'ecran n'offre donc pas le geste.
   soiMeme: string | undefined
   onRemove: (member: ServiceMember) => void
+  // Aligne le rôle du membre sur le rôle par défaut de son soignant.
+  onApplyDefaultRole: (member: ServiceMember, roleId: string) => void
 }
 
 // Membres du service courant. Le role DANS CE SERVICE et le retrait du service se gerent ici par
@@ -31,6 +33,7 @@ export const getServiceMemberColumns = ({
   avecIdentifiant,
   soiMeme,
   onRemove,
+  onApplyDefaultRole,
 }: ServiceMemberColumnOptions) => [
   ...(avecIdentifiant
     ? [
@@ -54,7 +57,33 @@ export const getServiceMemberColumns = ({
   columnHelper.display({
     id: 'role',
     header: 'Rôle',
-    cell: ({ row }) => <Etiquette>{row.original.role.name}</Etiquette>,
+    cell: ({ row }) => {
+      const membre = row.original
+      const soignant = soignants.find((s) => s.id === membre.soignantId)
+      const ecart =
+        soignant?.defaultRoleId && soignant.defaultRoleId !== membre.role.id
+      return (
+        <div className="flex items-center gap-2">
+          <Etiquette>{membre.role.name}</Etiquette>
+          {ecart && soignant.defaultRoleId && (
+            <>
+              <Etiquette ton="alerte">
+                Rôle différent de {soignant.name}
+              </Etiquette>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  onApplyDefaultRole(membre, soignant.defaultRoleId as string)
+                }
+              >
+                Appliquer le rôle par défaut
+              </Button>
+            </>
+          )}
+        </div>
+      )
+    },
   }),
   columnHelper.display({
     id: 'soignant',

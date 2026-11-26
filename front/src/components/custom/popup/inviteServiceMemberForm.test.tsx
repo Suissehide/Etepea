@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -78,6 +78,27 @@ const routeRoles: Route = {
         memberCount: 0,
         archivedAt: null,
       },
+      {
+        id: 'role-equipe',
+        name: 'Équipe SMCP',
+        preset: null,
+        permissions: [],
+        hiddenSoignantIds: [],
+        memberCount: 0,
+        archivedAt: null,
+      },
+    ],
+  }),
+}
+
+const routeSoignants: Route = {
+  match: (url, method) => url.includes('/s/svcA/soignant') && method === 'GET',
+  respond: () => ({
+    ok: true,
+    status: 200,
+    json: async () => [
+      { id: 'so1', name: 'IDE SMCP', defaultRoleId: 'role-equipe' },
+      { id: 'so2', name: 'Sans défaut', defaultRoleId: null },
     ],
   }),
 }
@@ -190,5 +211,27 @@ describe('InviteServiceMemberForm', () => {
     expect(texte).not.toMatch(/super-admin/i)
     expect(texte).not.toMatch(/autre établissement.*existe/i)
     expect(screen.queryByText(LIEN_ATTENDU)).not.toBeInTheDocument()
+  })
+
+  it('pré-remplit le rôle par défaut du soignant choisi, qui reste modifiable', async () => {
+    vi.stubGlobal('fetch', buildFetchMock([routeRoles, routeSoignants]))
+    renderForm()
+    await userEvent.click(screen.getByRole('button', { name: /^inviter$/i }))
+
+    const roleBouton = () =>
+      screen.getByRole('combobox', { name: /rôle dans le service/i })
+    expect(await within(roleBouton()).findByText('Intervenant')).toBeTruthy()
+
+    await userEvent.click(screen.getByRole('combobox', { name: /soignant/i }))
+    await userEvent.click(
+      await screen.findByRole('option', { name: 'IDE SMCP' }),
+    )
+    expect(within(roleBouton()).getByText('Équipe SMCP')).toBeTruthy()
+
+    await userEvent.click(roleBouton())
+    await userEvent.click(
+      await screen.findByRole('option', { name: 'Intervenant' }),
+    )
+    expect(within(roleBouton()).getByText('Intervenant')).toBeTruthy()
   })
 })

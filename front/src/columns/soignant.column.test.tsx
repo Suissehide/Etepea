@@ -29,6 +29,8 @@ const actions = (canLinkAccounts: boolean) => {
     members: [],
     canManage: true,
     canLinkAccounts,
+    roles: [],
+    onChangeDefaultRole: vi.fn(),
   }).find((c) => c.id === 'actions')
   if (!column?.cell) {
     throw new Error('colonne actions introuvable')

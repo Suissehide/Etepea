@@ -9,7 +9,9 @@ import EditSoignantThematicsForm from '../components/custom/popup/editSoignantTh
 import { EtiquettesTronquees } from '../components/table/etiquette.tsx'
 import type { Features } from '../components/table/features.ts'
 import { Button } from '../components/ui/button.tsx'
+import { Select } from '../components/ui/select.tsx'
 import { Switch } from '../components/ui/switch.tsx'
+import type { Role } from '../types/role.ts'
 import type { ServiceMember } from '../types/serviceMember.ts'
 import type { Soignant } from '../types/soignant.ts'
 import type { Thematic } from '../types/thematic.ts'
@@ -34,6 +36,8 @@ type SoignantColumnOptions = {
   canManage: boolean
   // Le rattachement d'un compte passe par `service-members:manage`, pas par `soignants:write`.
   canLinkAccounts: boolean
+  roles: Role[]
+  onChangeDefaultRole: (id: string, roleId: string | null) => void
 }
 
 export const getSoignantColumns = ({
@@ -47,6 +51,8 @@ export const getSoignantColumns = ({
   members,
   canManage,
   canLinkAccounts,
+  roles,
+  onChangeDefaultRole,
 }: SoignantColumnOptions) => {
   const columns = [
     columnHelper.accessor('name', {
@@ -76,6 +82,23 @@ export const getSoignantColumns = ({
           <span className="text-sm text-text-dark">{comptes.join(', ')}</span>
         ) : (
           <span className="text-sm text-text-light">—</span>
+        )
+      },
+    }),
+    columnHelper.display({
+      id: 'defaultRole',
+      header: 'Rôle par défaut',
+      size: 200,
+      cell: ({ row }) => {
+        const soignant = row.original
+        return (
+          <Select
+            options={roles.map((r) => ({ value: r.id, label: r.name }))}
+            value={soignant.defaultRoleId ?? undefined}
+            placeholder="Aucun"
+            disabled={!canManage || archived}
+            onValueChange={(v) => onChangeDefaultRole(soignant.id, v || null)}
+          />
         )
       },
     }),

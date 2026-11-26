@@ -41,7 +41,7 @@ function ServiceMembers() {
   const { allSoignants: soignants } = useSoignantQueries()
   const superAdmin = useAuthStore((state) => state.user?.isSuperAdmin === true)
   const soiMeme = useAuthStore((state) => state.user?.id)
-  const { removeMember } = useServiceMemberMutations()
+  const { removeMember, setRole } = useServiceMemberMutations()
   const [cibleRetrait, setCibleRetrait] = useState<ServiceMember | null>(null)
 
   const sorted = useMemo(
@@ -58,8 +58,10 @@ function ServiceMembers() {
         avecIdentifiant: superAdmin,
         soiMeme,
         onRemove: setCibleRetrait,
+        onApplyDefaultRole: (member, roleId) =>
+          setRole.mutate({ affectationId: member.id, roleId }),
       }),
-    [soignants, superAdmin, soiMeme],
+    [soignants, superAdmin, soiMeme, setRole],
   )
 
   return (

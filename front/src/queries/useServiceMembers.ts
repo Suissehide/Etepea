@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { ServiceMembersApi } from '../api/serviceMembers.api.ts'
-import { SERVICE_MEMBER } from '../constants/process.constant.ts'
+import { ROLE, SERVICE_MEMBER } from '../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
@@ -78,9 +78,10 @@ export const useServiceMemberMutations = () => {
       })
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: [SERVICE_MEMBER.GET_ALL],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [SERVICE_MEMBER.GET_ALL] }),
+        queryClient.invalidateQueries({ queryKey: [ROLE.GET_ALL] }),
+      ])
     },
   })
 

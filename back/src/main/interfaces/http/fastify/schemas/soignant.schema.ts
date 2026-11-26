@@ -19,7 +19,12 @@ export const soignantResponseSchema = z.object({
 export const soignantDetailResponseSchema = soignantResponseSchema.extend({
   inactive: z.boolean(),
   hidden: z.boolean(),
+  defaultRoleId: cuid().nullable(),
 })
+
+export const soignantUpdateResponseSchema = soignantDetailResponseSchema.extend(
+  { membersWithOtherRole: z.number().int() },
+)
 
 export const soignantsResponseSchema = z.array(soignantDetailResponseSchema)
 
@@ -43,6 +48,7 @@ export const updateSoignantByIdSchema = {
     archived: z.boolean().optional(),
     inactive: z.boolean().optional(),
     hidden: z.boolean().optional(),
+    defaultRoleId: cuid().nullable().optional(),
   }),
 }
 

@@ -191,11 +191,17 @@ export const useSoignantMutations = () => {
 
       return { previousSoignants }
     },
-    onSuccess: () => {
+    onSuccess: ({ membersWithOtherRole }) => {
       toast({
         title: 'Soignant modifié avec succès',
         severity: TOAST_SEVERITY.SUCCESS,
       })
+      if (membersWithOtherRole) {
+        toast({
+          title: `${membersWithOtherRole} compte(s) rattaché(s) gardent un autre rôle`,
+          severity: TOAST_SEVERITY.INFO,
+        })
+      }
     },
     onError: (error, __, context) => {
       restoreForTenant(queryClient, context?.previousSoignants)

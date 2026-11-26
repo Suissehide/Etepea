@@ -22,6 +22,11 @@ export interface SoignantRepositoryInterface {
     soignantID: string,
     soignantUpdateParams: SoignantUpdateEntityRepo,
   ) => Promise<SoignantEntityRepo>
+  // Comptes actifs rattaches au soignant dont le role n'est pas `roleId` (0 si `roleId` est nul).
+  countMembersWithOtherRole: (
+    soignantID: string,
+    roleId: string | null,
+  ) => Promise<number>
   // Suppression definitive : refusee si la ligne n'est pas archivee,
   // ou si quoi que ce soit la reference encore.
   deleteForever: (soignantID: string) => Promise<void>

@@ -3,6 +3,7 @@ import { handleHttpError, messageDuServeur } from '../libs/httpErrorHandler.ts'
 import type {
   CreateSoignantParams,
   Soignant,
+  UpdatedSoignant,
   UpdateSoignantParams,
 } from '../types/soignant.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
@@ -48,7 +49,7 @@ export const SoignantApi = {
 
   update: async (
     updateSoignantParams: UpdateSoignantParams,
-  ): Promise<Soignant> => {
+  ): Promise<UpdatedSoignant> => {
     const { id: soignantID, ...updateSoignantInputs } = updateSoignantParams
     const response = await fetchWithAuth(
       `${tenantApiUrl()}/soignant/${soignantID}?action=updateSoignant`,

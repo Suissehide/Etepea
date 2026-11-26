@@ -181,7 +181,20 @@ function InviteServiceMemberForm() {
                   )}
                 </form.AppField>
 
-                <form.AppField name="soignantId">
+                <form.AppField
+                  name="soignantId"
+                  listeners={{
+                    // Le rôle par défaut du soignant pré-remplit le rôle, qui reste modifiable.
+                    onChange: ({ value }) => {
+                      const roleId = soignants?.find(
+                        (s) => s.id === value,
+                      )?.defaultRoleId
+                      if (roleId) {
+                        form.setFieldValue('roleId', roleId)
+                      }
+                    },
+                  }}
+                >
                   {(field) => (
                     <field.Select
                       label="Soignant"

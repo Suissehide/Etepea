@@ -23,6 +23,11 @@ export interface SoignantDomainInterface {
     soignantID: string,
     soignantUpdateParams: SoignantUpdateEntityDomain,
   ) => Promise<SoignantEntityDomain>
+  // Met a jour puis compte les comptes rattaches dont le role differe du role par defaut.
+  updateWithMembers: (
+    soignantID: string,
+    soignantUpdateParams: SoignantUpdateEntityDomain,
+  ) => Promise<SoignantEntityDomain & { membersWithOtherRole: number }>
   // Suppression definitive : refusee si la ligne n'est pas archivee,
   // ou si quoi que ce soit la reference encore.
   deleteForever: (soignantID: string) => Promise<void>

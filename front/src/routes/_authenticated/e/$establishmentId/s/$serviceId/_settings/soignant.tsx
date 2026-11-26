@@ -10,6 +10,7 @@ import { VueSupprimesToggle } from '@/components/settings/vueSupprimesToggle.tsx
 import ReactTable from '@/components/table/reactTable.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { can, useCan } from '@/hooks/useCan.ts'
+import { useRolesQuery } from '@/queries/useRoles.ts'
 import { useServiceMembersQuery } from '@/queries/useServiceMembers.ts'
 import {
   useSoignantMutations,
@@ -51,6 +52,7 @@ function SoignantSettings() {
   const [purgeTargetId, setPurgeTargetId] = useState<string | null>(null)
   const { thematics } = useThematicQueries()
   const { members } = useServiceMembersQuery()
+  const { roles } = useRolesQuery()
 
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -83,6 +85,9 @@ function SoignantSettings() {
         members: members ?? [],
         canManage,
         canLinkAccounts,
+        roles,
+        onChangeDefaultRole: (id, defaultRoleId) =>
+          updateSoignant.mutate({ id, defaultRoleId }),
       }),
     [
       thematics,
@@ -90,6 +95,7 @@ function SoignantSettings() {
       members,
       canManage,
       canLinkAccounts,
+      roles,
       showArchived,
       restoreSoignant,
       updateSoignant,

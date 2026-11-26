@@ -92,6 +92,23 @@ class SoignantRepository implements SoignantRepositoryInterface {
       })
     }
   }
+  countMembersWithOtherRole(
+    soignantID: string,
+    roleId: string | null,
+  ): Promise<number> {
+    if (!roleId) {
+      return Promise.resolve(0)
+    }
+    return this.prisma.serviceMembership.count({
+      where: {
+        soignantId: soignantID,
+        ...this.scope,
+        roleId: { not: roleId },
+        establishmentMembership: { user: { deactivatedAt: null } },
+      },
+    })
+  }
+
   // Suppression DEFINITIVE, reservee aux lignes deja archivees. Le refus de
   // fond vient de la base (`onDelete: Restrict`) ; ce comptage ne sert qu'a
   // dire en francais ce qui bloque, avant d'aller buter dessus.
