@@ -587,6 +587,58 @@ class PathwayRepository implements PathwayRepositoryInterface {
       })
     }
   }
+
+  // Modèle disparu : templateID repasse à null ; créneaux ou patients disparus : ignorés.
+  async restore({ pathway, slotIds, priorities }: PathwayRestoreData) {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const { serviceId, establishmentId } = this.scope
+        const template = pathway.templateID
+          ? await tx.pathwayTemplate.findFirst({
+              where: { id: pathway.templateID, serviceId },
+              select: { id: true },
+            })
+          : null
+        await tx.pathway.create({
+          data: {
+            id: pathway.id,
+            startDate: new Date(pathway.startDate),
+            templateID: template?.id ?? null,
+            serviceId,
+            establishmentId,
+          },
+        })
+        await tx.slot.updateMany({
+          where: { id: { in: slotIds }, serviceId },
+          data: { pathwayID: pathway.id, archivedAt: null },
+        })
+        const patients = await tx.patient.findMany({
+          where: {
+            id: { in: priorities.map((p) => p.patientID) },
+            establishmentId,
+          },
+          select: { id: true },
+        })
+        const alive = new Set(patients.map((p) => p.id))
+        await tx.patientPathwayPriority.createMany({
+          data: priorities
+            .filter((p) => alive.has(p.patientID))
+            .map((p) => ({
+              ...p,
+              pathwayID: pathway.id,
+              serviceId,
+              establishmentId,
+            })),
+          skipDuplicates: true,
+        })
+      })
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'Pathway',
+        error: err,
+      })
+    }
+  }
 }
 
 export { PathwayRepository }

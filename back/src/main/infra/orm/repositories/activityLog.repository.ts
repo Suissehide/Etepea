@@ -7,6 +7,7 @@ import type {
   ActivityLogFindManyResult,
   ActivityLogRepositoryInterface,
   ActivityLogScopeFilters,
+  PlanningDeletionRepo,
   PlatformAccessLogFilters,
   PlatformAccessLogPage,
 } from '../../../types/infra/orm/repositories/activityLog.repository.interface'
@@ -118,6 +119,7 @@ class ActivityLogRepository implements ActivityLogRepositoryInterface {
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
+        omit: { restoreData: true },
       }),
       this.prisma.activityLog.count({ where }),
     ])
@@ -193,10 +195,64 @@ class ActivityLogRepository implements ActivityLogRepositoryInterface {
             orderBy: { createdAt: 'desc' },
             skip: (filters.page - 1) * filters.pageSize,
             take: filters.pageSize,
+            omit: { restoreData: true },
           }),
           this.prisma.activityLog.count({ where }),
         ])
         return { data, total }
+      })
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'ActivityLog',
+        error: err,
+      })
+    }
+  }
+
+  async findPlanningDeletion(id: string): Promise<PlanningDeletionRepo | null> {
+    const { establishmentId, serviceId } = this.tenantContext.scope()
+    try {
+      return await this.prisma.activityLog.findFirst({
+        where: { id, establishmentId, serviceId, action: 'planning.deleted' },
+        select: {
+          id: true,
+          entityType: true,
+          entityID: true,
+          restoreData: true,
+          restoredAt: true,
+        },
+      })
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'ActivityLog',
+        error: err,
+      })
+    }
+  }
+
+  // Un seul appelant gagne : le `where restoredAt: null` départage les restaurations simultanées.
+  async claimRestore(id: string): Promise<boolean> {
+    const { establishmentId, serviceId } = this.tenantContext.scope()
+    try {
+      const { count } = await this.prisma.activityLog.updateMany({
+        where: { id, establishmentId, serviceId, restoredAt: null },
+        data: { restoredAt: new Date() },
+      })
+      return count === 1
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'ActivityLog',
+        error: err,
+      })
+    }
+  }
+
+  async releaseRestore(id: string): Promise<void> {
+    const { establishmentId, serviceId } = this.tenantContext.scope()
+    try {
+      await this.prisma.activityLog.updateMany({
+        where: { id, establishmentId, serviceId },
+        data: { restoredAt: null },
       })
     } catch (err) {
       throw this.errorHandler.boomErrorFromPrismaError({

@@ -92,7 +92,18 @@ export type PlatformAccessLogPage = {
   total: number
 }
 
+export type PlanningDeletionRepo = {
+  id: string
+  entityType: string
+  entityID: string
+  restoreData: unknown
+  restoredAt: Date | null
+}
+
 export interface ActivityLogRepositoryInterface {
+  findPlanningDeletion: (id: string) => Promise<PlanningDeletionRepo | null>
+  claimRestore: (id: string) => Promise<boolean>
+  releaseRestore: (id: string) => Promise<void>
   // `client` optionnel : voir le commentaire sur
   // l'implémentation.
   create: (

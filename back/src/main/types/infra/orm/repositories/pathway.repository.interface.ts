@@ -92,6 +92,7 @@ export interface PathwayRepositoryInterface {
   ) => Promise<PathwayEntityRepo>
   findLiveAppointmentIDs: (pathwayID: string) => Promise<string[]>
   archive: (pathwayID: string) => Promise<PathwayRestoreData>
+  restore: (data: PathwayRestoreData) => Promise<void>
   regenerate: (
     pathwayTemplateIDs: string[],
     fromDate: Date,

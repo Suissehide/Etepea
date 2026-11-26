@@ -29,6 +29,7 @@ import { patientServiceFileRouter } from './patientServiceFile'
 import { pdfAssetReadRouter, pdfAssetWriteRouter } from './pdfAsset'
 import { pdfDesignReadRouter, pdfDesignWriteRouter } from './pdfDesign'
 import { planningCycleRouter } from './planningCycle'
+import { planningRestoreRouter } from './planningRestore'
 import { serviceFieldRouter } from './serviceField'
 import { serviceFieldCategoryRouter } from './serviceFieldCategory'
 import { serviceMembersRouter } from './serviceMembers'
@@ -203,6 +204,7 @@ const tenantRoutes: FastifyPluginAsyncZod = async (fastify) => {
   })
   await fastify.register(forbiddenWeekRouter, { prefix: '/forbidden-week' })
   await fastify.register(planningCycleRouter, { prefix: '/planning-cycle' })
+  await fastify.register(planningRestoreRouter, { prefix: '/planning/restore' })
   await fastify.register(serviceMembersRouter, { prefix: '/membres' })
   await fastify.register(serviceRoleRouter, { prefix: '/roles' })
   await fastify.register(serviceActivityLogRouter, { prefix: '/activity-log' })

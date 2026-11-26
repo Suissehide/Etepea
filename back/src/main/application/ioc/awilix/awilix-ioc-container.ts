@@ -26,6 +26,7 @@ import { PdfAssetDomain } from '../../../domain/pdf-asset.domain'
 import { PdfDesignDomain } from '../../../domain/pdf-design.domain'
 import { PdfDesignPresetDomain } from '../../../domain/pdf-design-preset.domain'
 import { PlanningCycleDomain } from '../../../domain/planningCycle.domain'
+import { PlanningRestoreDomain } from '../../../domain/planningRestore.domain'
 import { ServiceDomain } from '../../../domain/service.domain'
 import { ServiceFieldDomain } from '../../../domain/serviceField.domain'
 import { ServiceFieldCategoryDomain } from '../../../domain/serviceFieldCategory.domain'
@@ -180,6 +181,10 @@ class AwilixIocContainer {
     this.#registerForbiddenWeekRepository()
     // PlanningCycle
     this.#registerPlanningCycleDomain()
+    this.register(
+      'planningRestoreDomain',
+      asClass(PlanningRestoreDomain).singleton(),
+    )
     this.#registerPlanningCycleRepository()
     // AccessGrant
     this.#registerAccessGrantRepository()

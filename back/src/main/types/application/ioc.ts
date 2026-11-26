@@ -27,6 +27,7 @@ import type { PdfAssetDomainInterface } from '../domain/pdf-asset.domain.interfa
 import type { PdfDesignDomainInterface } from '../domain/pdf-design.domain.interface'
 import type { PdfDesignPresetDomainInterface } from '../domain/pdf-design-preset.domain.interface'
 import type { PlanningCycleDomainInterface } from '../domain/planningCycle.domain.interface'
+import type { PlanningRestoreDomainInterface } from '../domain/planningRestore.domain.interface'
 import type { ServiceDomainInterface } from '../domain/service.domain.interface'
 import type { ServiceFieldDomainInterface } from '../domain/serviceField.domain.interface'
 import type { ServiceFieldCategoryDomainInterface } from '../domain/serviceFieldCategory.domain.interface'
@@ -168,6 +169,7 @@ export interface IocContainer {
   readonly forbiddenWeekDomain: ForbiddenWeekDomainInterface
   readonly forbiddenWeekRepository: ForbiddenWeekRepositoryInterface
   // PlanningCycle
+  readonly planningRestoreDomain: PlanningRestoreDomainInterface
   readonly planningCycleDomain: PlanningCycleDomainInterface
   readonly planningCycleRepository: PlanningCycleRepositoryInterface
   // AccessGrant (octroi temporaire d'acces) — la lecture (`effectiveMemberships`,
