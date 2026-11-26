@@ -1,3 +1,4 @@
+import { ALL_SERVICE_PERMISSIONS } from '../../main/utils/permissions'
 import { buildTestApp, type TestApp } from './setup/app'
 import { testDb, truncateAll } from './setup/db'
 import {
@@ -64,6 +65,10 @@ describe('chef d etablissement', () => {
         id: serviceId,
         name: 'Non affecte',
         role: 'COORDINATEUR',
+        roleId: null,
+        roleName: 'Administrateur',
+        permissions: ALL_SERVICE_PERMISSIONS,
+        hiddenSoignantIds: [],
         soignantId: null,
         affecte: false,
       },

@@ -20,6 +20,13 @@ import { TenantContextMissingError } from './tenant-errors'
 // de la précédente. `clear()` pose explicitement l'absence de tenant, et le
 // hook onRequest global (interfaces/http/fastify/routes/index.ts) l'appelle
 // en toute première instruction : chaque requête démarre sans tenant.
+const geler = (tenant: Tenant): Tenant => {
+  if (tenant.servicePermissions !== null) {
+    Object.freeze(tenant.servicePermissions)
+  }
+  return Object.freeze(tenant)
+}
+
 class TenantContext implements TenantContextInterface {
   private readonly storage = new AsyncLocalStorage<TenantStore | undefined>()
 
@@ -38,11 +45,10 @@ class TenantContext implements TenantContextInterface {
   // `peek().tenant.establishmentId = 'e9'` réussissait, survivait à une frontière asynchrone, et
   // repointait TOUT le contexte sur un autre établissement — une lecture filtrée sur
   // l'établissement substitué passait alors le garde-fou. Le `tenant` imbriqué est
-  // donc gelé lui aussi. `Tenant` ne porte que des scalaires (voir types/utils/tenant-context.ts,
-  // six colonnes : chaînes, ou `null`), donc ce second gel est TOTAL, pas un niveau de plus dans
-  // une récursion inachevée — un test le tient (`tenant-context.test.ts`, « aucune colonne de
-  // Tenant n'est un objet »), pour que l'ajout d'une colonne imbriquée fasse rougir plutôt que de
-  // rouvrir la porte en silence.
+  // donc gelé lui aussi, avec sa seule colonne non scalaire, `servicePermissions` (un `push` y
+  // accorderait une permission) : un test le tient (`tenant-context.test.ts`, « le gel est
+  // total »), pour que l'ajout d'une autre colonne imbriquée fasse rougir plutôt que de rouvrir
+  // la porte en silence.
   //
   // Vérifié dans l'autre sens, celui qui casse : aucun appelant ne mute un tenant. Les
   // emplois de `peek()` hors de ce fichier ne font que LIRE ses colonnes
@@ -56,7 +62,7 @@ class TenantContext implements TenantContextInterface {
   // store était atteint sans jamais appeler `peek()`.
   enter(tenant: Tenant): void {
     this.storage.enterWith(
-      Object.freeze({ kind: 'tenant', tenant: Object.freeze(tenant) }),
+      Object.freeze({ kind: 'tenant', tenant: geler(tenant) }),
     )
   }
 
@@ -67,7 +73,7 @@ class TenantContext implements TenantContextInterface {
   // Même gel, et pour la même raison, que `enter` ci-dessus : l'enveloppe ET le tenant.
   run<T>(tenant: Tenant, fn: () => Promise<T>): Promise<T> {
     return this.storage.run(
-      Object.freeze({ kind: 'tenant', tenant: Object.freeze(tenant) }),
+      Object.freeze({ kind: 'tenant', tenant: geler(tenant) }),
       fn,
     )
   }
@@ -86,13 +92,13 @@ class TenantContext implements TenantContextInterface {
 
   currentService(): ServiceTenant {
     const tenant = this.current()
-    if (tenant.serviceId === null || tenant.serviceRole === null) {
+    if (tenant.serviceId === null || tenant.servicePermissions === null) {
       throw new TenantContextMissingError('no service in the current tenant')
     }
     return {
       ...tenant,
       serviceId: tenant.serviceId,
-      serviceRole: tenant.serviceRole,
+      servicePermissions: tenant.servicePermissions,
     }
   }
 

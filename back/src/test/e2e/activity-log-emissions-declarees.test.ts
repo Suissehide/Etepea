@@ -229,7 +229,7 @@ describe("chaque evenement declare ecrit une ligne d'activite sous son contexte 
           establishmentId: 'synthetique-etablissement',
           establishmentRole: 'ADMIN',
           serviceId: 'synthetique-service',
-          serviceRole: 'COORDINATEUR',
+          servicePermissions: [],
           soignantId: null,
         })
       } else if (genreContexte === 'tenant-administration') {
@@ -238,7 +238,7 @@ describe("chaque evenement declare ecrit une ligne d'activite sous son contexte 
           establishmentId: 'synthetique-etablissement',
           establishmentRole: 'ADMIN',
           serviceId: null,
-          serviceRole: null,
+          servicePermissions: null,
           soignantId: null,
         })
       } else if (genreContexte === 'aucun') {

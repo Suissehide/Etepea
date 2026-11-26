@@ -139,7 +139,7 @@ const tenant: Tenant = {
   establishmentId: 'e1',
   establishmentRole: 'MEMBER',
   serviceId: 's1',
-  serviceRole: 'INTERVENANT',
+  servicePermissions: [],
   soignantId: 'so1',
 }
 
@@ -598,23 +598,26 @@ describe('MembershipRepository (gestion des membres)', () => {
 
     // Contexte d'administration d'etablissement : pas de service courant.
     await expect(
-      ctx.run({ ...tenant, serviceId: null, serviceRole: null }, async () => {
-        await repo.findAll()
-        await repo.findByID('em1')
-        await repo.findByUserID('u9')
-        await repo.countAdmins()
-        await repo.serviceExists('sv1')
-        await repo.create({
-          userId: 'u9',
-          role: 'MEMBER',
-          services: [{ serviceId: 'sv1', role: 'LECTURE' }],
-        })
-        await repo.update('em1', {
-          role: 'ADMIN',
-          services: [{ serviceId: 'sv1', role: 'LECTURE' }],
-        })
-        await repo.delete('em1')
-      }),
+      ctx.run(
+        { ...tenant, serviceId: null, servicePermissions: null },
+        async () => {
+          await repo.findAll()
+          await repo.findByID('em1')
+          await repo.findByUserID('u9')
+          await repo.countAdmins()
+          await repo.serviceExists('sv1')
+          await repo.create({
+            userId: 'u9',
+            role: 'MEMBER',
+            services: [{ serviceId: 'sv1', role: 'LECTURE' }],
+          })
+          await repo.update('em1', {
+            role: 'ADMIN',
+            services: [{ serviceId: 'sv1', role: 'LECTURE' }],
+          })
+          await repo.delete('em1')
+        },
+      ),
     ).resolves.toBeUndefined()
   })
 
@@ -1764,7 +1767,7 @@ describe('PatientServiceFileRepository.impactDesactivation', () => {
     establishmentId: 'e1',
     establishmentRole: 'ADMIN',
     serviceId: null,
-    serviceRole: null,
+    servicePermissions: null,
     soignantId: null,
   }
 
@@ -2015,7 +2018,7 @@ describe('PatientAccessLogRepository', () => {
     establishmentId: 'e1',
     establishmentRole: 'ADMIN',
     serviceId: null,
-    serviceRole: null,
+    servicePermissions: null,
     soignantId: null,
   }
 
@@ -2170,7 +2173,7 @@ describe('PatientAccessLogRepository', () => {
 // `soignantDuService` (MDS-37), emploi declare du mode systeme (`runAsSystem-unicite.test.ts`) :
 // ses BORNES sont gardees ici.
 describe('MembershipRepository.soignantDuService', () => {
-  const adminEtab = { ...tenant, serviceId: null, serviceRole: null }
+  const adminEtab = { ...tenant, serviceId: null, servicePermissions: null }
 
   it('compte sous runAsSystem, borne au service vise ET a l etablissement courant', async () => {
     const { prisma, calls } = buildFakePrisma({ 'soignant.count': 1 })
@@ -2392,6 +2395,86 @@ describe('UserRepository.findNotificationPrefsMany, sous contexte de tenant (Tas
     expect(() =>
       assertTenantScope(
         { model: 'User', operation: 'findMany', args },
+        undefined,
+      ),
+    ).toThrow(TenantScopeMissingError)
+  })
+})
+
+describe('UserRepository.findByID, roles des affectations', () => {
+  const roleSelect = {
+    id: true,
+    name: true,
+    preset: true,
+    permissions: true,
+    hiddenSoignants: { select: { soignantId: true } },
+  }
+
+  it('lit les roles sous systeme, bornes aux seuls roleId des affectations du compte', async () => {
+    const ctx = new TenantContext()
+    const vus: { args: unknown; kind: string | undefined }[] = []
+    const prisma = {
+      user: {
+        findUniqueOrThrow: () =>
+          Promise.resolve({
+            id: 'u1',
+            establishmentMemberships: [
+              { serviceMemberships: [{ roleId: 'r1' }, { roleId: 'r2' }] },
+              { serviceMemberships: [{ roleId: 'r1' }] },
+            ],
+          }),
+      },
+      serviceRoleDef: {
+        findMany: (args: unknown) => {
+          vus.push({ args, kind: ctx.peek()?.kind })
+          return Promise.resolve([
+            {
+              id: 'r1',
+              name: 'Agenda',
+              preset: null,
+              permissions: ['agenda:read'],
+              hiddenSoignants: [{ soignantId: 'so1' }],
+            },
+            {
+              id: 'r2',
+              name: 'Lecture seule',
+              preset: 'LECTURE',
+              permissions: [],
+              hiddenSoignants: [],
+            },
+          ])
+        },
+      },
+    }
+    const repo = new UserRepository(buildContainer(prisma, ctx))
+
+    const user = await repo.findByID('u1')
+
+    expect(vus).toEqual([
+      {
+        args: { where: { id: { in: ['r1', 'r2'] } }, select: roleSelect },
+        kind: 'system',
+      },
+    ])
+    expect(
+      user.establishmentMemberships[0]?.serviceMemberships[0]?.roleDef,
+    ).toEqual({
+      id: 'r1',
+      name: 'Agenda',
+      preset: null,
+      permissions: ['agenda:read'],
+      hiddenSoignantIds: ['so1'],
+    })
+  })
+
+  it('la meme forme est refusee sans contexte : d ou le mode systeme', () => {
+    expect(() =>
+      assertTenantScope(
+        {
+          model: 'ServiceRoleDef',
+          operation: 'findMany',
+          args: { where: { id: { in: ['r1'] } }, select: roleSelect },
+        },
         undefined,
       ),
     ).toThrow(TenantScopeMissingError)

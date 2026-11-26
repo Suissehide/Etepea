@@ -70,7 +70,7 @@ const tenantDe = (decor: Decor) => ({
   establishmentId: decor.etablissementA,
   establishmentRole: 'MEMBER' as const,
   serviceId: null,
-  serviceRole: null,
+  servicePermissions: null,
   soignantId: null,
 })
 

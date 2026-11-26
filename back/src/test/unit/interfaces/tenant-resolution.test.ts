@@ -6,6 +6,15 @@ import {
   resolveTenantFromUser,
 } from '../../../main/interfaces/http/fastify/plugins/tenant.plugin'
 import type { UserWithMemberships } from '../../../main/types/infra/orm/repositories/user.repository.interface'
+import { ALL_SERVICE_PERMISSIONS } from '../../../main/utils/permissions'
+
+const roleDef = (id: string, permissions: string[]) => ({
+  id,
+  name: id,
+  preset: null,
+  permissions,
+  hiddenSoignantIds: [],
+})
 
 const now = new Date()
 // L'appartenance est nommee a part : la reprendre par index perdrait son
@@ -30,6 +39,8 @@ const membership: UserWithMemberships['establishmentMemberships'][number] = {
       serviceId: 's1',
       establishmentId: 'e1',
       role: 'INTERVENANT',
+      roleId: 'r1',
+      roleDef: roleDef('r1', ['agenda:read', 'tasks:read']),
       soignantId: 'so1',
       createdAt: now,
       service: {
@@ -46,6 +57,8 @@ const membership: UserWithMemberships['establishmentMemberships'][number] = {
       serviceId: 's2',
       establishmentId: 'e1',
       role: 'LECTURE',
+      roleId: 'r2',
+      roleDef: roleDef('r2', []),
       soignantId: null,
       createdAt: now,
       service: {
@@ -88,7 +101,7 @@ describe('resolveTenantFromUser', () => {
       establishmentId: 'e1',
       establishmentRole: 'MEMBER',
       serviceId: 's1',
-      serviceRole: 'INTERVENANT',
+      servicePermissions: ['tasks:read', 'agenda:read'],
       soignantId: 'so1',
       origine: 'reelle',
     })
@@ -187,7 +200,7 @@ describe('resolveTenantFromUser', () => {
       establishmentId: 'e1',
       establishmentRole: 'ADMIN',
       serviceId: null,
-      serviceRole: null,
+      servicePermissions: null,
       soignantId: null,
       origine: 'reelle',
     })
@@ -225,7 +238,7 @@ describe('resolveTenantFromUser', () => {
       establishmentId: 'e9',
       establishmentRole: 'ADMIN',
       serviceId: 's9',
-      serviceRole: 'COORDINATEUR',
+      servicePermissions: ALL_SERVICE_PERMISSIONS,
       soignantId: null,
       origine: 'octroi',
     })
@@ -265,7 +278,7 @@ describe('resolveTenantFromUser', () => {
       establishmentId: 'e9',
       establishmentRole: 'ADMIN',
       serviceId: null,
-      serviceRole: null,
+      servicePermissions: null,
       soignantId: null,
       origine: 'octroi',
     })

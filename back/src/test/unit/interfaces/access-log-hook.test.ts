@@ -550,7 +550,7 @@ const tenantOf = (): Tenant => ({
   establishmentId: 'e1',
   establishmentRole: 'MEMBER',
   serviceId: 's1',
-  serviceRole: 'COORDINATEUR',
+  servicePermissions: [],
   soignantId: null,
   origine: 'reelle',
 })

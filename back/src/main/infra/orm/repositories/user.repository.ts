@@ -5,6 +5,7 @@ import type {
   UserEntityRepo,
   UserProfileUpdateRepo,
   UserRepositoryInterface,
+  MembershipRole,
   UserWithMemberships,
 } from '../../../types/infra/orm/repositories/user.repository.interface'
 import type { ErrorHandlerInterface } from '../../../types/utils/error-handler'
@@ -20,6 +21,17 @@ import type { PostgresPrismaClient } from '../postgres-client'
 // Inclusion de l'arbre des appartenances (établissements puis services).
 // Autorisée par le garde-fou tenant uniquement sur un findUnique(OrThrow) :
 // voir GLOBAL_TENANT_RELATIONS dans tenant-guard.ts.
+const roleOf = (
+  roles: Map<string, MembershipRole>,
+  roleId: string,
+): MembershipRole => {
+  const role = roles.get(roleId)
+  if (!role) {
+    throw new Error(`Rôle ${roleId} introuvable`)
+  }
+  return role
+}
+
 const membershipsInclude = {
   establishmentMemberships: {
     include: {
@@ -44,10 +56,25 @@ class UserRepository implements UserRepositoryInterface {
 
   async findByID(userID: string): Promise<UserWithMemberships> {
     try {
-      return await this.prisma.user.findUniqueOrThrow({
+      const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: userID },
         include: membershipsInclude,
       })
+      const roles = await this.#rolesOf(
+        user.establishmentMemberships.flatMap((m) =>
+          m.serviceMemberships.map((sm) => sm.roleId),
+        ),
+      )
+      return {
+        ...user,
+        establishmentMemberships: user.establishmentMemberships.map((m) => ({
+          ...m,
+          serviceMemberships: m.serviceMemberships.map((sm) => ({
+            ...sm,
+            roleDef: roleOf(roles, sm.roleId),
+          })),
+        })),
+      }
     } catch (err) {
       throw this.errorHandler.boomErrorFromPrismaError({
         entityName: 'User',
@@ -258,6 +285,35 @@ class UserRepository implements UserRepositoryInterface {
       [...prefs].map(([id, p]) => [
         id,
         withLiveServices(p, actuels.get(id) ?? []),
+      ]),
+    )
+  }
+
+  // Rôles des affectations du compte, tous établissements : lecture système bornée à ces ids, le garde exigeant un service de tenant.
+  async #rolesOf(roleIds: string[]): Promise<Map<string, MembershipRole>> {
+    if (roleIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.tenantContext.runAsSystem(
+      async () =>
+        await this.prisma.serviceRoleDef.findMany({
+          where: { id: { in: [...new Set(roleIds)] } },
+          select: {
+            id: true,
+            name: true,
+            preset: true,
+            permissions: true,
+            hiddenSoignants: { select: { soignantId: true } },
+          },
+        }),
+    )
+    return new Map(
+      rows.map(({ hiddenSoignants, ...role }) => [
+        role.id,
+        {
+          ...role,
+          hiddenSoignantIds: hiddenSoignants.map((h) => h.soignantId),
+        },
       ]),
     )
   }

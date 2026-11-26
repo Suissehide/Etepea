@@ -174,11 +174,11 @@ class NotificationScheduleRepository
       where: { dueDate: day, doneAt: null },
       include: { assignees: true, soignants: true },
     })
-    // Personnes taguees : memes filtres que les destinataires par metier (actives, hors LECTURE, membres du service).
+    // Personnes taguees : memes filtres que les destinataires par metier (actives, rôle avec `tasks:read`, membres du service).
     const eligibles = await this.prisma.serviceMembership.findMany({
       where: {
         serviceId: { in: [...new Set(rows.map((t) => t.serviceId))] },
-        role: { not: 'LECTURE' },
+        roleDef: { permissions: { has: 'tasks:read' } },
         establishmentMembership: {
           userId: { in: rows.flatMap((t) => t.assignees.map((a) => a.userId)) },
           user: { deactivatedAt: null },
@@ -218,7 +218,7 @@ class NotificationScheduleRepository
     const rows = await this.prisma.serviceMembership.findMany({
       where: {
         serviceId: { in: serviceIds },
-        role: { not: 'LECTURE' },
+        roleDef: { permissions: { has: 'tasks:read' } },
         soignantId: { not: null },
         establishmentMembership: { user: { deactivatedAt: null } },
       },

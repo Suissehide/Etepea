@@ -161,7 +161,7 @@ const tenant: TenantStore = {
     establishmentId: 'e1',
     establishmentRole: 'MEMBER',
     serviceId: 's1',
-    serviceRole: 'INTERVENANT',
+    servicePermissions: [],
     soignantId: null,
   },
 }
@@ -170,7 +170,7 @@ const tenantAdmin: TenantStore = {
   tenant: {
     ...tenant.tenant,
     serviceId: null,
-    serviceRole: null,
+    servicePermissions: null,
     establishmentRole: 'ADMIN',
   },
 }

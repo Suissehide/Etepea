@@ -17,7 +17,7 @@ const store: TenantStore = {
     establishmentId: 'e1',
     establishmentRole: 'MEMBER',
     serviceId: 's1',
-    serviceRole: 'INTERVENANT',
+    servicePermissions: [],
     soignantId: null,
   },
 }
@@ -26,7 +26,7 @@ const adminStore: TenantStore = {
   tenant: {
     ...store.tenant,
     serviceId: null,
-    serviceRole: null,
+    servicePermissions: null,
     establishmentRole: 'ADMIN',
   },
 }
@@ -2472,7 +2472,7 @@ describe('ecritures declarees sur un modele global sous superadmin', () => {
       establishmentId: 'e1',
       establishmentRole: 'MEMBER',
       serviceId: 's1',
-      serviceRole: 'INTERVENANT',
+      servicePermissions: [],
       soignantId: null,
     },
   }

@@ -64,6 +64,8 @@ export type ServiceMemberRow = {
 export interface MembershipRepositoryInterface {
   // Sous le contexte de SERVICE : les affectations du service courant.
   findServiceMembers: () => Promise<ServiceMemberRow[]>
+  // Les membres du service dont le rôle porte `tasks:read` : seuls assignables et notifiés.
+  findTaskMembers: () => Promise<ServiceMemberRow[]>
   // Sous le contexte de SERVICE : pose le soignant d'une affectation du service courant. `null`
   // si l'affectation n'est pas de ce service (le domaine en fait un 404).
   setServiceSoignant: (

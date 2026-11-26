@@ -1,6 +1,9 @@
 import type { EstablishmentRole, ServiceRole } from '../../generated/enums'
 import { effectiveMemberships } from '../domain/accessGrant.domain'
-import type { LiveGrant } from '../types/domain/accessGrant.domain.interface'
+import type {
+  EffectiveService,
+  LiveGrant,
+} from '../types/domain/accessGrant.domain.interface'
 import type { UserWithMemberships } from '../types/infra/orm/repositories/user.repository.interface'
 
 export type MeResponse = {
@@ -17,6 +20,10 @@ export type MeResponse = {
       id: string
       name: string
       role: ServiceRole
+      roleId: string | null
+      roleName: string
+      permissions: string[]
+      hiddenSoignantIds: string[]
       soignantId: string | null
       // Vraie affectation ; faux pour le coordinateur implicite (chef d'etablissement) ou un octroi.
       affecte: boolean
@@ -28,6 +35,14 @@ export type MeResponse = {
     origine: 'reelle' | 'octroi'
   }[]
 }
+
+const roleFields = (service: EffectiveService) => ({
+  role: service.role,
+  roleId: service.roleId,
+  roleName: service.roleName,
+  permissions: [...service.permissions],
+  hiddenSoignantIds: service.hiddenSoignantIds,
+})
 
 // Arbre des appartenances EFFECTIVES (réelles + octrois vivants), actives seulement — un
 // établissement ou un service désactivé disparaît de la réponse, le front ne peut donc jamais le
@@ -87,7 +102,7 @@ export const toMeResponse = (
           services: effective.services.map((service) => ({
             id: service.id,
             name: serviceNameById.get(service.id) ?? '',
-            role: service.role,
+            ...roleFields(service),
             soignantId: soignantByService.get(service.id) ?? null,
             affecte: soignantByService.has(service.id),
           })),
@@ -107,7 +122,7 @@ export const toMeResponse = (
         services: effective.services.map((service) => ({
           id: service.id,
           name: serviceNameById.get(service.id) ?? '',
-          role: service.role,
+          ...roleFields(service),
           // Un octroi ne rattache jamais a un soignant.
           soignantId: null,
           affecte: false,

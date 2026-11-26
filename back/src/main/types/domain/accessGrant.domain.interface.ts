@@ -1,4 +1,8 @@
-import type { EstablishmentRole, ServiceRole } from '../../../generated/enums'
+import type { EstablishmentRole } from '../../../generated/enums'
+import type {
+  ServicePermission,
+  ServiceRole,
+} from '../../utils/permissions'
 
 // Description d'un octroi telle que la fournit `AccessGrantRepositoryInterface.findForUser` :
 // une ligne `SuperAdminAccessGrant` non révoquée (le filtre `revokedAt: null` est fait côté
@@ -25,6 +29,16 @@ export type LiveGrant = {
 export type EffectiveMembership = {
   establishmentId: string
   role: EstablishmentRole
-  services: { id: string; role: ServiceRole }[]
+  services: EffectiveService[]
   origine: 'reelle' | 'octroi'
+}
+
+// `role` : transitoire, le préréglage du rôle (ou l'ancienne colonne) jusqu'à ce que le front lise `permissions`.
+export type EffectiveService = {
+  id: string
+  role: ServiceRole
+  roleId: string | null
+  roleName: string
+  permissions: readonly ServicePermission[]
+  hiddenSoignantIds: string[]
 }

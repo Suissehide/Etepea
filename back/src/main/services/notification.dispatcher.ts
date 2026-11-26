@@ -232,10 +232,10 @@ class NotificationDispatcher implements NotificationDispatcherInterface {
   }
 
   #members(): Promise<ServiceMemberRow[]> {
-    return this.membershipRepository.findServiceMembers()
+    return this.membershipRepository.findTaskMembers()
   }
 
-  // Soignants de la seance : actifs, hors LECTURE, jamais l'auteur de l'action.
+  // Soignants de la seance : actifs, rôle avec `tasks:read`, jamais l'auteur de l'action.
   #usersOf(
     members: ServiceMemberRow[],
     soignantIds: string[],
@@ -248,7 +248,6 @@ class NotificationDispatcher implements NotificationDispatcherInterface {
             (m) =>
               m.soignantId &&
               soignantIds.includes(m.soignantId) &&
-              m.role !== 'LECTURE' &&
               m.establishmentMembership.user.deactivatedAt === null,
           )
           .map((m) => m.establishmentMembership.user.id),

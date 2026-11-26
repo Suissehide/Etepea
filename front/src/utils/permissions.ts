@@ -10,26 +10,27 @@ export type RolePreset =
 export type ServiceRole = RolePreset
 export type EstablishmentRole = 'ADMIN' | 'MEMBER'
 
-export type ServicePermission =
-  | 'planning:read'
-  | 'planning:write'
-  | 'referentials:read'
-  | 'referentials:write'
-  | 'patient:read'
-  | 'patient:write'
-  | 'patient:delete'
-  | 'clinical:read'
-  | 'clinical:write'
-  | 'appointment:write'
-  | 'pdf:export'
-  | 'tasks:read'
-  | 'tasks:write'
-  | 'notifications:own'
-  | 'members:read'
+// Catalogue exhaustif des clés de service : le type `ServicePermission` en dérive.
+export const SERVICE_PERMISSION_KEYS = [
+  'planning:read',
+  'planning:write',
+  'referentials:read',
+  'referentials:write',
+  'patient:read',
+  'patient:write',
+  'patient:delete',
+  'clinical:read',
+  'clinical:write',
+  'appointment:write',
+  'pdf:export',
+  'tasks:read',
+  'tasks:write',
+  'notifications:own',
+  'members:read',
   // Gerer l'equipe du SEUL service courant : inviter, changer le role de service, retirer.
   // Distincte de `members:manage` (etablissement), qui porte les comptes et les
   // rattachements : un coordinateur n'en a aucun.
-  | 'service-members:manage'
+  'service-members:manage',
   // Lire le journal des consultations (`PatientAccessLog`), a l'echelle du
   // SEUL service courant. `access-log:read` (EstablishmentPermission ci-dessous, deja present
   // pour ADMIN depuis la toute premiere version de ce fichier, bd26a72) ne convient pas pour
@@ -56,31 +57,33 @@ export type ServicePermission =
   // membre d'un service en LECTURE obtiendrait `consultations:read` sur la route DE SERVICE par
   // sa seule appartenance de service, une confusion durable que cette tache ne doit pas
   // introduire dans une fonction dont depend chaque route du depot.
-  | 'consultations:read'
+  'consultations:read',
   // Journal d'activite du SEUL service courant (chef de service). Nom distinct d'`activity-log:read`
   // pour la meme raison que `consultations:read`.
-  | 'service-journal:read'
+  'service-journal:read',
   // Indicateurs de l'enquete annuelle ARS du service courant, en chiffres agreges et sans donnee
   // nominative (MDS-26). Non accordee a LECTURE : la direction lit `activity:read`.
-  | 'stats:read'
+  'stats:read',
   // Saisir les indicateurs ARS a renseigner a la main (2.5, 4.2) du service courant.
-  | 'stats:write'
+  'stats:write',
   // Tableau de bord d'activite du service courant, en chiffres agreges (MDS-40). Accordee a
   // LECTURE : c'est l'ecran de la direction.
-  | 'activity:read'
-  | 'pathway-templates:write'
-  | 'thematics:write'
-  | 'soignants:write'
-  | 'locations:write'
-  | 'diagnostic-templates:write'
-  | 'pdf-design:write'
-  | 'patient-form:write'
-  | 'patient:create'
-  | 'appointment:create'
-  | 'dashboard:read'
-  | 'agenda:read'
-  | 'patients:read'
-  | 'suivi:read'
+  'activity:read',
+  'pathway-templates:write',
+  'thematics:write',
+  'soignants:write',
+  'locations:write',
+  'diagnostic-templates:write',
+  'pdf-design:write',
+  'patient-form:write',
+  'patient:create',
+  'appointment:create',
+  'dashboard:read',
+  'agenda:read',
+  'patients:read',
+  'suivi:read',
+] as const
+export type ServicePermission = (typeof SERVICE_PERMISSION_KEYS)[number]
 
 export type EstablishmentPermission =
   | 'services:manage'
@@ -198,11 +201,8 @@ export const ESTABLISHMENT_PERMISSIONS: Record<
   MEMBER: [],
 }
 
-// Catalogue des clés de service, source de vérité de `isServicePermission` et `parsePermissions`.
-export const SERVICE_PERMISSION_KEYS: readonly ServicePermission[] = [
-  ...new Set(Object.values(DEFAULT_ROLE_PERMISSIONS).flat()),
-]
-export const ALL_SERVICE_PERMISSIONS = SERVICE_PERMISSION_KEYS
+export const ALL_SERVICE_PERMISSIONS: readonly ServicePermission[] =
+  SERVICE_PERMISSION_KEYS
 
 const SERVICE_PERMISSION_SET: ReadonlySet<string> = new Set(
   SERVICE_PERMISSION_KEYS,
@@ -229,7 +229,7 @@ export type RoleSet = {
   establishmentRole: EstablishmentRole | null
 }
 
-// Transitoire : rôle figé vers liste de permissions, tant que les appelants portent un `serviceRole`.
+// Transitoire (front) : rôle figé vers liste de permissions, tant que `/me` porte un `role`.
 export const presetPermissions = (
   role: RolePreset | null,
 ): readonly ServicePermission[] | null =>

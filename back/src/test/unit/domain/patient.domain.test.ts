@@ -3,7 +3,10 @@ import Boom from '@hapi/boom'
 import { PatientDomain } from '../../../main/domain/patient.domain'
 import type { IocContainer } from '../../../main/types/application/ioc'
 import type { PathwayWithSlotsRepo } from '../../../main/types/infra/orm/repositories/pathway.repository.interface'
-import type { ServiceRole } from '../../../main/utils/permissions'
+import {
+  DEFAULT_ROLE_PERMISSIONS,
+  type ServiceRole,
+} from '../../../main/utils/permissions'
 
 type CreatedAppointment = {
   id: string
@@ -110,7 +113,10 @@ const buildDomain = (
     // Contexte de tenant minimal : seuls les roles sont lus par le domaine
     // (report du motif dans une transmission clinique).
     tenantContext: {
-      current: () => ({ serviceRole, establishmentRole: 'MEMBER' }),
+      current: () => ({
+        servicePermissions: DEFAULT_ROLE_PERMISSIONS[serviceRole],
+        establishmentRole: 'MEMBER',
+      }),
     },
     logger: {
       error: jest.fn(recordLog),

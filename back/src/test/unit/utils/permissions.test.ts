@@ -7,6 +7,7 @@ import {
   ESTABLISHMENT_PERMISSIONS,
   hasPermission,
   parsePermissions,
+  SERVICE_PERMISSION_KEYS,
 } from '../../../main/utils/permissions'
 
 describe('permissions', () => {
@@ -277,6 +278,15 @@ describe('permissions', () => {
     expect(parsePermissions(['agenda:read', 'patient:fly'])).toEqual([
       'agenda:read',
     ])
+  })
+
+  it('catalogue complet : chaque clé d un rôle par défaut y figure, sans doublon', () => {
+    const catalogue = new Set<string>(SERVICE_PERMISSION_KEYS)
+    expect(catalogue.size).toBe(SERVICE_PERMISSION_KEYS.length)
+    for (const cle of Object.values(DEFAULT_ROLE_PERMISSIONS).flat()) {
+      expect(catalogue).toContain(cle)
+    }
+    expect(SERVICE_PERMISSION_KEYS).toHaveLength(34)
   })
 
   it('est identique a la copie du front', () => {

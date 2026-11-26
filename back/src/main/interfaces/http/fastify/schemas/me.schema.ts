@@ -27,6 +27,10 @@ export const meResponseSchema = z.object({
             'SECRETARIAT',
             'LECTURE',
           ]),
+          roleId: z.string().nullable(),
+          roleName: z.string(),
+          permissions: z.array(z.string()),
+          hiddenSoignantIds: z.array(z.string()),
         }),
       ),
       // Dit à l'écran d'où vient cet accès (voir utils/me-mapper.ts) : sans elle dans ce schéma

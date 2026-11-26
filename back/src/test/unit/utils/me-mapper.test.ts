@@ -1,5 +1,20 @@
 import type { UserWithMemberships } from '../../../main/types/infra/orm/repositories/user.repository.interface'
 import { toMeResponse } from '../../../main/utils/me-mapper'
+import { ALL_SERVICE_PERMISSIONS } from '../../../main/utils/permissions'
+
+const administrateur = {
+  roleId: null,
+  roleName: 'Administrateur',
+  permissions: [...ALL_SERVICE_PERMISSIONS],
+  hiddenSoignantIds: [],
+}
+const roleDef = (id: string, permissions: string[]) => ({
+  id,
+  name: `Rôle ${id}`,
+  preset: null,
+  permissions,
+  hiddenSoignantIds: [],
+})
 
 const base = {
   id: 'u1',
@@ -58,9 +73,11 @@ describe('toMeResponse', () => {
               serviceId: 's1',
               establishmentId: 'e1',
               role: 'COORDINATEUR',
+              roleId: 'r1',
               soignantId: 'so1',
               createdAt: new Date(),
               service: svc('s1', 'e1'),
+              roleDef: roleDef('r1', ['agenda:read']),
             },
             {
               id: 'sm2',
@@ -68,9 +85,11 @@ describe('toMeResponse', () => {
               serviceId: 's2',
               establishmentId: 'e1',
               role: 'LECTURE',
+              roleId: 'r2',
               soignantId: null,
               createdAt: new Date(),
               service: svc('s2', 'e1', new Date()),
+              roleDef: roleDef('r2', []),
             },
           ],
         },
@@ -103,6 +122,7 @@ describe('toMeResponse', () => {
               id: 's1',
               name: 'Svc s1',
               role: 'COORDINATEUR',
+              ...administrateur,
               soignantId: 'so1',
               affecte: true,
             },
@@ -110,6 +130,7 @@ describe('toMeResponse', () => {
               id: 's3',
               name: 'Svc s3',
               role: 'COORDINATEUR',
+              ...administrateur,
               soignantId: null,
               affecte: false,
             },
@@ -118,5 +139,54 @@ describe('toMeResponse', () => {
         },
       ],
     })
+  })
+
+  it('un membre au rôle personnalisé reçoit exactement ses permissions et ses soignants masqués', () => {
+    const user: UserWithMemberships = {
+      ...base,
+      establishmentMemberships: [
+        {
+          id: 'em1',
+          userId: 'u1',
+          establishmentId: 'e1',
+          role: 'MEMBER',
+          createdAt: new Date(),
+          establishment: est('e1', null, [svc('s1', 'e1')]),
+          serviceMemberships: [
+            {
+              id: 'sm1',
+              establishmentMembershipId: 'em1',
+              serviceId: 's1',
+              establishmentId: 'e1',
+              role: 'INTERVENANT',
+              roleId: 'r9',
+              soignantId: null,
+              createdAt: new Date(),
+              service: svc('s1', 'e1'),
+              roleDef: {
+                id: 'r9',
+                name: 'Agenda seul',
+                preset: null,
+                permissions: ['agenda:read', 'patient:fly'],
+                hiddenSoignantIds: ['so7'],
+              },
+            },
+          ],
+        },
+      ],
+    }
+    expect(toMeResponse(user, []).establishments[0]?.services).toEqual([
+      {
+        id: 's1',
+        name: 'Svc s1',
+        role: 'INTERVENANT',
+        roleId: 'r9',
+        roleName: 'Agenda seul',
+        permissions: ['agenda:read'],
+        hiddenSoignantIds: ['so7'],
+        soignantId: null,
+        affecte: true,
+      },
+    ])
   })
 })

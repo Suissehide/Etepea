@@ -51,14 +51,13 @@ class TaskDomain implements TaskDomainInterface {
     const requestedSoignants = [...new Set(input.soignantIds)]
     const members =
       requestedAssignees.length > 0 || requestedSoignants.length > 0
-        ? await this.membershipRepository.findServiceMembers()
+        ? await this.membershipRepository.findTaskMembers()
         : []
     if (requestedAssignees.length > 0) {
       const eligible = new Set(
         members
           .filter(
             (m) =>
-              m.role !== 'LECTURE' &&
               m.establishmentMembership.user.deactivatedAt === null,
           )
           .map((m) => m.establishmentMembership.user.id),
@@ -85,12 +84,11 @@ class TaskDomain implements TaskDomainInterface {
     ) {
       throw Boom.badRequest('Patient is not followed in this service')
     }
-    // Destinataires MENTION : les personnes taguees, plus les membres actifs hors LECTURE qui
+    // Destinataires MENTION : les personnes taguees, plus les membres actifs (rôle avec `tasks:read`) qui
     // incarnent un des metiers tagues — deduplique, l'auteur jamais notifie de sa propre tache.
     const soignantRecipientIds = members
       .filter(
         (m) =>
-          m.role !== 'LECTURE' &&
           m.establishmentMembership.user.deactivatedAt === null &&
           m.soignantId !== null &&
           requestedSoignants.includes(m.soignantId),

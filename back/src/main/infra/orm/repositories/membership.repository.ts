@@ -72,6 +72,19 @@ class MembershipRepository implements MembershipRepositoryInterface {
     })
   }
 
+  findTaskMembers(): Promise<ServiceMemberRow[]> {
+    const { establishmentId, serviceId } = this.tenantContext.scope()
+    return this.prisma.serviceMembership.findMany({
+      where: {
+        establishmentId,
+        serviceId,
+        roleDef: { permissions: { has: 'tasks:read' } },
+      },
+      select: this.serviceMemberSelect,
+      orderBy: { createdAt: 'asc' },
+    })
+  }
+
   async setServiceSoignant(
     serviceMembershipId: string,
     soignantId: string | null,

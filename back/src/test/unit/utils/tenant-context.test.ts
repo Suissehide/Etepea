@@ -7,7 +7,7 @@ const tenant: Tenant = {
   establishmentId: 'e1',
   establishmentRole: 'MEMBER',
   serviceId: 's1',
-  serviceRole: 'INTERVENANT',
+  servicePermissions: [],
   soignantId: null,
 }
 
@@ -46,7 +46,7 @@ describe('TenantContext', () => {
   it('currentService leve quand le service est nul', async () => {
     const ctx = new TenantContext()
     await ctx.run(
-      { ...tenant, serviceId: null, serviceRole: null },
+      { ...tenant, serviceId: null, servicePermissions: null },
       async () => {
         await Promise.resolve()
         expect(() => ctx.currentService()).toThrow(TenantContextMissingError)
@@ -179,16 +179,21 @@ describe('TenantContext', () => {
     ctx.clear()
   })
 
-  it('n a aucune colonne imbriquee : le gel a deux niveaux est donc total, et le restera ou rougira', () => {
+  it('le gel est total : seule servicePermissions est imbriquee, et elle est gelee aussi', () => {
     const ctx = new TenantContext()
-    ctx.enter({ ...tenant })
-    const valeurs = Object.values(ctx.current())
-    // Une colonne de `Tenant` qui deviendrait un objet (ou un tableau) rendrait le gel de nouveau
-    // superficiel sans que rien ne le signale : ce test est ce qui le signale.
-    for (const valeur of valeurs) {
-      expect(typeof valeur === 'object' && valeur !== null).toBe(false)
+    ctx.enter({ ...tenant, servicePermissions: ['agenda:read'] })
+    const courant = ctx.current()
+    // Une autre colonne imbriquee rendrait le gel de nouveau superficiel sans que rien ne le signale.
+    for (const [cle, valeur] of Object.entries(courant)) {
+      if (cle !== 'servicePermissions') {
+        expect(typeof valeur === 'object' && valeur !== null).toBe(false)
+      }
     }
-    expect(valeurs).toHaveLength(6)
+    expect(Object.values(courant)).toHaveLength(6)
+    expect(Object.isFrozen(courant.servicePermissions)).toBe(true)
+    expect(() => {
+      ;(courant.servicePermissions as string[]).push('clinical:read')
+    }).toThrow(TypeError)
     ctx.clear()
   })
 

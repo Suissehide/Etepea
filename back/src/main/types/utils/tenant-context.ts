@@ -1,11 +1,14 @@
-import type { EstablishmentRole, ServiceRole } from '../../utils/permissions'
+import type {
+  EstablishmentRole,
+  ServicePermission,
+} from '../../utils/permissions'
 
 export type Tenant = {
   userId: string
   establishmentId: string
   establishmentRole: EstablishmentRole
   serviceId: string | null
-  serviceRole: ServiceRole | null
+  servicePermissions: readonly ServicePermission[] | null
   soignantId: string | null
   // Optionnel a dessein : seule `resolveTenantFromUser`
   // (interfaces/http/fastify/plugins/tenant.plugin.ts) le pose, depuis
@@ -22,7 +25,7 @@ export type Tenant = {
 
 export type ServiceTenant = Tenant & {
   serviceId: string
-  serviceRole: ServiceRole
+  servicePermissions: readonly ServicePermission[]
 }
 
 export type TenantStore =

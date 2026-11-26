@@ -31,11 +31,7 @@ import {
   plannedPatientExportAccess,
 } from '../../../../utils/access-log-routes'
 import { withoutClinicalFields } from '../../../../utils/clinical-fields'
-import {
-  hasPermission,
-  type Permission,
-  presetPermissions,
-} from '../../../../utils/permissions'
+import { hasPermission, type Permission } from '../../../../utils/permissions'
 
 declare module 'fastify' {
   export interface FastifyRequest {
@@ -124,7 +120,7 @@ export const resolveTenantFromUser = (
       establishmentId: membership.establishmentId,
       establishmentRole: membership.role,
       serviceId: null,
-      serviceRole: null,
+      servicePermissions: null,
       soignantId: null,
       // Le journal des consultations (`PatientAccessLogDomain.record`) doit
       // pouvoir distinguer un acces obtenu par octroi temporaire d'un acces reel — sans quoi les
@@ -144,7 +140,7 @@ export const resolveTenantFromUser = (
     establishmentId: membership.establishmentId,
     establishmentRole: membership.role,
     serviceId: service.id,
-    serviceRole: service.role,
+    servicePermissions: service.permissions,
     soignantId: soignantDuService(service.id),
     origine: membership.origine,
   }
@@ -393,13 +389,10 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
         if (!request.tenant) {
           throw Boom.notFound()
         }
-        const { serviceRole, establishmentRole } = request.tenant
+        const { servicePermissions, establishmentRole } = request.tenant
         if (
           !hasPermission(
-            {
-              servicePermissions: presetPermissions(serviceRole),
-              establishmentRole,
-            },
+            { servicePermissions, establishmentRole },
             permission,
           )
         ) {
@@ -428,13 +421,10 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
         if (!request.tenant) {
           return Promise.resolve(withoutClinicalFields(payload))
         }
-        const { serviceRole, establishmentRole } = request.tenant
+        const { servicePermissions, establishmentRole } = request.tenant
         if (
           hasPermission(
-            {
-              servicePermissions: presetPermissions(serviceRole),
-              establishmentRole,
-            },
+            { servicePermissions, establishmentRole },
             'clinical:read',
           )
         ) {
@@ -458,13 +448,10 @@ const tenantPlugin: FastifyPluginAsync = fastifyPlugin(
           request.body = withoutClinicalFields(request.body)
           return Promise.resolve()
         }
-        const { serviceRole, establishmentRole } = request.tenant
+        const { servicePermissions, establishmentRole } = request.tenant
         if (
           !hasPermission(
-            {
-              servicePermissions: presetPermissions(serviceRole),
-              establishmentRole,
-            },
+            { servicePermissions, establishmentRole },
             'clinical:write',
           )
         ) {

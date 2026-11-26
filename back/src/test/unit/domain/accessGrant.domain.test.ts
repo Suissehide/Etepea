@@ -1,6 +1,17 @@
 import { effectiveMemberships } from '../../../main/domain/accessGrant.domain'
 import type { LiveGrant } from '../../../main/types/domain/accessGrant.domain.interface'
 import type { UserWithMemberships } from '../../../main/types/infra/orm/repositories/user.repository.interface'
+import { ALL_SERVICE_PERMISSIONS } from '../../../main/utils/permissions'
+
+// ADMIN et octroi : toutes les permissions, sans ligne de rôle.
+const admin = (id: string) => ({
+  id,
+  role: 'COORDINATEUR',
+  roleId: null,
+  roleName: 'Administrateur',
+  permissions: ALL_SERVICE_PERMISSIONS,
+  hiddenSoignantIds: [],
+})
 
 const maintenant = new Date('2026-09-25T12:00:00Z')
 
@@ -136,10 +147,7 @@ describe('effectiveMemberships', () => {
       {
         establishmentId: 'e9',
         role: 'ADMIN',
-        services: [
-          { id: 's1', role: 'COORDINATEUR' },
-          { id: 's2', role: 'COORDINATEUR' },
-        ],
+        services: [admin('s1'), admin('s2')],
         origine: 'octroi',
       },
     ])
@@ -195,6 +203,14 @@ describe('effectiveMemberships', () => {
               serviceId: 's1',
               establishmentId: 'e1',
               role: 'COORDINATEUR',
+              roleId: 'r1',
+              roleDef: {
+                id: 'r1',
+                name: 'Coordinateur',
+                preset: 'COORDINATEUR',
+                permissions: [],
+                hiddenSoignantIds: [],
+              },
               soignantId: null,
               createdAt: maintenant,
               service: {
@@ -211,6 +227,14 @@ describe('effectiveMemberships', () => {
               serviceId: 's2',
               establishmentId: 'e1',
               role: 'LECTURE',
+              roleId: 'r2',
+              roleDef: {
+                id: 'r2',
+                name: 'Lecture seule',
+                preset: 'LECTURE',
+                permissions: [],
+                hiddenSoignantIds: [],
+              },
               soignantId: null,
               createdAt: maintenant,
               service: {
@@ -243,10 +267,7 @@ describe('effectiveMemberships', () => {
       {
         establishmentId: 'e1',
         role: 'ADMIN',
-        services: [
-          { id: 's1', role: 'COORDINATEUR' },
-          { id: 's3', role: 'COORDINATEUR' },
-        ],
+        services: [admin('s1'), admin('s3')],
         origine: 'reelle',
       },
     ])
@@ -306,7 +327,7 @@ describe('effectiveMemberships', () => {
       {
         establishmentId: 'e1',
         role: 'ADMIN',
-        services: [{ id: 's1', role: 'COORDINATEUR' }],
+        services: [admin('s1')],
         origine: 'octroi',
       },
     ])
@@ -351,5 +372,74 @@ describe('effectiveMemberships', () => {
         maintenant,
       ),
     ).toEqual([])
+  })
+
+  it('un membre reel recoit les permissions de son role, archive ou non, et le prereglage comme role', () => {
+    const service = {
+      id: 's1',
+      establishmentId: 'e1',
+      name: 'S1',
+      createdAt: maintenant,
+      deactivatedAt: null,
+    }
+    const membre = (
+      preset: 'SECRETARIAT' | null,
+      permissions: string[],
+    ): UserWithMemberships => ({
+      ...baseUser,
+      establishmentMemberships: [
+        {
+          id: 'em1',
+          userId: 'u1',
+          establishmentId: 'e1',
+          role: 'MEMBER',
+          createdAt: maintenant,
+          establishment: {
+            id: 'e1',
+            name: 'E1',
+            createdAt: maintenant,
+            deactivatedAt: null,
+            services: [service],
+          },
+          serviceMemberships: [
+            {
+              id: 'sm1',
+              establishmentMembershipId: 'em1',
+              serviceId: 's1',
+              establishmentId: 'e1',
+              role: 'INTERVENANT',
+              roleId: 'r9',
+              roleDef: {
+                id: 'r9',
+                name: 'Accueil',
+                preset,
+                permissions,
+                hiddenSoignantIds: ['so1'],
+              },
+              soignantId: null,
+              createdAt: maintenant,
+              service,
+            },
+          ],
+        },
+      ],
+    })
+    expect(
+      effectiveMemberships(membre(null, ['agenda:read']), [], maintenant)[0]
+        ?.services,
+    ).toEqual([
+      {
+        id: 's1',
+        role: 'INTERVENANT',
+        roleId: 'r9',
+        roleName: 'Accueil',
+        permissions: ['agenda:read'],
+        hiddenSoignantIds: ['so1'],
+      },
+    ])
+    expect(
+      effectiveMemberships(membre('SECRETARIAT', []), [], maintenant)[0]
+        ?.services[0]?.role,
+    ).toBe('SECRETARIAT')
   })
 })

@@ -101,13 +101,15 @@ describe('routes services', () => {
     expect(service.deactivatedAt).toBeNull()
 
     const services = await meServices(adminCookies)
-    expect(services).toContainEqual({
-      id: service.id,
-      name: 'Cardiologie',
-      role: 'COORDINATEUR',
-      soignantId: null,
-      affecte: true,
-    })
+    expect(services).toContainEqual(
+      expect.objectContaining({
+        id: service.id,
+        name: 'Cardiologie',
+        role: 'COORDINATEUR',
+        soignantId: null,
+        affecte: true,
+      }),
+    )
 
     const roles = await testDb.serviceRoleDef.findMany({
       where: { serviceId: service.id },
@@ -442,13 +444,15 @@ describe('routes services', () => {
       expect(res.json().id).toBe(serviceFileId)
       expect(res.json().followUpToDo).toBe('a-regulariser')
 
-      expect(await meServices(cookiesD)).toContainEqual({
-        id: serviceD.id,
-        name: 'D-focus',
-        role: 'LECTURE',
-        soignantId: null,
-        affecte: true,
-      })
+      expect(await meServices(cookiesD)).toContainEqual(
+        expect.objectContaining({
+          id: serviceD.id,
+          name: 'D-focus',
+          role: 'LECTURE',
+          soignantId: null,
+          affecte: true,
+        }),
+      )
     })
 
     it(
@@ -510,13 +514,15 @@ describe('routes services', () => {
       expect(retour.json().id).toBe(serviceFileId)
       expect(retour.json().followUpToDo).toBe('a-regulariser')
 
-      expect(await meServices(cookiesD)).toContainEqual({
-        id: serviceD.id,
-        name: 'D-focus',
-        role: 'LECTURE',
-        soignantId: null,
-        affecte: true,
-      })
+      expect(await meServices(cookiesD)).toContainEqual(
+        expect.objectContaining({
+          id: serviceD.id,
+          name: 'D-focus',
+          role: 'LECTURE',
+          soignantId: null,
+          affecte: true,
+        }),
+      )
     })
 
     it('un role de service sans role ADMIN d etablissement n atteint pas les routes de service', async () => {

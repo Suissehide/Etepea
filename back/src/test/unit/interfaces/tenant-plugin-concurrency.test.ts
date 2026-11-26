@@ -52,6 +52,14 @@ const user: UserWithMemberships = {
           serviceId: 's1',
           establishmentId: 'e1',
           role: 'INTERVENANT',
+          roleId: 'r-INTERVENANT',
+          roleDef: {
+            id: 'r-INTERVENANT',
+            name: 'INTERVENANT',
+            preset: null,
+            permissions: ['planning:read'],
+            hiddenSoignantIds: [],
+          },
           soignantId: null,
           createdAt: now,
           service: {
@@ -83,6 +91,14 @@ const user: UserWithMemberships = {
           serviceId: 's2',
           establishmentId: 'e2',
           role: 'COORDINATEUR',
+          roleId: 'r-COORDINATEUR',
+          roleDef: {
+            id: 'r-COORDINATEUR',
+            name: 'COORDINATEUR',
+            preset: null,
+            permissions: ['planning:read', 'tasks:read'],
+            hiddenSoignantIds: [],
+          },
           soignantId: null,
           createdAt: now,
           service: {
@@ -159,14 +175,14 @@ describe('tenantPlugin — isolation entre requetes concurrentes', () => {
       expect.objectContaining({
         establishmentId: 'e1',
         serviceId: 's1',
-        serviceRole: 'INTERVENANT',
+        servicePermissions: ['planning:read'],
       }),
     )
     expect(resB.json().tenant).toEqual(
       expect.objectContaining({
         establishmentId: 'e2',
         serviceId: 's2',
-        serviceRole: 'COORDINATEUR',
+        servicePermissions: ['planning:read', 'tasks:read'],
       }),
     )
 

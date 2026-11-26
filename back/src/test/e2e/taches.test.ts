@@ -1,3 +1,4 @@
+import { ALL_SERVICE_PERMISSIONS } from '../../main/utils/permissions'
 import { buildTestApp, type TestApp } from './setup/app'
 import { testDb, truncateAll } from './setup/db'
 import {
@@ -25,6 +26,10 @@ describe('taches partagees et mentions', () => {
   let claireC: Cookies
   let leoC: Cookies
   let lecteurC: Cookies
+  let agenda: string
+  let agendaRole: string
+  let agendaC: Cookies
+  let adminC: Cookies
 
   const call = (
     c: Cookies,
@@ -65,7 +70,42 @@ describe('taches partagees et mentions', () => {
       serviceId: string,
       role: 'INTERVENANT' | 'LECTURE',
       soignantId?: string,
-    ) => [{ establishmentId: E, services: [{ serviceId, role, soignantId }] }]
+      roleId?: string,
+    ) => [
+      {
+        establishmentId: E,
+        services: [{ serviceId, role, soignantId, roleId }],
+      },
+    ]
+    // Rôle personnalisé sans `tasks:read` ; l'ancienne colonne dit INTERVENANT, elle ne compte plus.
+    agendaRole = (
+      await testDb.serviceRoleDef.create({
+        data: {
+          establishmentId: E,
+          serviceId: A,
+          name: 'Agenda seul',
+          permissions: ['agenda:read'],
+        },
+      })
+    ).id
+    await testDb.serviceRoleHiddenSoignant.create({
+      data: {
+        roleId: agendaRole,
+        soignantId: psychologue,
+        serviceId: A,
+        establishmentId: E,
+      },
+    })
+    agenda = (
+      await createUser({
+        email: 'agenda@t.fr',
+        memberships: membre(A, 'INTERVENANT', psychologue, agendaRole),
+      })
+    ).id
+    await createUser({
+      email: 'admin@t.fr',
+      memberships: [{ establishmentId: E, role: 'ADMIN' }],
+    })
     leo = (
       await createUser({
         email: 'leo@t.fr',
@@ -98,6 +138,8 @@ describe('taches partagees et mentions', () => {
     leoC = await signIn(t.app, 'leo@t.fr')
     claireC = await signIn(t.app, 'claire@t.fr')
     lecteurC = await signIn(t.app, 'lecteur@t.fr')
+    agendaC = await signIn(t.app, 'agenda@t.fr')
+    adminC = await signIn(t.app, 'admin@t.fr')
   })
 
   afterAll(async () => {
@@ -379,6 +421,83 @@ describe('taches partagees et mentions', () => {
       .map((x: { id: string }) => x.id)
     expect(ids).toContain(id)
     expect(ids).not.toContain(vieille.id)
+  })
+
+  it('/me porte le rôle en base ; la résolution du tenant lit ses permissions', async () => {
+    const me = await call(agendaC, 'GET', '/me')
+    expect(me.statusCode).toBe(200)
+    expect(me.json().establishments[0].services).toEqual([
+      expect.objectContaining({
+        id: A,
+        role: 'INTERVENANT',
+        roleId: agendaRole,
+        roleName: 'Agenda seul',
+        permissions: ['agenda:read'],
+        hiddenSoignantIds: [psychologue],
+      }),
+    ])
+    expect(
+      (await call(agendaC, 'GET', tenantUrl(E, A, '/taches'))).statusCode,
+    ).toBe(403)
+
+    const admin = (await call(adminC, 'GET', '/me')).json()
+    expect(admin.establishments[0].services).toContainEqual(
+      expect.objectContaining({
+        id: A,
+        roleId: null,
+        roleName: 'Administrateur',
+        permissions: ALL_SERVICE_PERMISSIONS,
+        hiddenSoignantIds: [],
+      }),
+    )
+  })
+
+  it('rôle sans tasks:read : ni assignable, ni notifié par métier, ni TASK_DUE', async () => {
+    expect(
+      (
+        await call(leoC, 'POST', tenantUrl(E, A, '/taches'), {
+          text: 'Pour agenda',
+          assigneeIds: [agenda],
+        })
+      ).statusCode,
+    ).toBe(400)
+
+    const res = await call(leoC, 'POST', tenantUrl(E, A, '/taches'), {
+      text: 'Pour les psychologues',
+      soignantIds: [psychologue],
+    })
+    expect(res.statusCode).toBe(201)
+    const mentions = await testDb.notification.findMany({
+      where: { payload: { path: ['taskId'], equals: res.json().id } },
+    })
+    expect(mentions.map((n) => n.userId).sort()).toEqual([claire].sort())
+
+    const task = await testDb.task.create({
+      data: {
+        text: 'Échéance',
+        establishmentId: E,
+        serviceId: A,
+        dueDate: new Date('2026-11-03T00:00:00Z'),
+        assignees: {
+          create: [
+            { userId: agenda, establishmentId: E },
+            { userId: claire, establishmentId: E },
+          ],
+        },
+      },
+    })
+    await t.instances.tenantContext.runAsSystem(() =>
+      t.instances.notificationScheduler.runOnce(
+        new Date('2026-11-03T06:00:00.000Z'),
+      ),
+    )
+    const dues = await testDb.notification.findMany({
+      where: {
+        type: 'TASK_DUE',
+        payload: { path: ['taskId'], equals: task.id },
+      },
+    })
+    expect(dues.map((n) => n.userId)).toEqual([claire])
   })
 
   it('LECTURE : 403 sur les taches, 200 sur ses notifications', async () => {

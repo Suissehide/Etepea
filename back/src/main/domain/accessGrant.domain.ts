@@ -1,9 +1,21 @@
 import type {
   EffectiveMembership,
+  EffectiveService,
   LiveGrant,
 } from '../types/domain/accessGrant.domain.interface'
 import type { AccessGrantRepositoryInterface } from '../types/infra/orm/repositories/accessGrant.repository.interface'
 import type { UserWithMemberships } from '../types/infra/orm/repositories/user.repository.interface'
+import { ALL_SERVICE_PERMISSIONS, parsePermissions } from '../utils/permissions'
+
+// ADMIN d'établissement et octroi : toutes les permissions, sans ligne de rôle.
+const commeAdministrateur = (id: string): EffectiveService => ({
+  id,
+  role: 'COORDINATEUR',
+  roleId: null,
+  roleName: 'Administrateur',
+  permissions: ALL_SERVICE_PERMISSIONS,
+  hiddenSoignantIds: [],
+})
 
 // Un octroi est vivant s'il n'a été ni révoqué ni atteint son terme, jugé contre l'horloge
 // REÇUE (jamais lue ici) : c'est ce qui rend l'expiration éprouvable sans attendre, à l'unité
@@ -26,10 +38,9 @@ const commeOctroi = (grant: LiveGrant): EffectiveMembership => ({
   // n'est pas vérifié par tsc, voir back/CLAUDE.md), mais réel à l'exécution. `AccessGrantRepository`
   // fournit toujours `services` en production ; ce repli ne change donc rien en dehors des tests
   // qui ne testent pas ce champ.
-  services: (grant.services ?? []).map((service) => ({
-    id: service.id,
-    role: 'COORDINATEUR',
-  })),
+  services: (grant.services ?? []).map((service) =>
+    commeAdministrateur(service.id),
+  ),
   origine: 'octroi',
 })
 
@@ -75,18 +86,19 @@ const appartenancesReelles = (
         membership.role === 'ADMIN'
           ? membership.establishment.services
               .filter((service) => service.deactivatedAt === null)
-              .map((service) => ({
-                id: service.id,
-                role: 'COORDINATEUR' as const,
-              }))
+              .map((service) => commeAdministrateur(service.id))
           : membership.serviceMemberships
               .filter(
                 (serviceMembership) =>
                   serviceMembership.service.deactivatedAt === null,
               )
-              .map((serviceMembership) => ({
-                id: serviceMembership.serviceId,
-                role: serviceMembership.role,
+              .map(({ serviceId, role, roleDef }) => ({
+                id: serviceId,
+                role: roleDef.preset ?? role,
+                roleId: roleDef.id,
+                roleName: roleDef.name,
+                permissions: parsePermissions(roleDef.permissions),
+                hiddenSoignantIds: roleDef.hiddenSoignantIds,
               })),
       origine: 'reelle' as const,
     }))

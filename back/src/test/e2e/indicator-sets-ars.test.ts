@@ -394,7 +394,7 @@ describe('jeu Grille ARS : resultats et export', () => {
       establishmentId,
       establishmentRole: 'ADMIN',
       serviceId: serviceA,
-      serviceRole: 'COORDINATEUR',
+      servicePermissions: [],
       soignantId: null,
     }
     const cohorte = await tenantContext.run(tenant, () =>

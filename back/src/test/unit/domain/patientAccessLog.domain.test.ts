@@ -56,7 +56,7 @@ const tenantReel: Tenant = {
   establishmentId: 'e1',
   establishmentRole: 'MEMBER',
   serviceId: 's1',
-  serviceRole: 'INTERVENANT',
+  servicePermissions: [],
   soignantId: 'so1',
   origine: 'reelle',
 }
@@ -70,7 +70,7 @@ const tenantOctroi: Tenant = {
   ...tenantReel,
   userId: 'u9',
   establishmentRole: 'ADMIN',
-  serviceRole: 'COORDINATEUR',
+  servicePermissions: [],
   soignantId: null,
   origine: 'octroi',
 }
@@ -86,7 +86,7 @@ const tenantSansOrigine: Tenant = {
   establishmentId: 'e1',
   establishmentRole: 'MEMBER',
   serviceId: 's1',
-  serviceRole: 'INTERVENANT',
+  servicePermissions: [],
   soignantId: 'so2',
 }
 

@@ -5,14 +5,26 @@ import type {
   ServiceMembership,
   User,
 } from '../../../../../generated/client'
+import type { ServiceRole } from '../../../../../generated/enums'
 import type { NotificationPrefs } from '../../../../utils/notification-prefs'
 import type { PrimaTransactionClient } from '../client'
 
 export type UserEntityRepo = User
+// Rôle d'une affectation, lu à part : le garde refuse l'include `roleDef` sans service de tenant.
+export type MembershipRole = {
+  id: string
+  name: string
+  preset: ServiceRole | null
+  permissions: string[]
+  hiddenSoignantIds: string[]
+}
 export type UserWithMemberships = User & {
   establishmentMemberships: (EstablishmentMembership & {
     establishment: Establishment & { services: Service[] }
-    serviceMemberships: (ServiceMembership & { service: Service })[]
+    serviceMemberships: (ServiceMembership & {
+      service: Service
+      roleDef: MembershipRole
+    })[]
   })[]
 }
 export type UserCreateEntityRepo = {

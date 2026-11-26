@@ -104,6 +104,7 @@ import ts from 'typescript5'
 //      DECLARATION du site ; que la ligne soit reellement ecrite est prouve par execution
 //      ailleurs (`src/test/e2e/activity-log-emissions-declarees.test.ts`).
 //   8. Les services actuels des destinataires (`infra/orm/repositories/user.repository.ts`, `#currentServices`) : bornee aux comptes lus, seule une liste perimee en sort, ramenee a « tous ».
+//   9. Les roles des affectations du compte (meme fichier, `#rolesOf`, appele par `findByID`) : bornee aux roleId deja lus.
 //
 // `runAsSuperAdmin` (meme fichier) y ajoute un troisieme mode, qui ne retire
 // rien mais substitue au filtre de tenant une liste declaree et exhaustive de couples (modele,
@@ -242,8 +243,11 @@ const AUTORISES = [
       '#currentServices — les services actuels des destinataires d une notification, tous ' +
       'etablissements confondus : une liste de services enregistree qui n en contient plus ' +
       'aucun vaut « tous » a l envoi comme a l ecran. Aucune requete bornee au tenant courant ne ' +
-      'voit les autres etablissements ; bornee aux comptes lus, rien de la lecture ne sort du depot',
-    appels: 1,
+      'voit les autres etablissements ; bornee aux comptes lus, rien de la lecture ne sort du depot. ' +
+      'ET #rolesOf — les roles des affectations du compte (findByID, sans contexte) : ServiceRoleDef ' +
+      'est un modele de service, que le garde ne lit qu avec le serviceId du tenant. Bornee aux ' +
+      'roleId des affectations deja lues, verifiee par repository-scope.test.ts',
+    appels: 2,
   },
 ]
 

@@ -1024,7 +1024,9 @@ describe('isolation par tenant', () => {
       for (const url of urls) {
         const res = await t.app.inject({ method: 'GET', url, cookies })
         expect(res.statusCode).toBe(404)
-        expect(res.body).not.toMatch(/destructure|request\.tenant|serviceRole/i)
+        expect(res.body).not.toMatch(
+          /destructure|request\.tenant|serviceRole|servicePermissions/i,
+        )
       }
     })
   })

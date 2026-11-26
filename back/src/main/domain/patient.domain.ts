@@ -52,7 +52,7 @@ import type { ThematicRepositoryInterface } from '../types/infra/orm/repositorie
 import type { Logger } from '../types/utils/logger'
 import type { TenantContextInterface } from '../types/utils/tenant-context'
 import type { AppEventBus } from '../utils/app-event-bus'
-import { hasPermission, presetPermissions } from '../utils/permissions'
+import { hasPermission } from '../utils/permissions'
 import { asValues } from '../utils/service-field-types'
 import { byGapThenDate, gapRank, type Interval } from '../utils/slot-gap'
 
@@ -1374,12 +1374,9 @@ class PatientDomain implements PatientDomainInterface {
     // permission, sans quoi un compte SECRETARIAT ou LECTURE écrirait dans
     // une transmission clinique par la porte de service. Calculé une fois et
     // appliqué aux trois écritures ci-dessous.
-    const { serviceRole, establishmentRole } = this.tenantContext.current()
+    const { servicePermissions, establishmentRole } = this.tenantContext.current()
     const canWriteClinical = hasPermission(
-      {
-        servicePermissions: presetPermissions(serviceRole),
-        establishmentRole,
-      },
+      { servicePermissions, establishmentRole },
       'clinical:write',
     )
     const transmissionNotes = canWriteClinical

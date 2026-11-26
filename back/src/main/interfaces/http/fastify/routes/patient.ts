@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod/v4'
 
-import { hasPermission, presetPermissions } from '../../../../utils/permissions'
+import { hasPermission } from '../../../../utils/permissions'
 import { requireTenant } from '../plugins/tenant.plugin'
 import {
   appointmentsCountResponseSchema,
@@ -88,15 +88,12 @@ const patientRouter: FastifyPluginAsync = (fastify) => {
       // L'export est un Buffer : le hook `preSerialization` qui retire les
       // champs cliniques des réponses JSON ne s'y applique pas, il faut donc
       // décider ici de la présence des colonnes cliniques.
-      const { serviceRole, establishmentRole } = requireTenant(request)
+      const { servicePermissions, establishmentRole } = requireTenant(request)
       const { buffer, count } = await patientDomain.exportExcel(
         { search, pathwayTemplateTags: tags },
         {
           includeClinicalFields: hasPermission(
-            {
-              servicePermissions: presetPermissions(serviceRole),
-              establishmentRole,
-            },
+            { servicePermissions, establishmentRole },
             'clinical:read',
           ),
         },

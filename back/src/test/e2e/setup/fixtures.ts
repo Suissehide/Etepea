@@ -58,6 +58,8 @@ type MembershipFixture = {
   services?: {
     serviceId: string
     role: ServiceRole
+    // Rôle en base ; à défaut, celui du préréglage `role`.
+    roleId?: string
     soignantId?: string | null
   }[]
 }
@@ -96,7 +98,7 @@ export const createUser = async (params: {
             (m.services ?? []).map(async (s) => ({
               serviceId: s.serviceId,
               role: s.role,
-              roleId: await roleIdOf(s.serviceId, s.role),
+              roleId: s.roleId ?? (await roleIdOf(s.serviceId, s.role)),
               soignantId: s.soignantId ?? null,
               establishmentId: m.establishmentId,
             })),

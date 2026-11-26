@@ -194,7 +194,7 @@ const asAdmin = <T>(ctx: TenantContext, fn: () => Promise<T>) =>
       establishmentId: 'e1',
       establishmentRole: 'ADMIN',
       serviceId: null,
-      serviceRole: null,
+      servicePermissions: null,
       soignantId: null,
     },
     fn,
