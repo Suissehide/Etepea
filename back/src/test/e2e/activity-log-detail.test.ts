@@ -115,7 +115,7 @@ describe('journal d activite : le detail de chaque ligne', () => {
     expect(res.statusCode).toBe(204)
 
     expect((await ligne('appointment.updated'))?.detail).toBe(
-      'Dupont Marie — 14/10/2026 à 14:00 — Atelier nutrition — convocation envoyée',
+      'Dupont Marie, 14/10/2026 à 14:00, Atelier nutrition, convocation envoyée',
     )
 
     const pointage = await t.app.inject({

@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { ACTION_LABELS } from '@/constants/activityLog.constant.ts'
 import type { ServiceMember } from '@/types/serviceMember.ts'
 import type {
   MentionPayload,
@@ -136,6 +135,13 @@ export const notificationTypeOf = (
   type: NotificationType,
 ): (typeof NOTIFICATION_TYPES)[NotificationType] =>
   NOTIFICATION_TYPES[type] ?? FALLBACK_TYPE
+
+const PLANNING_VERBS: Record<string, string> = {
+  'planning.created': 'a ajouté',
+  'planning.updated': 'a modifié',
+  'planning.deleted': 'a supprimé',
+  'planning.restored': 'a restauré',
+}
 
 const str = (p: Record<string, unknown>, key: string): string =>
   typeof p[key] === 'string' ? (p[key] as string) : ''
@@ -291,11 +297,12 @@ export const notificationText = (
       return <>Échéance aujourd'hui : {bold(str(p, 'text'))}</>
     }
     case 'PLANNING_CHANGED': {
-      const action = str(p, 'action')
+      const verbe = PLANNING_VERBS[str(p, 'action')] ?? 'a modifié'
+      const detail = str(p, 'detail')
       return (
         <>
-          {bold(memberName(members, str(p, 'actorId') || null))} :{' '}
-          {ACTION_LABELS[action] ?? action} {str(p, 'detail')}
+          {bold(memberName(members, str(p, 'actorId') || null))} {verbe}
+          {detail && ` : ${detail}`}
         </>
       )
     }

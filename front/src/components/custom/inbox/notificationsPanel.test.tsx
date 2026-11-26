@@ -145,6 +145,8 @@ describe('NotificationsPanel', () => {
       await screen.findByRole('button', { name: 'Restaurer' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Voir le planning')).toBeInTheDocument()
+    expect(screen.getByText(/a supprimé : Atelier/)).toBeInTheDocument()
+    expect(screen.getByText(/a modifié : Atelier/)).toBeInTheDocument()
   })
 
   it('Restaurer appelle la route du service de la notification puis marque lue', async () => {

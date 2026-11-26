@@ -103,11 +103,11 @@ service au lieu des quatre valeurs fixes, pré-remplis depuis le soignant choisi
 
 ## Traçabilité du planning (cas n°2)
 
-Quand un membre **non administrateur** modifie le planning (`planning:write`) :
+Quand un membre modifie le planning (`planning:write`), journal pour tous, notification pour les non-administrateurs :
 
-1. une ligne au journal d'activité (`planning.slotCreated`, `planning.slotUpdated`,
-   `planning.slotArchived`, etc.) avec le détail lisible ;
-2. une notification `PLANNING_CHANGED` aux `ADMIN` de l'établissement ;
+1. une ligne au journal d'activité (`planning.created|updated|deleted|restored`, avec `entityType`)
+   et le détail lisible ;
+2. une notification `PLANNING_CHANGED` aux `ADMIN` de l'établissement, si l'auteur n'en est pas un ;
 3. pour une suppression, un bouton « Restaurer » depuis la notification et le journal. Un créneau
    (suppression ou archivage) et un parcours (ses créneaux vivants sont archivés, la ligne du parcours est
    supprimée) s'archivent ; une semaine interdite et un cycle de planification sont supprimés en dur, leurs
@@ -115,6 +115,8 @@ Quand un membre **non administrateur** modifie le planning (`planning:write`) :
    une notification par suppression, les autres modifications groupées par service, auteur et heure.
 
 Annuler une modification autre qu'une suppression : hors périmètre.
+
+Limite connue : `restoreData` ne vit que dans la ligne de journal, écrite sans attendre ; si cette écriture échoue, un parcours supprimé ne peut plus être restauré (ses créneaux restent archivés et détachés).
 
 ## Les cas de Léo, une fois configurés
 

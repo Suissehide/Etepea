@@ -5,8 +5,11 @@ import { NOTIFICATION_PREF_KEYS } from '../../../../utils/notification-prefs'
 const prefKeyBooleans = () =>
   z.object(
     Object.fromEntries(
-      NOTIFICATION_PREF_KEYS.map((k) => [k, z.boolean()]),
-    ) as Record<(typeof NOTIFICATION_PREF_KEYS)[number], z.ZodBoolean>,
+      NOTIFICATION_PREF_KEYS.map((k) => [k, z.boolean().optional()]),
+    ) as Record<
+      (typeof NOTIFICATION_PREF_KEYS)[number],
+      z.ZodOptional<z.ZodBoolean>
+    >,
   )
 
 export const notificationPrefsSchema = z.object({

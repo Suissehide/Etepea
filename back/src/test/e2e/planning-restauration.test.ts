@@ -125,6 +125,30 @@ describe('restauration du planning', () => {
     await ligne('planning.restored', slot.id)
   })
 
+  it('créneau déjà rétabli : ligne marquée restaurée, rien de journalisé', async () => {
+    const slot = await creerCreneau()
+    await supprimer(`/slot/${slot.id}`)
+    const log = await ligne('planning.deleted', slot.id)
+    await testDb.slot.update({
+      where: { id: slot.id },
+      data: { archivedAt: null },
+    })
+
+    const res = await restaurer(log.id)
+
+    expect(res.statusCode).toBe(204)
+    expect(
+      (await testDb.activityLog.findUnique({ where: { id: log.id } }))
+        ?.restoredAt,
+    ).toBeInstanceOf(Date)
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    expect(
+      await testDb.activityLog.count({
+        where: { action: 'planning.restored', entityID: slot.id },
+      }),
+    ).toBe(0)
+  })
+
   it('créneau disparu entre-temps : 404 et la ligne reste restaurable', async () => {
     const slot = await creerCreneau()
     await supprimer(`/slot/${slot.id}`)

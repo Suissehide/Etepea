@@ -102,6 +102,21 @@ describe('preferences de notification', () => {
     expect((await get()).json()).toEqual(prefs)
   })
 
+  it('une ancienne page sans la clé planning est acceptée et complétée', async () => {
+    const prefs = {
+      level: 'all',
+      services: null,
+      reminderDelay: 'eve',
+      digest: 'now',
+      app: { reminder: true },
+      mail: { reminder: false },
+    }
+    expect((await put(prefs)).statusCode).toBe(200)
+    const lues = (await get()).json()
+    expect(lues.app.planning).toBe(true)
+    expect(lues.mail.planning).toBe(false)
+  })
+
   it('digest invalide refuse', async () => {
     const prefs = {
       level: 'custom',

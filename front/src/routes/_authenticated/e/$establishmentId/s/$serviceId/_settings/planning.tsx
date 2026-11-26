@@ -1136,7 +1136,7 @@ function Planning() {
           onConfirm={handleConfirmDeleteHoverSlot}
           loading={archiveSlots.isPending || deleteSlotTemplate.isPending}
           title="Supprimer le créneau"
-          description="Voulez-vous vraiment supprimer ce créneau ? Vous pourrez le restaurer depuis le journal."
+          description="Voulez-vous vraiment supprimer ce créneau ? Un administrateur pourra le restaurer."
         />
 
         <BulkThematicTypeForm

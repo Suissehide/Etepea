@@ -237,7 +237,7 @@ export default function EventSheet({
           setShowDeleteConfirm(false)
         }}
         title="Supprimer le créneau"
-        description="Voulez-vous vraiment supprimer ce créneau ? Vous pourrez le restaurer depuis le journal."
+        description="Voulez-vous vraiment supprimer ce créneau ? Un administrateur pourra le restaurer."
       />
       <ConfirmDeleteForm
         open={showDeletePathwayConfirm}
@@ -248,7 +248,7 @@ export default function EventSheet({
         }}
         loading={deletePathway.isPending}
         title="Supprimer tout le parcours"
-        description="Voulez-vous vraiment supprimer tous les créneaux de ce parcours ? Vous pourrez les restaurer depuis le journal."
+        description="Voulez-vous vraiment supprimer tous les créneaux de ce parcours ? Un administrateur pourra les restaurer."
       />
     </Sheet>
   )

@@ -52,7 +52,7 @@ class PlanningRestoreDomain implements PlanningRestoreDomainInterface {
           userID,
           entityType: line.entityType as 'pathway',
           entityID: line.entityID,
-          detail,
+          detail: detail || undefined,
         })
       }
     } catch (err) {
@@ -61,7 +61,7 @@ class PlanningRestoreDomain implements PlanningRestoreDomainInterface {
     }
   }
 
-  // Rend le détail à journaliser, ou null quand l'émission est faite en aval (créneau).
+  // Détail à journaliser ; '' sans détail, null quand rien à émettre ici.
   async #apply(
     line: { entityType: string; entityID: string; restoreData: unknown },
     userID: string,
@@ -69,6 +69,10 @@ class PlanningRestoreDomain implements PlanningRestoreDomainInterface {
     switch (line.entityType) {
       case 'slot':
         try {
+          // Déjà rétabli (Annuler du toast) : la ligne est seulement marquée restaurée.
+          if (!(await this.slotDomain.findByID(line.entityID)).archivedAt) {
+            return null
+          }
           await this.slotDomain.update(
             line.entityID,
             { archivedAt: null },
@@ -83,7 +87,7 @@ class PlanningRestoreDomain implements PlanningRestoreDomainInterface {
       case 'pathway': {
         const data = line.restoreData as PathwayRestoreData
         await this.pathwayRepository.restore(data)
-        return `parcours du ${jour(data.pathway.startDate)}`
+        return ''
       }
       case 'forbiddenWeek': {
         const { startOfWeek } = line.restoreData as { startOfWeek: string }

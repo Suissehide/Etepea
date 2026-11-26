@@ -386,6 +386,7 @@ class EstablishmentRepository implements EstablishmentRepositoryInterface {
         const [data, total] = await Promise.all([
           this.prisma.activityLog.findMany({
             where,
+            omit: { restoreData: true },
             orderBy: { createdAt: 'desc' },
             skip: (page - 1) * pageSize,
             take: pageSize,

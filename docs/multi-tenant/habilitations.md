@@ -98,7 +98,7 @@ associe les permissions aux rôles. C'est cette matrice qui fait foi.
 
 Règles associées :
 
-- Depuis le 2026-11-26, les routes `slot-template` (POST, PATCH, DELETE) exigent `pathway-templates:write`, plus `planning:write` : un modèle de créneau est un modèle de parcours.
+- Depuis le 2026-11-26, les routes `slot-template` (POST, PATCH, DELETE) exigent `pathway-templates:write` et non plus `planning:write` : un modèle de créneau est un modèle de parcours.
 - La restauration (`planning:write`) répond 204, ou 409 (déjà restauré, autre cycle enregistré depuis, semaine déjà interdite) et 404 (ligne qui n'est pas une suppression du service, créneau disparu).
 - Les champs cliniques sont filtrés **par le back, dans les deux sens**, pas
   seulement masqués côté front. En sortie, un hook de sérialisation les

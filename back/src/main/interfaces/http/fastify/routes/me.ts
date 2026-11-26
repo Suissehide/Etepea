@@ -3,6 +3,7 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 
 import { liveGrantsForUser } from '../../../../domain/accessGrant.domain'
 import { toMeResponse } from '../../../../utils/me-mapper'
+import { normalizePrefs } from '../../../../utils/notification-prefs'
 import {
   meResponseSchema,
   type UpdateMeBody,
@@ -88,11 +89,9 @@ const meRouter: FastifyPluginAsync = (fastify) => {
       if (request.body.services?.some((s) => !mine.has(s))) {
         throw Boom.badRequest('Service is not one of the account services')
       }
-      await userRepository.setNotificationPrefs(
-        request.currentUser.id,
-        request.body,
-      )
-      return request.body
+      const prefs = normalizePrefs(request.body)
+      await userRepository.setNotificationPrefs(request.currentUser.id, prefs)
+      return prefs
     },
   )
   return Promise.resolve()

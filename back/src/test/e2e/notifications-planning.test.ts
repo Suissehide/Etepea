@@ -193,9 +193,11 @@ describe('notification PLANNING_CHANGED', () => {
       })
       expect(res.statusCode).toBeLessThan(300)
     }
-    expect(
-      await recues('admin@plan-notif.fr', 2, 'planning.deleted'),
-    ).toHaveLength(2)
+    const notifs = await recues('admin@plan-notif.fr', 2, 'planning.deleted')
+    expect(notifs).toHaveLength(2)
+    for (const n of notifs) {
+      expect((n.payload as { detail: string }).detail).toContain('01/04/2026')
+    }
   })
 
   it("l'administrateur modifie : journal oui, notification non", async () => {

@@ -173,7 +173,7 @@ class ActivityLogSubscriber {
         const store = this.tenantContext.peek()
         const isAdmin =
           store?.kind === 'tenant' && store.tenant.establishmentRole === 'ADMIN'
-        const activityLogId = await this.#record(
+        const recorded = await this.#record(
           action,
           p.entityType,
           p.userID,
@@ -181,13 +181,13 @@ class ActivityLogSubscriber {
           p.detail,
           p.restoreData,
         )
-        if (activityLogId && !isAdmin) {
+        if (recorded && !isAdmin) {
           this.notificationDispatcher.planningChanged({
             actorId: p.userID,
-            activityLogId,
+            activityLogId: recorded.id,
             action,
             entityType: p.entityType,
-            detail: p.detail ?? null,
+            detail: recorded.detail,
           })
         }
       })
@@ -275,7 +275,7 @@ class ActivityLogSubscriber {
     entityID: string,
     complement?: string,
     restoreData?: Record<string, unknown>,
-  ): Promise<string | null> {
+  ): Promise<{ id: string; detail: string | null } | null> {
     try {
       // `findIdentity`, PAS `findByID`.
       //
@@ -310,6 +310,7 @@ class ActivityLogSubscriber {
         entityID,
         restoreData,
       ).catch(() => null)
+      const detail = [entite, complement].filter(Boolean).join(', ') || null
       const { id } = await this.activityLogRepository.create({
         userID,
         userFirstName: user?.firstName ?? null,
@@ -317,10 +318,10 @@ class ActivityLogSubscriber {
         action,
         entityType,
         entityID,
-        detail: [entite, complement].filter(Boolean).join(' — ') || null,
+        detail,
         restoreData,
       })
-      return id
+      return { id, detail }
     } catch (err) {
       // Jamais `${err}` : ce depot (`activityLog.repository.ts`) n'a lui-meme aucun `catch`, donc
       // une erreur Prisma brute peut remonter ici telle quelle, et son message recopie
@@ -356,7 +357,7 @@ class ActivityLogSubscriber {
           rdv.thematic?.name,
         ]
           .filter(Boolean)
-          .join(' — ')
+          .join(', ')
       }
       case 'member': {
         const membre = await this.membershipRepository.findByID(entityID)
@@ -382,7 +383,7 @@ class ActivityLogSubscriber {
             : null,
         ]
           .filter(Boolean)
-          .join(' — ')
+          .join(', ')
       }
       case 'pathway': {
         // Un parcours supprimé n'existe plus : ce que la restauration garde le décrit.
@@ -393,7 +394,7 @@ class ActivityLogSubscriber {
           ? (await this.pathwayTemplateRepository.findByID(pathway.templateID))
               .name
           : 'Parcours'
-        return `${modele} — ${dayjs.utc(pathway.startDate).format('DD/MM/YYYY')}`
+        return `${modele}, ${dayjs.utc(pathway.startDate).format('DD/MM/YYYY')}`
       }
       default:
         return null
