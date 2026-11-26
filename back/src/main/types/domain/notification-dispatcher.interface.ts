@@ -1,3 +1,4 @@
+import type { PlanningEntity } from '../../utils/app-event-bus'
 import type { SessionSnapshot } from '../infra/orm/repositories/notification-context.repository.interface'
 
 export type { SessionSnapshot }
@@ -32,7 +33,7 @@ export interface NotificationDispatcherInterface {
       | 'planning.updated'
       | 'planning.deleted'
       | 'planning.restored'
-    entityType: string
+    entityType: PlanningEntity
     detail: string | null
   }) => void
 }

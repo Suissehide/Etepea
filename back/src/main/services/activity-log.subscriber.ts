@@ -170,9 +170,10 @@ class ActivityLogSubscriber {
     for (const action of PLANNING_ACTIONS) {
       this.appEventBus.on(action, async (p) => {
         // Lu avant tout await : un administrateur ne prévient personne.
+        const store = this.tenantContext.peek()
         const isAdmin =
-          this.tenantContext.current().establishmentRole === 'ADMIN'
-        const activityLogId = await this.record(
+          store?.kind === 'tenant' && store.tenant.establishmentRole === 'ADMIN'
+        const activityLogId = await this.#record(
           action,
           p.entityType,
           p.userID,
@@ -250,12 +251,24 @@ class ActivityLogSubscriber {
 
   // Les journaux hors planning n'attendent pas d'identifiant.
   async #log(
-    ...args: Parameters<ActivityLogSubscriber['record']>
+    action: string,
+    entityType: string,
+    userID: string,
+    entityID: string,
+    complement?: string,
+    restoreData?: Record<string, unknown>,
   ): Promise<void> {
-    await this.record(...args)
+    await this.#record(
+      action,
+      entityType,
+      userID,
+      entityID,
+      complement,
+      restoreData,
+    )
   }
 
-  async record(
+  async #record(
     action: string,
     entityType: string,
     userID: string,

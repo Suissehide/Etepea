@@ -1,6 +1,10 @@
 import { EventEmitter } from 'node:events'
 
-type PlanningEntity = 'slot' | 'pathway' | 'forbiddenWeek' | 'planningCycle'
+export type PlanningEntity =
+  | 'slot'
+  | 'pathway'
+  | 'forbiddenWeek'
+  | 'planningCycle'
 
 type AppEvents = {
   'patient.created': { userID: string; patientId: string }

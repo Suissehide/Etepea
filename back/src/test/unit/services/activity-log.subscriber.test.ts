@@ -63,18 +63,27 @@ const buildSubscriber = () => {
   // `TenantContext` ici, cet appel leverait un `TypeError` (`this.tenantContext` vaudrait
   // `undefined`) avant meme d'atteindre `#log`.
   const tenantContext = new TenantContext()
+  const notificationDispatcher = { planningChanged: jest.fn() }
   const container = {
     appEventBus,
     activityLogRepository,
     userRepository,
     logger,
     tenantContext,
+    notificationDispatcher,
   }
   // biome-ignore lint/correctness/noUnusedVariables: instancie pour son effet de bord (#subscribe)
   const subscriber = new ActivityLogSubscriber(
     container as unknown as IocContainer,
   )
-  return { appEventBus, activityLogRepository, userRepository, logger, calls }
+  return {
+    appEventBus,
+    activityLogRepository,
+    userRepository,
+    logger,
+    calls,
+    notificationDispatcher,
+  }
 }
 
 // Attend que le depot d'activite ait ete appele au moins une fois, sans dependre d'un delai
@@ -191,5 +200,55 @@ describe('ActivityLogSubscriber – user.accessLinkReissued lit l auteur par fin
 
     expect(userRepository.findIdentity).toHaveBeenCalledWith('super-1')
     expect(userRepository.findByID).not.toHaveBeenCalled()
+  })
+})
+
+describe('ActivityLogSubscriber – un evenement de planning sans contexte de tenant', () => {
+  const emit = (appEventBus: AppEventBus) =>
+    appEventBus.emit('planning.created', {
+      userID: 'user-1',
+      entityType: 'forbiddenWeek',
+      entityID: 'fw-1',
+    })
+
+  it('ne rejette pas, tente l ecriture et previent quand elle reussit', async () => {
+    const rejections: unknown[] = []
+    const onRejection = (e: unknown) => rejections.push(e)
+    process.on('unhandledRejection', onRejection)
+    const { appEventBus, activityLogRepository, notificationDispatcher } =
+      buildSubscriber()
+    activityLogRepository.create.mockResolvedValue({ id: 'log-1' })
+
+    expect(() => emit(appEventBus)).not.toThrow()
+    await new Promise((r) => setTimeout(r, 20))
+    process.off('unhandledRejection', onRejection)
+
+    expect(rejections).toEqual([])
+    expect(activityLogRepository.create).toHaveBeenCalledTimes(1)
+    expect(notificationDispatcher.planningChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ activityLogId: 'log-1', actorId: 'user-1' }),
+    )
+  })
+
+  it('n envoie rien quand l ecriture echoue, sans rejet', async () => {
+    const rejections: unknown[] = []
+    const onRejection = (e: unknown) => rejections.push(e)
+    process.on('unhandledRejection', onRejection)
+    const {
+      appEventBus,
+      activityLogRepository,
+      logger,
+      notificationDispatcher,
+    } = buildSubscriber()
+    activityLogRepository.create.mockRejectedValue(new Error('boom'))
+
+    const done = waitForLoggedError(logger)
+    emit(appEventBus)
+    await done
+    await new Promise((r) => setTimeout(r, 20))
+    process.off('unhandledRejection', onRejection)
+
+    expect(rejections).toEqual([])
+    expect(notificationDispatcher.planningChanged).not.toHaveBeenCalled()
   })
 })

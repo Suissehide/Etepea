@@ -227,11 +227,12 @@ class NotificationDispatcher implements NotificationDispatcherInterface {
   ): void {
     this.#safe(async () => {
       const { actorId, action } = input
+      const { serviceId } = this.tenantContext.scope()
       const admins = await this.membershipRepository.findActiveAdminUserIds()
       const dedupeKey =
         action === 'planning.deleted'
           ? undefined
-          : `planning:${actorId}:${new Date().toISOString().slice(0, 13)}`
+          : `planning:${serviceId}:${actorId}:${new Date().toISOString().slice(0, 13)}`
       await this.#write(
         admins
           .filter((userId) => userId !== actorId)
