@@ -344,4 +344,182 @@ describe('roles de service : liste et attribution par roleId', () => {
     })
     expect(res.statusCode).toBe(403)
   })
+
+  describe('gestion des roles (roles:manage)', () => {
+    const roles = (
+      method: 'POST' | 'PATCH' | 'DELETE',
+      path: string,
+      payload?: object,
+    ) =>
+      t.app.inject({
+        method,
+        url: tenantUrl(E, A, `/roles${path}`),
+        cookies: admin,
+        ...(payload && { payload }),
+      })
+
+    it('refuse (403) un coordinateur non administrateur', async () => {
+      const res = await t.app.inject({
+        method: 'POST',
+        url: tenantUrl(E, A, '/roles'),
+        cookies: coordA,
+        payload: { name: 'Interdit', permissions: [] },
+      })
+      expect(res.statusCode).toBe(403)
+    })
+
+    it('refuse (400) une permission inconnue', async () => {
+      const res = await roles('POST', '', {
+        name: 'Inconnu',
+        permissions: ['agenda:read', 'nimporte:quoi'],
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('cree un role, permissions dedoublonnees et nom rogne', async () => {
+      const soignant = await testDb.soignant.create({
+        data: { name: 'Infirmiere', serviceId: A, establishmentId: E },
+      })
+      const res = await roles('POST', '', {
+        name: '  Diététicien  ',
+        permissions: ['patient:read', 'patient:read', 'agenda:read'],
+        hiddenSoignantIds: [soignant.id],
+      })
+      expect(res.statusCode).toBe(201)
+      const role = res.json() as RoleDto
+      expect(role.name).toBe('Diététicien')
+      expect([...role.permissions].sort()).toEqual([
+        'agenda:read',
+        'patient:read',
+      ])
+      expect(role.hiddenSoignantIds).toEqual([soignant.id])
+      expect(role.preset).toBeNull()
+      expect(role.memberCount).toBe(0)
+    })
+
+    it('refuse (409) un nom deja pris, sans tenir compte de la casse', async () => {
+      const res = await roles('POST', '', {
+        name: 'coordinateur',
+        permissions: [],
+      })
+      expect(res.statusCode).toBe(409)
+      expect(res.json().message).toBe(
+        "Un rôle s'appelle déjà « coordinateur ».",
+      )
+      const renomme = await roles('PATCH', `/${await roleIdOf(A, 'LECTURE')}`, {
+        name: 'INTERVENANT',
+      })
+      expect(renomme.statusCode).toBe(409)
+    })
+
+    it('refuse (400) un soignant masque d un autre service', async () => {
+      const etranger = await testDb.soignant.create({
+        data: { name: 'Etranger', serviceId: B, establishmentId: E },
+      })
+      const res = await roles('POST', '', {
+        name: 'Masque etranger',
+        permissions: [],
+        hiddenSoignantIds: [etranger.id],
+      })
+      expect(res.statusCode).toBe(400)
+    })
+
+    it('remplace les soignants masques et journalise role.updated avec le nom', async () => {
+      const s1 = await testDb.soignant.create({
+        data: { name: 'S1', serviceId: A, establishmentId: E },
+      })
+      const s2 = await testDb.soignant.create({
+        data: { name: 'S2', serviceId: A, establishmentId: E },
+      })
+      const cree = (
+        await roles('POST', '', {
+          name: 'Masquage',
+          permissions: ['agenda:read'],
+          hiddenSoignantIds: [s1.id],
+        })
+      ).json() as RoleDto
+      const res = await roles('PATCH', `/${cree.id}`, {
+        name: 'Masquage renommé',
+        hiddenSoignantIds: [s2.id],
+      })
+      expect(res.statusCode).toBe(200)
+      expect((res.json() as RoleDto).hiddenSoignantIds).toEqual([s2.id])
+      expect((res.json() as RoleDto).permissions).toEqual(['agenda:read'])
+
+      let ligne = null
+      for (let essai = 0; essai < 40 && !ligne; essai += 1) {
+        ligne = await testDb.activityLog.findFirst({
+          where: { action: 'role.updated', entityID: cree.id },
+        })
+        if (!ligne) {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+        }
+      }
+      expect(ligne?.detail).toBe('Masquage renommé')
+      expect(ligne?.serviceId).toBe(A)
+    })
+
+    it('refuse (409) de supprimer un role encore attribue', async () => {
+      const res = await roles('DELETE', `/${await roleIdOf(A, 'COORDINATEUR')}`)
+      expect(res.statusCode).toBe(409)
+      expect(res.json().message).toBe('Rôle encore attribué à 1 membre(s)')
+    })
+
+    it('refuse (409) de supprimer le role par defaut d un soignant actif', async () => {
+      const cree = (
+        await roles('POST', '', { name: 'Par défaut', permissions: [] })
+      ).json() as RoleDto
+      await testDb.soignant.create({
+        data: {
+          name: 'Avec defaut',
+          serviceId: A,
+          establishmentId: E,
+          defaultRoleId: cree.id,
+        },
+      })
+      const res = await roles('DELETE', `/${cree.id}`)
+      expect(res.statusCode).toBe(409)
+      expect(res.json().message).toMatch(/par défaut/)
+    })
+
+    it('supprime puis restaure, et refuse (409) la restauration sur un nom repris', async () => {
+      const premier = (
+        await roles('POST', '', {
+          name: 'Temporaire',
+          permissions: ['agenda:read'],
+        })
+      ).json() as RoleDto
+      expect((await roles('DELETE', `/${premier.id}`)).statusCode).toBe(204)
+      const supprimes = await t.app.inject({
+        method: 'GET',
+        url: tenantUrl(E, A, '/roles?archived=true'),
+        cookies: admin,
+      })
+      expect((supprimes.json() as RoleDto[]).map((r) => r.id)).toContain(
+        premier.id,
+      )
+
+      const second = await roles('POST', '', {
+        name: 'temporaire',
+        permissions: [],
+      })
+      expect(second.statusCode).toBe(201)
+      expect((await roles('POST', `/${premier.id}/restore`)).statusCode).toBe(
+        409,
+      )
+
+      await roles('DELETE', `/${(second.json() as RoleDto).id}`)
+      const restaure = await roles('POST', `/${premier.id}/restore`)
+      expect(restaure.statusCode).toBe(200)
+      expect((restaure.json() as RoleDto).archivedAt).toBeNull()
+    })
+
+    it('un role predefini se renomme comme un autre', async () => {
+      const res = await roles('PATCH', `/${await roleIdOf(A, 'SECRETARIAT')}`, {
+        name: 'Accueil',
+      })
+      expect(res.statusCode).toBe(200)
+      expect((res.json() as RoleDto).preset).toBe('SECRETARIAT')
+    })
+  })
 })

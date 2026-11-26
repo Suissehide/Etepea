@@ -45,6 +45,11 @@ type AppEvents = {
   // (`targetUserId`), et la confondre avec la variante d'etablissement effacerait precisement la
   // distinction que le journal doit porter. `userID` est le super-admin qui agit.
   'user.accessLinkReissued': { userID: string; targetUserId: string }
+  // Rôles d'un service : `detail` porte le nom du rôle.
+  'role.created': { userID: string; roleId: string }
+  'role.updated': { userID: string; roleId: string }
+  'role.archived': { userID: string; roleId: string }
+  'role.restored': { userID: string; roleId: string }
 }
 
 // Complement du libelle du journal, quand l'entite ne le dit pas seule (supprimee, parcours vises…).

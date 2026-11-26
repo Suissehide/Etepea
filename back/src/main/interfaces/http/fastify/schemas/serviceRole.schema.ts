@@ -1,5 +1,8 @@
 import { z } from 'zod/v4'
 
+import { SERVICE_PERMISSION_KEYS } from '../../../../utils/permissions'
+import { cuid } from './id.schema'
+
 export const serviceRoleResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -19,3 +22,19 @@ export const listServiceRolesQuerySchema = z.object({
 })
 
 export type ListServiceRolesQuery = z.infer<typeof listServiceRolesQuerySchema>
+
+export const createServiceRoleSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  permissions: z.array(z.enum(SERVICE_PERMISSION_KEYS)),
+  hiddenSoignantIds: z.array(cuid()).optional(),
+})
+
+export type CreateServiceRoleBody = z.infer<typeof createServiceRoleSchema>
+
+export const updateServiceRoleSchema = createServiceRoleSchema.partial()
+
+export type UpdateServiceRoleBody = z.infer<typeof updateServiceRoleSchema>
+
+export const serviceRoleParamsSchema = z.object({ roleId: cuid() })
+
+export type ServiceRoleParams = z.infer<typeof serviceRoleParamsSchema>

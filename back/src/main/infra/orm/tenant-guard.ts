@@ -148,6 +148,7 @@ export const NESTED_RELATIONS: Record<string, Record<string, string>> = {
   },
   ServiceFieldDefinition: { choices: 'ServiceFieldChoice' },
   IndicatorSet: { indicators: 'Indicator' },
+  ServiceRoleDef: { hiddenSoignants: 'ServiceRoleHiddenSoignant' },
 }
 
 // Relations d'un modèle global qui exposent des données de tenant. Un include/select dessus n'est

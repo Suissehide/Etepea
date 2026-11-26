@@ -653,6 +653,33 @@ describe('isolation par tenant', () => {
       expect(
         await testDb.user.count({ where: { email: 'role-etranger@test.fr' } }),
       ).toBe(0)
+
+      // L'administrateur passe roles:manage : seul le cloisonnement peut alors répondre 404.
+      await createUser({
+        email: 'admin-roles@test.fr',
+        memberships: [{ establishmentId: est.id, role: 'ADMIN' }],
+      })
+      const admin = await signIn(t.app, 'admin-roles@test.fr')
+      const roleDeB = rolesDeB[0]?.id
+      const ecritures = [
+        { method: 'PATCH', path: `/roles/${roleDeB}`, payload: { name: 'X' } },
+        { method: 'DELETE', path: `/roles/${roleDeB}` },
+        { method: 'POST', path: `/roles/${roleDeB}/restore` },
+      ] as const
+      for (const { method, path, ...rest } of ecritures) {
+        const res = await t.app.inject({
+          method,
+          url: tenantUrl(est.id, serviceA.id, path),
+          cookies: admin,
+          ...rest,
+        })
+        expect([method, res.statusCode]).toEqual([method, 404])
+      }
+      const intact = await testDb.serviceRoleDef.findUniqueOrThrow({
+        where: { id: roleDeB },
+      })
+      expect(intact.name).not.toBe('X')
+      expect(intact.archivedAt).toBeNull()
     })
 
     it('un design de PDF d un autre service ne se lit, ne se modifie ni ne se supprime', async () => {

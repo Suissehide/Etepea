@@ -30,6 +30,10 @@ export const ACTION_LABELS: Record<string, string> = {
   'serviceMember.accountCreated': 'Compte créé et affecté au service',
   'serviceMember.updated': 'Rôle dans le service modifié',
   'serviceMember.removed': 'Membre retiré du service',
+  'role.created': 'Rôle créé',
+  'role.updated': 'Rôle modifié',
+  'role.archived': 'Rôle supprimé',
+  'role.restored': 'Rôle restauré',
 }
 
 export const ACTION_OPTIONS = toSelectOptions(ACTION_LABELS)
@@ -43,6 +47,7 @@ export const TYPE_LABELS: Record<string, string> = {
   pathway: 'Parcours',
   member: 'Membre',
   user: 'Compte',
+  role: 'Rôle',
 }
 
 export const PERIOD_DAYS: Record<string, string> = {

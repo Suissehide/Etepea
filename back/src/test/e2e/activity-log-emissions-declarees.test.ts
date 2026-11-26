@@ -83,6 +83,11 @@ const CONTEXTES_REELS: Record<string, ContexteReel> = {
   'serviceMember.removed': { genre: 'tenant-service' },
   // domain/user.domain.ts#reissueAccessLink : sous `/super-admin`, aucun store.
   'user.accessLinkReissued': { genre: 'aucun' },
+  // domain/serviceRole.domain.ts : sous `/e/:e/s/:s/roles`.
+  'role.created': { genre: 'tenant-service' },
+  'role.updated': { genre: 'tenant-service' },
+  'role.archived': { genre: 'tenant-service' },
+  'role.restored': { genre: 'tenant-service' },
 }
 
 // Liste NOMMEE, jamais un pourcentage implicite : un evenement

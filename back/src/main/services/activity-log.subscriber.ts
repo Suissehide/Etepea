@@ -35,6 +35,13 @@ const MEMBER_ACTIONS = [
   'serviceMember.removed',
 ] as const
 
+const ROLE_ACTIONS = [
+  'role.created',
+  'role.updated',
+  'role.archived',
+  'role.restored',
+] as const
+
 class ActivityLogSubscriber {
   private readonly appEventBus: AppEventBus
   private readonly activityLogRepository: ActivityLogRepositoryInterface
@@ -130,6 +137,11 @@ class ActivityLogSubscriber {
     for (const action of MEMBER_ACTIONS) {
       this.appEventBus.on(action, (p) =>
         this.#log(action, 'member', p.userID, p.membershipId, p.detail),
+      )
+    }
+    for (const action of ROLE_ACTIONS) {
+      this.appEventBus.on(action, (p) =>
+        this.#log(action, 'role', p.userID, p.roleId, p.detail),
       )
     }
     // La reemission par le super-admin. `entityType: 'user'`, pas
