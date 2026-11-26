@@ -35,13 +35,14 @@ model ServiceRoleHiddenSoignant {
 }
 ```
 
-- **Les droits se règlent par soignant (métier), pas par compte.** `Soignant.roleId` : chaque
-  soignant du service reçoit un rôle (« Équipe SMCP » pour IDE, Diététicienne, Pharmacienne et
-  Aide-soignante SMCP, par exemple). Un compte rattaché à un soignant
-  (`ServiceMembership.soignantId`, qui existe déjà) en prend le rôle.
-- `ServiceMembership.role` (enum) devient `ServiceMembership.roleId`, utilisé **seulement** pour
-  un compte sans soignant (secrétariat, direction). Rôle effectif = rôle du soignant rattaché,
-  sinon rôle du membre. Un soignant sans rôle ne donne rien de plus que le rôle du membre.
+- **Le rôle appartient au compte** : `ServiceMembership.role` (enum) devient
+  `ServiceMembership.roleId`. C'est la seule source des droits.
+- **Le soignant porte un rôle par défaut** : `Soignant.defaultRoleId` (nullable). Quand on invite
+  un membre ou qu'on le rattache à un soignant, le rôle du formulaire se remplit avec celui du
+  soignant (« Équipe SMCP » pour IDE, Diététicienne, Pharmacienne et Aide-soignante SMCP, par
+  exemple). Il reste modifiable avant d'enregistrer.
+- Changer le rôle par défaut d'un soignant ne touche pas les comptes déjà rattachés : c'est un
+  pré-remplissage, pas un lien.
 - Migration : pour chaque service, création de quatre rôles **Coordinateur**, **Intervenant**,
   **Secrétariat**, **Lecture seule**, avec exactement les permissions actuelles (plus les nouvelles
   permissions issues des découpages ci-dessous, accordées là où l'ancienne l'était). Aucun compte
@@ -91,8 +92,8 @@ d'établissement). Liste des rôles ; pour chacun : nom modifiable, cases à coc
 soignants masqués, nombre de membres. Actions : créer, dupliquer, renommer, supprimer (archive).
 Toute modification écrit `role.created|updated|archived` dans le journal d'activité.
 
-L'écran Soignants gagne une colonne « Rôle ». L'écran Membres affiche le rôle effectif et sa
-provenance (« via Kiné 1 ») ; le choix d'un rôle n'y est proposé que pour un compte sans soignant.
+L'écran Soignants gagne une colonne « Rôle par défaut ». L'écran Membres propose les rôles du
+service au lieu des quatre valeurs fixes, pré-remplis depuis le soignant choisi.
 
 ## Traçabilité du planning (cas n°2)
 
@@ -109,8 +110,8 @@ Annuler une modification autre qu'une suppression : hors périmètre.
 
 ## Les cas de Léo, une fois configurés
 
-Réglages faits dans l'écran, pas dans le code. Trois rôles, chacun attribué aux soignants
-listés :
+Réglages faits dans l'écran, pas dans le code. Trois rôles, chacun mis par défaut sur les
+soignants listés :
 
 - **Cadre de santé** : `dashboard:read`, `agenda:read`, `patients:read`, `planning:write`,
   `diagnostic-templates:write`, `patient-form:write`, `stats:write` + lectures ; ni
