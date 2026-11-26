@@ -49,8 +49,14 @@ class PlanningCycleDomain implements PlanningCycleDomainInterface {
     })
   }
 
-  delete(): Promise<void> {
-    return this.planningCycleRepository.delete()
+  async delete(): Promise<{ startOfWeek: string; weekCount: number } | null> {
+    const deleted = await this.planningCycleRepository.delete()
+    return deleted
+      ? {
+          startOfWeek: deleted.startOfWeek.toISOString().slice(0, 10),
+          weekCount: deleted.weekCount,
+        }
+      : null
   }
 }
 

@@ -10,5 +10,5 @@ export type SavePlanningCycleParams = {
 export interface PlanningCycleDomainInterface {
   find: () => Promise<PlanningCycleEntityDomain | null>
   save: (params: SavePlanningCycleParams) => Promise<PlanningCycleEntityDomain>
-  delete: () => Promise<void>
+  delete: () => Promise<{ startOfWeek: string; weekCount: number } | null>
 }

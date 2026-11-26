@@ -37,7 +37,6 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
     slotDomain,
     slotTemplateDomain,
     forbiddenWeekDomain,
-    logger,
   } = iocContainer
 
   // Get all
@@ -154,11 +153,7 @@ const pathwayRouter: FastifyPluginAsync = (fastify) => {
     },
     async (request, reply) => {
       const { pathwayID } = request.params
-      const deleted = await pathwayDomain.delete(pathwayID)
-      if (!deleted) {
-        logger.info('Pathway not found')
-        throw Boom.notFound('Pathway not found')
-      }
+      await pathwayDomain.delete(pathwayID, request.user.userID)
       reply.code(204).send()
     },
   )

@@ -5,5 +5,5 @@ export type ForbiddenWeekEntityDomain = ForbiddenWeek
 export interface ForbiddenWeekDomainInterface {
   findAll: () => Promise<ForbiddenWeekEntityDomain[]>
   create: (date: Date) => Promise<ForbiddenWeekEntityDomain>
-  delete: (id: string) => Promise<ForbiddenWeekEntityDomain>
+  delete: (id: string) => Promise<{ startOfWeek: string }>
 }

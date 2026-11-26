@@ -48,11 +48,13 @@ class PlanningCycleRepository implements PlanningCycleRepositoryInterface {
 
   // Supprimer un cycle inexistant n'est pas une erreur : le résultat visé
   // (aucun cycle configuré) est déjà atteint, d'où `deleteMany`.
-  async delete(): Promise<void> {
+  async delete(): Promise<PlanningCycleEntityRepo | null> {
     try {
+      const before = await this.find()
       await this.prisma.planningCycle.deleteMany({
         where: { serviceId: this.scope.serviceId },
       })
+      return before
     } catch (err) {
       throw this.errorHandler.boomErrorFromPrismaError({
         entityName: 'PlanningCycle',

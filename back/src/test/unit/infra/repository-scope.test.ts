@@ -964,6 +964,11 @@ describe('scoping des repositories de service simples', () => {
     })
     expect(calls[2]).toMatchObject({
       model: 'planningCycle',
+      op: 'findUnique',
+      args: { where: { serviceId: 's1' } },
+    })
+    expect(calls[3]).toMatchObject({
+      model: 'planningCycle',
       op: 'deleteMany',
       args: { where: { serviceId: 's1' } },
     })
@@ -1441,18 +1446,26 @@ describe('scoping pathwayTemplate et pathway', () => {
     })
   })
 
-  it('PathwayRepository.delete filtre la suppression des slots, modeles clones et du parcours', async () => {
+  it('PathwayRepository.archive archive les slots du parcours puis le supprime, sans toucher aux modeles', async () => {
     const { prisma, calls } = buildFakePrisma({
       'pathway.findUniqueOrThrow': {
         id: 'pw1',
-        slots: [{ id: 'sl1', slotTemplateID: 'st1' }],
+        startDate: new Date('2026-04-06'),
+        templateID: null,
+        slots: [{ id: 'sl1' }],
+        patientPriorities: [{ patientID: 'p1', priority: 2 }],
       },
     })
     const ctx = new TenantContext()
     const repo = new PathwayRepository(buildContainer(prisma, ctx))
 
-    await ctx.run(tenant, () => repo.delete('pw1'))
+    const data = await ctx.run(tenant, () => repo.archive('pw1'))
 
+    expect(data).toEqual({
+      pathway: { id: 'pw1', startDate: '2026-04-06', templateID: null },
+      slotIds: ['sl1'],
+      priorities: [{ patientID: 'p1', priority: 2 }],
+    })
     expect(calls[0]).toMatchObject({
       model: 'pathway',
       op: 'findUniqueOrThrow',
@@ -1460,23 +1473,18 @@ describe('scoping pathwayTemplate et pathway', () => {
     })
     expect(calls[1]).toMatchObject({
       model: 'slot',
-      op: 'deleteMany',
-      args: { where: { id: { in: ['sl1'] }, serviceId: 's1' } },
-    })
-    // Meme condition de surete que regenerate() : ne jamais supprimer un
-    // modele maitre partage par un PathwayTemplate, seulement un clone.
-    expect(calls[2]).toMatchObject({
-      model: 'slotTemplate',
-      op: 'deleteMany',
+      op: 'updateMany',
       args: {
-        where: { id: { in: ['st1'] }, templateID: null, serviceId: 's1' },
+        where: { id: { in: ['sl1'] }, serviceId: 's1' },
+        data: { archivedAt: expect.any(Date) },
       },
     })
-    expect(calls[3]).toMatchObject({
+    expect(calls[2]).toMatchObject({
       model: 'pathway',
       op: 'delete',
       args: { where: { id_serviceId: { id: 'pw1', serviceId: 's1' } } },
     })
+    expect(calls.some((c) => c.model === 'slotTemplate')).toBe(false)
   })
 })
 

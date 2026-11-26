@@ -32,6 +32,12 @@ export type PathwayUpdateEntityRepo = Omit<
   'establishmentId' | 'serviceId' | 'slots' | 'template'
 >
 
+export type PathwayRestoreData = {
+  pathway: { id: string; startDate: string; templateID: string | null }
+  slotIds: string[]
+  priorities: { patientID: string; priority: number }[]
+}
+
 export type RegeneratePathwaysResultRepo = {
   pathwaysUpdated: number
   slotsDeleted: number
@@ -84,7 +90,8 @@ export interface PathwayRepositoryInterface {
     pathwayID: string,
     pathwayUpdateParams: PathwayUpdateEntityRepo,
   ) => Promise<PathwayEntityRepo>
-  delete: (pathwayID: string) => Promise<PathwayEntityRepo>
+  findLiveAppointmentIDs: (pathwayID: string) => Promise<string[]>
+  archive: (pathwayID: string) => Promise<PathwayRestoreData>
   regenerate: (
     pathwayTemplateIDs: string[],
     fromDate: Date,

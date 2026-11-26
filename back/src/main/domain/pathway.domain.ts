@@ -1,4 +1,5 @@
 import type { IocContainer } from '../types/application/ioc'
+import type { NotificationDispatcherInterface } from '../types/domain/notification-dispatcher.interface'
 import type {
   PathwayCreateEntityDomain,
   PathwayDomainInterface,
@@ -8,14 +9,23 @@ import type {
   RegeneratePathwaysResultDomain,
   TrackingPathwayDomain,
 } from '../types/domain/pathway.domain.interface'
-import type { PathwayRepositoryInterface } from '../types/infra/orm/repositories/pathway.repository.interface'
+import type {
+  PathwayRepositoryInterface,
+  PathwayRestoreData,
+} from '../types/infra/orm/repositories/pathway.repository.interface'
 import type { PathwayTemplateRepositoryInterface } from '../types/infra/orm/repositories/pathwayTemplate.repository.interface'
 
 class PathwayDomain implements PathwayDomainInterface {
   private readonly pathwayRepository: PathwayRepositoryInterface
+  private readonly notificationDispatcher: NotificationDispatcherInterface
   private readonly pathwayTemplateRepository: PathwayTemplateRepositoryInterface
 
-  constructor({ pathwayRepository, pathwayTemplateRepository }: IocContainer) {
+  constructor({
+    pathwayRepository,
+    pathwayTemplateRepository,
+    notificationDispatcher,
+  }: IocContainer) {
+    this.notificationDispatcher = notificationDispatcher
     this.pathwayRepository = pathwayRepository
     this.pathwayTemplateRepository = pathwayTemplateRepository
   }
@@ -62,8 +72,13 @@ class PathwayDomain implements PathwayDomainInterface {
     return await this.pathwayRepository.update(pathwayID, pathwayUpdateParams)
   }
 
-  delete(pathwayID: string): Promise<PathwayEntityDomain> {
-    return this.pathwayRepository.delete(pathwayID)
+  async delete(pathwayID: string, userID: string): Promise<PathwayRestoreData> {
+    const snapshots = await this.notificationDispatcher.snapshot(
+      await this.pathwayRepository.findLiveAppointmentIDs(pathwayID),
+    )
+    const restoreData = await this.pathwayRepository.archive(pathwayID)
+    this.notificationDispatcher.cancelled(userID, snapshots)
+    return restoreData
   }
 
   regenerate(

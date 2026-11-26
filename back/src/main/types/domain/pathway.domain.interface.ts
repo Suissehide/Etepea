@@ -5,6 +5,7 @@ import type {
   Slot,
 } from '../../../generated/client'
 import type {
+  PathwayRestoreData,
   RegeneratePathwaysResultRepo,
   TrackingPathwayRepo,
 } from '../infra/orm/repositories/pathway.repository.interface'
@@ -47,7 +48,7 @@ export interface PathwayDomainInterface {
     pathwayID: string,
     pathwayUpdateParams: PathwayUpdateEntityDomain,
   ) => Promise<PathwayEntityDomain>
-  delete: (pathwayID: string) => Promise<PathwayEntityDomain>
+  delete: (pathwayID: string, userID: string) => Promise<PathwayRestoreData>
   regenerate: (
     pathwayTemplateIDs: string[],
     fromDate: Date,

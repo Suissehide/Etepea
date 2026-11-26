@@ -12,5 +12,5 @@ export interface PlanningCycleRepositoryInterface {
   upsert: (
     params: PlanningCycleUpsertEntityRepo,
   ) => Promise<PlanningCycleEntityRepo>
-  delete: () => Promise<void>
+  delete: () => Promise<PlanningCycleEntityRepo | null>
 }

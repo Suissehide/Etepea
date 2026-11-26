@@ -109,9 +109,11 @@ class SlotDomain implements SlotDomainInterface {
     const snapshots = await this.notificationDispatcher.snapshot(
       before.appointments.map((a) => a.id),
     )
-    const deleted = await this.slotRepository.delete(slotID)
+    const archived = await this.slotRepository.update(slotID, {
+      archivedAt: new Date(),
+    })
     this.notificationDispatcher.cancelled(userID, snapshots)
-    return deleted
+    return archived
   }
 }
 

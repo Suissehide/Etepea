@@ -9,6 +9,7 @@ import type {
   PathwayCreateEntityRepo,
   PathwayEntityRepo,
   PathwayRepositoryInterface,
+  PathwayRestoreData,
   PathwayUpdateEntityRepo,
   PathwayWithSlotsRepo,
   PathwayWithTemplateAndSlotsRepo,
@@ -532,49 +533,52 @@ class PathwayRepository implements PathwayRepositoryInterface {
     }
   }
 
-  async delete(pathwayID: string): Promise<PathwayEntityRepo> {
+  async findLiveAppointmentIDs(pathwayID: string): Promise<string[]> {
+    try {
+      const slots = await this.prisma.slot.findMany({
+        where: { pathwayID, archivedAt: null, serviceId: this.scope.serviceId },
+        select: { appointments: { select: { id: true } } },
+      })
+      return slots.flatMap((slot) => slot.appointments.map((a) => a.id))
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'Pathway',
+        error: err,
+      })
+    }
+  }
+
+  // Les créneaux sont archivés puis détachés (SET NULL) ; les modèles clonés restent pour la restauration.
+  async archive(pathwayID: string): Promise<PathwayRestoreData> {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        // Find the pathway with its slots to get slotTemplateIDs
+        const { serviceId } = this.scope
         const pathway = await tx.pathway.findUniqueOrThrow({
-          where: {
-            id_serviceId: { id: pathwayID, serviceId: this.scope.serviceId },
-          },
+          where: { id_serviceId: { id: pathwayID, serviceId } },
           include: {
-            slots: {
-              select: {
-                id: true,
-                slotTemplateID: true,
-              },
+            slots: { where: { archivedAt: null }, select: { id: true } },
+            patientPriorities: {
+              select: { patientID: true, priority: true },
             },
           },
         })
-
-        const slotIDs = pathway.slots.map((slot) => slot.id)
-        const slotTemplateIDs = pathway.slots.map((slot) => slot.slotTemplateID)
-
-        // Delete all slots
-        await tx.slot.deleteMany({
-          where: { id: { in: slotIDs }, serviceId: this.scope.serviceId },
+        const slotIds = pathway.slots.map((slot) => slot.id)
+        await tx.slot.updateMany({
+          where: { id: { in: slotIds }, serviceId },
+          data: { archivedAt: new Date() },
         })
-
-        // Delete all slotTemplates — même garde qu'en régénération : seuls
-        // les clones (templateID null) sont supprimés, jamais un modèle
-        // maître partagé.
-        await tx.slotTemplate.deleteMany({
-          where: {
-            id: { in: slotTemplateIDs },
-            templateID: null,
-            serviceId: this.scope.serviceId,
+        await tx.pathway.delete({
+          where: { id_serviceId: { id: pathwayID, serviceId } },
+        })
+        return {
+          pathway: {
+            id: pathway.id,
+            startDate: pathway.startDate.toISOString().slice(0, 10),
+            templateID: pathway.templateID,
           },
-        })
-
-        // Delete the pathway
-        return await tx.pathway.delete({
-          where: {
-            id_serviceId: { id: pathwayID, serviceId: this.scope.serviceId },
-          },
-        })
+          slotIds,
+          priorities: pathway.patientPriorities,
+        }
       })
     } catch (err) {
       throw this.errorHandler.boomErrorFromPrismaError({

@@ -22,8 +22,9 @@ class ForbiddenWeekDomain implements ForbiddenWeekDomainInterface {
     return this.forbiddenWeekRepository.create({ startOfWeek })
   }
 
-  delete(id: string): Promise<ForbiddenWeekEntityDomain> {
-    return this.forbiddenWeekRepository.delete(id)
+  async delete(id: string): Promise<{ startOfWeek: string }> {
+    const deleted = await this.forbiddenWeekRepository.delete(id)
+    return { startOfWeek: deleted.startOfWeek.toISOString().slice(0, 10) }
   }
 }
 
