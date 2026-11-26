@@ -187,42 +187,6 @@ export const useSlotMutations = () => {
     },
   })
 
-  const deleteSlot = useMutation({
-    mutationKey: [SLOT.DELETE],
-    mutationFn: SlotApi.delete,
-    onMutate: async (slotID) => {
-      await queryClient.cancelQueries({ queryKey: [SLOT.GET_ALL] })
-
-      const previousSlots = snapshotSlotCaches(queryClient)
-      updateSlotCaches(queryClient, (oldSlots) =>
-        oldSlots?.filter((slot) => slot.id !== slotID),
-      )
-
-      return { previousSlots }
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Créneau supprimé avec succès',
-        severity: TOAST_SEVERITY.SUCCESS,
-      })
-    },
-    onError: (error, __, context) => {
-      restoreForTenant(queryClient, context?.previousSlots)
-
-      toast({
-        title: 'Erreur lors de la suppression du créneau',
-        message: error.message,
-        severity: TOAST_SEVERITY.ERROR,
-      })
-    },
-    // Relire avant la fin du lot ferait revenir les créneaux encore en cours de suppression.
-    onSettled: async () => {
-      if (queryClient.isMutating({ mutationKey: [SLOT.DELETE] }) === 1) {
-        await queryClient.invalidateQueries({ queryKey: [SLOT.GET_ALL] })
-      }
-    },
-  })
-
   const updateSlot = useMutation({
     mutationKey: [SLOT.UPDATE],
     mutationFn: SlotApi.update,
@@ -322,5 +286,5 @@ export const useSlotMutations = () => {
     },
   })
 
-  return { createSlot, deleteSlot, updateSlot, archiveSlots }
+  return { createSlot, updateSlot, archiveSlots }
 }

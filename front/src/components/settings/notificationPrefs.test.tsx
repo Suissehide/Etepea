@@ -381,4 +381,38 @@ describe('NotificationPrefs', () => {
     expect(cardio).toHaveAttribute('aria-checked', 'true')
     expect(diabeto).toHaveAttribute('aria-checked', 'true')
   })
+
+  it('la ligne Modifications du planning est reservee aux administrateurs', async () => {
+    const { rerender } = render(<NotificationPrefs />, { wrapper })
+    await screen.findByRole('radio', { name: /^Tout/ })
+    expect(screen.queryByText('Modifications du planning')).toBeNull()
+    act(() =>
+      useAuthStore.setState({
+        user: {
+          ...user,
+          establishments: [{ ...user.establishments[0], role: 'ADMIN' }],
+        } as User,
+      }),
+    )
+    rerender(<NotificationPrefs />)
+    expect(
+      await screen.findByText('Modifications du planning'),
+    ).toBeInTheDocument()
+  })
+
+  it('un non-administrateur garde sa valeur planning en changeant de niveau', async () => {
+    get.mockReset().mockResolvedValue({
+      ...essentialSaufAbsent,
+      app: { ...essentialSaufAbsent.app, planning: false },
+    })
+    const u = userEvent.setup()
+    render(<NotificationPrefs />, { wrapper })
+    await u.click(await screen.findByRole('radio', { name: /^Tout/ }))
+    expect(put).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        app: expect.objectContaining({ planning: false }),
+      }),
+      expect.anything(),
+    )
+  })
 })

@@ -106,17 +106,4 @@ export const SlotApi = {
     }
     return response.json()
   },
-
-  delete: async (slotID: string): Promise<void> => {
-    const response = await fetchWithAuth(
-      `${tenantApiUrl()}/slot/${slotID}?action=deleteSlot`,
-      {
-        method: 'DELETE',
-      },
-    )
-    if (!response.ok) {
-      handleHttpError(response, {}, 'Impossible de supprimer le créneau')
-    }
-    return
-  },
 }

@@ -2,9 +2,7 @@ import dayjs from 'dayjs'
 import { ChevronDown, FilePlus, Loader2Icon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
-import { useToast } from '../../../hooks/useToast.ts'
 import { formatDuration } from '../../../libs/utils.ts'
 import { usePathwayMutations } from '../../../queries/usePathway.ts'
 import { useSlotByIDQuery, useSlotMutations } from '../../../queries/useSlot.ts'
@@ -43,13 +41,12 @@ export default function EventSheet({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showDeletePathwayConfirm, setShowDeletePathwayConfirm] =
     useState(false)
-  const { toast } = useToast()
 
   useSoignantQueries()
   const { isPending, slot, refetch } = useSlotByIDQuery(eventID, {
     enabled: false,
   })
-  const { updateSlot, deleteSlot } = useSlotMutations()
+  const { updateSlot } = useSlotMutations()
   const { deletePathway } = usePathwayMutations()
 
   const hasPathway = slot?.pathway?.id
@@ -96,15 +93,6 @@ export default function EventSheet({
 
   const handleDeleteSlot = () => {
     if (slot) {
-      if (slot.appointments && slot.appointments.length > 0) {
-        toast({
-          title: 'Suppression impossible',
-          message:
-            "Ce créneau contient des rendez-vous déjà programmés. Veuillez d'abord supprimer les rendez-vous avant de supprimer le créneau.",
-          severity: TOAST_SEVERITY.ERROR,
-        })
-        return
-      }
       handleDeleteEvent?.(slot.id)
       setOpen('')
     }
@@ -248,9 +236,8 @@ export default function EventSheet({
           handleDeleteSlot()
           setShowDeleteConfirm(false)
         }}
-        loading={deleteSlot.isPending}
         title="Supprimer le créneau"
-        description="Voulez-vous vraiment supprimer ce créneau ? Cette action est irréversible."
+        description="Voulez-vous vraiment supprimer ce créneau ? Vous pourrez le restaurer depuis le journal."
       />
       <ConfirmDeleteForm
         open={showDeletePathwayConfirm}
@@ -261,7 +248,7 @@ export default function EventSheet({
         }}
         loading={deletePathway.isPending}
         title="Supprimer tout le parcours"
-        description="Voulez-vous vraiment supprimer tous les créneaux de ce parcours ? Cette action est irréversible."
+        description="Voulez-vous vraiment supprimer tous les créneaux de ce parcours ? Vous pourrez les restaurer depuis le journal."
       />
     </Sheet>
   )

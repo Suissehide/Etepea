@@ -88,7 +88,6 @@ import { TOAST_SEVERITY } from '@/constants/ui.constant.ts'
 import { can, useCan } from '@/hooks/useCan.ts'
 import { useToast } from '@/hooks/useToast.ts'
 import { labelConflicts } from '@/libs/planningConflicts.ts'
-import { getBookedPatientCount } from '@/libs/slotAvailability.ts'
 import {
   buildCalendarEventsFromSlots,
   buildCalendarEventsFromSlotTemplates,
@@ -218,8 +217,7 @@ function Planning() {
   )
   const { pathways } = usePathwayQueries()
   const { pathwayTemplates } = usePathwayTemplateQueries()
-  const { createSlot, updateSlot, deleteSlot, archiveSlots } =
-    useSlotMutations()
+  const { createSlot, updateSlot, archiveSlots } = useSlotMutations()
   const { instantiatePathway, deletePathway } = usePathwayMutations()
   const { toast } = useToast()
   const controleurAnnee = useCalendarController()
@@ -520,41 +518,21 @@ function Planning() {
     }
   }
 
-  /**
-   * Un créneau où un patient est inscrit est archivé : le supprimer perdrait son
-   * rendez-vous. Un rendez-vous sans patient (l'import historique en a laissé)
-   * n'est pas une inscription : le créneau part pour de bon.
-   */
-  const archiveOrDeleteSlots = (ids: string[]) => {
-    const toArchive = ids.filter((id) => {
-      const slot = slots?.find((s) => s.id === id)
-      return slot && getBookedPatientCount(slot) > 0
-    })
-    for (const id of ids) {
-      if (!toArchive.includes(id)) {
-        deleteSlot.mutate(id)
-      }
-    }
-    if (toArchive.length === 0) {
-      return
-    }
+  // Supprimer archive : le créneau et ses rendez-vous se restaurent depuis le journal.
+  const archiveSelectedSlots = (ids: string[]) => {
     archiveSlots.mutate(
-      { ids: toArchive, archived: true },
+      { ids, archived: true },
       {
         onSuccess: () =>
           toast({
-            title: `${toArchive.length} créneau(x) conservé(s) au lieu d'être supprimé(s)`,
-            message:
-              'Ils portent des rendez-vous, qui restent visibles sur le Dashboard.',
+            title: `${ids.length} créneau(x) supprimé(s)`,
             severity: TOAST_SEVERITY.SUCCESS,
             action: (
               <Button
                 variant="none"
                 size="sm"
                 className="h-7 px-2 text-xs"
-                onClick={() =>
-                  archiveSlots.mutate({ ids: toArchive, archived: false })
-                }
+                onClick={() => archiveSlots.mutate({ ids, archived: false })}
               >
                 Annuler
               </Button>
@@ -574,7 +552,7 @@ function Planning() {
       deleteSlotTemplate.mutate(id)
       return
     }
-    archiveOrDeleteSlots([id])
+    archiveSelectedSlots([id])
   }
 
   const handleDeleteHoverSlot = (eventId: string) => {
@@ -779,7 +757,7 @@ function Planning() {
         deleteSlotTemplate.mutate(id)
       }
     } else {
-      archiveOrDeleteSlots(ids)
+      archiveSelectedSlots(ids)
     }
     setShowBulkDeleteModal(false)
     handleClearSelection()
@@ -1156,9 +1134,9 @@ function Planning() {
             }
           }}
           onConfirm={handleConfirmDeleteHoverSlot}
-          loading={deleteSlot.isPending || deleteSlotTemplate.isPending}
+          loading={archiveSlots.isPending || deleteSlotTemplate.isPending}
           title="Supprimer le créneau"
-          description="Voulez-vous vraiment supprimer ce créneau ? S'il porte des rendez-vous, il sera conservé plutôt que supprimé."
+          description="Voulez-vous vraiment supprimer ce créneau ? Vous pourrez le restaurer depuis le journal."
         />
 
         <BulkThematicTypeForm

@@ -8,8 +8,10 @@ import {
   useInboxMutations,
   useServiceMembers,
 } from '@/queries/useInbox.ts'
+import { usePlanningRestore } from '@/queries/usePlanningRestore.ts'
 import { dayGroup, whenLabel } from './inbox.utils.ts'
 import {
+  isPlanningDeletion,
   notificationTarget,
   notificationText,
   notificationTypeOf,
@@ -26,50 +28,64 @@ const GROUPS = ["Aujourd'hui", 'Hier', 'Cette semaine', 'Plus ancien'] as const
 function NotificationRow({
   n,
   onOpen,
+  onRestore,
 }: {
   n: InboxNotification
   onOpen: (n: InboxNotification) => void
+  onRestore: (n: InboxNotification) => void
 }) {
   const members = useServiceMembers(n.service)
   const unread = n.readAt === null
   const { icon: Icon, color, tint, kind, cta } = notificationTypeOf(n.type)
   const target = notificationTarget(n)
   const showCta = cta !== '' && (target.kind !== 'task' || n.service.canTasks)
+  const restorable = isPlanningDeletion(n)
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(n)}
-      className={`cursor-pointer w-full text-left flex gap-3 px-[18px] py-3 hover:bg-[#f8fafc] ${unread ? 'bg-[#f8fbff]' : 'bg-white'}`}
-    >
-      <span
-        style={{ backgroundColor: tint, color }}
-        className="w-[34px] h-[34px] shrink-0 rounded-full flex items-center justify-center"
+    <div className={unread ? 'bg-[#f8fbff]' : 'bg-white'}>
+      <button
+        type="button"
+        onClick={() => onOpen(n)}
+        className="cursor-pointer w-full text-left flex gap-3 px-[18px] py-3 hover:bg-[#f8fafc]"
       >
-        <Icon className="w-4 h-4" />
-      </span>
-      <span className="flex-1 min-w-0">
-        <span className="block text-sm text-foreground">
-          {notificationText(n, members)}
+        <span
+          style={{ backgroundColor: tint, color }}
+          className="w-[34px] h-[34px] shrink-0 rounded-full flex items-center justify-center"
+        >
+          <Icon className="w-4 h-4" />
         </span>
-        <span className="block text-xs text-text-light mt-0.5">
-          {kind} · {whenLabel(n.createdAt)}
-        </span>
-        {showCta && (
-          <span className="block text-[13px] text-primary font-medium mt-1">
-            {cta}
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm text-foreground">
+            {notificationText(n, members)}
           </span>
+          <span className="block text-xs text-text-light mt-0.5">
+            {kind} · {whenLabel(n.createdAt)}
+          </span>
+          {showCta && !restorable && (
+            <span className="block text-[13px] text-primary font-medium mt-1">
+              {cta}
+            </span>
+          )}
+        </span>
+        {unread && (
+          <>
+            <span
+              aria-hidden="true"
+              className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-primary"
+            />
+            <span className="sr-only">Non lue</span>
+          </>
         )}
-      </span>
-      {unread && (
-        <>
-          <span
-            aria-hidden="true"
-            className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-primary"
-          />
-          <span className="sr-only">Non lue</span>
-        </>
+      </button>
+      {restorable && (
+        <button
+          type="button"
+          onClick={() => onRestore(n)}
+          className="cursor-pointer ml-[64px] mb-3 text-[13px] text-primary font-medium"
+        >
+          Restaurer
+        </button>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -87,6 +103,7 @@ export function NotificationsPanel({
   const [serviceId, setServiceId] = useState('all')
   const [scope, setScope] = useState<'unread' | 'all'>('unread')
   const { markRead, markAllRead } = useInboxMutations()
+  const restore = usePlanningRestore()
   const unread = notifications.filter((n) => n.readAt === null)
   const counts = Object.fromEntries(
     services.map((s) => [
@@ -121,6 +138,11 @@ export function NotificationsPanel({
     }
     onOpenNotification(n)
   }
+  const restoreDeletion = (n: InboxNotification) =>
+    restore.mutate(
+      { service: n.service, activityLogId: String(n.payload.activityLogId) },
+      { onSuccess: () => markRead.mutate(n) },
+    )
 
   return (
     <>
@@ -177,7 +199,12 @@ export function NotificationsPanel({
                     {d.title}
                   </h4>
                   {d.items.map((n) => (
-                    <NotificationRow key={n.id} n={n} onOpen={open} />
+                    <NotificationRow
+                      key={n.id}
+                      n={n}
+                      onOpen={open}
+                      onRestore={restoreDeletion}
+                    />
                   ))}
                 </div>
               ))}

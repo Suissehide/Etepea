@@ -16,8 +16,11 @@ import {
   PERIOD_OPTIONS,
 } from '@/constants/activityLog.constant.ts'
 import { PLATFORM_ONLY_ACTIVITY_ACTION_LABELS } from '@/constants/superAdminAccessLog.constant.ts'
+import { useCan } from '@/hooks/useCan.ts'
 import { toSelectOptions } from '@/libs/utils.ts'
 import { useActivityLogsQuery } from '@/queries/useActivityLog.ts'
+import { usePlanningRestore } from '@/queries/usePlanningRestore.ts'
+import { useAuthStore } from '@/store/useAuthStore.ts'
 import type { ActivityLog } from '@/types/activityLog.ts'
 import type { Service } from '@/types/service.ts'
 import type { Features } from '../table/features.ts'
@@ -114,6 +117,12 @@ export function JournalActivite({ services }: Props) {
   )
 
   const { establishmentId, serviceId } = useParams({ strict: false })
+  // Le journal d'administration n'a pas de service : l'ADMIN y a tout, sans permission de service.
+  const isAdmin = useAuthStore(
+    (state) => state.context?.establishmentRole === 'ADMIN',
+  )
+  const canRestore = useCan('planning:write') || isAdmin
+  const { mutate: restore, isPending: restoring } = usePlanningRestore()
 
   const columns = useMemo(() => {
     // Apres l'action : ce qu'elle vise. Le patient s'ouvre depuis le journal du service, dont
@@ -145,9 +154,45 @@ export function JournalActivite({ services }: Props) {
         )
       },
     })
+    // Une suppression du planning se restaure tant qu'elle ne l'a pas ete.
+    const colonneRestaurer = columnHelper.display({
+      id: 'restaurer',
+      header: '',
+      size: 110,
+      cell: ({ row: { original: ligne } }) =>
+        canRestore &&
+        establishmentId &&
+        ligne.action === 'planning.deleted' &&
+        !ligne.restoredAt ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={restoring}
+            onClick={() =>
+              restore({
+                service: {
+                  establishmentId,
+                  serviceId: ligne.serviceId ?? serviceId ?? '',
+                },
+                activityLogId: ligne.id,
+              })
+            }
+          >
+            Restaurer
+          </Button>
+        ) : null,
+    })
     const [date, heure, auteur, action, ...reste] = activityLogColumns
     if (!services) {
-      return [date, heure, auteur, action, colonneDetail, ...reste]
+      return [
+        date,
+        heure,
+        auteur,
+        action,
+        colonneDetail,
+        ...reste,
+        colonneRestaurer,
+      ]
     }
     const nomDuService = new Map(services.map((s) => [s.id, s.name]))
     const colonneService = columnHelper.accessor(
@@ -166,8 +211,9 @@ export function JournalActivite({ services }: Props) {
       action,
       colonneDetail,
       ...reste,
+      colonneRestaurer,
     ]
-  }, [services, establishmentId, serviceId])
+  }, [services, establishmentId, serviceId, canRestore, restore, restoring])
 
   const logs = data?.data ?? []
 

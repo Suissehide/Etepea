@@ -121,6 +121,12 @@ const EXCEPTIONS: { fichier: string; raison: string; occurrences: number }[] = [
     occurrences: 2,
   },
   {
+    fichier: 'api/planningRestore.api.ts',
+    raison:
+      "la restauration part du service de la ligne du journal ou de la notification (journal de l'administration, panneaux de la topbar) ; le service est une DONNEE de la requete, comme pour inbox.api.ts",
+    occurrences: 1,
+  },
+  {
     fichier: 'queries/useInbox.ts',
     raison:
       'meme raison que api/inbox.api.ts : une requete par service du compte, cle portant le service ' +

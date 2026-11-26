@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { ACTION_LABELS } from '@/constants/activityLog.constant.ts'
 import type { ServiceMember } from '@/types/serviceMember.ts'
 import type {
   MentionPayload,
@@ -26,6 +27,7 @@ export type NotificationTarget =
   | { kind: 'task'; taskId: string }
   | { kind: 'agenda'; date: string }
   | { kind: 'patient'; patientId: string }
+  | { kind: 'planning' }
 
 // Table `TYPES` du handoff (tour 15), couleurs/icones figees par la spec d'etape 2.
 export const NOTIFICATION_TYPES: Record<
@@ -125,6 +127,10 @@ const FALLBACK_TYPE: {
   kind: 'Notification',
   cta: '',
 }
+
+// Une suppression du planning se restaure d'un clic ; le reste ouvre le planning.
+export const isPlanningDeletion = (n: Notification): boolean =>
+  n.type === 'PLANNING_CHANGED' && n.payload.action === 'planning.deleted'
 
 export const notificationTypeOf = (
   type: NotificationType,
@@ -284,6 +290,15 @@ export const notificationText = (
     case 'TASK_DUE': {
       return <>Échéance aujourd'hui : {bold(str(p, 'text'))}</>
     }
+    case 'PLANNING_CHANGED': {
+      const action = str(p, 'action')
+      return (
+        <>
+          {bold(memberName(members, str(p, 'actorId') || null))} :{' '}
+          {ACTION_LABELS[action] ?? action} {str(p, 'detail')}
+        </>
+      )
+    }
     case 'MENTION': {
       const mention = p as MentionPayload
       return (
@@ -309,6 +324,8 @@ export const notificationTarget = (n: Notification): NotificationTarget => {
     case 'DIAGNOSTIC_DUE':
     case 'PATHWAY_END':
       return { kind: 'patient', patientId: str(p, 'patientId') }
+    case 'PLANNING_CHANGED':
+      return { kind: 'planning' }
     case 'APPOINTMENT_MOVED':
       return {
         kind: 'agenda',

@@ -90,6 +90,8 @@ export function Inbox() {
         params,
         search: { date: target.date },
       })
+    } else if (target.kind === 'planning') {
+      navigate({ to: '/e/$establishmentId/s/$serviceId/planning', params })
     } else {
       navigate({
         to: '/e/$establishmentId/s/$serviceId/patient/$patientID',

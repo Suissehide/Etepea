@@ -69,4 +69,21 @@ describe('archiveSlots', () => {
     )
     expect(useToastStore.getState().toasts).toEqual([])
   })
+
+  it('supprimer archive par PATCH archivedAt, sans route DELETE', async () => {
+    const { result } = renderHook(() => useSlotMutations(), { wrapper })
+
+    act(() =>
+      result.current.archiveSlots.mutate({ ids: ['a'], archived: true }),
+    )
+
+    await waitFor(() =>
+      expect(result.current.archiveSlots.isSuccess).toBe(true),
+    )
+    expect(SlotApi.update).toHaveBeenCalledWith({
+      id: 'a',
+      archivedAt: expect.any(String),
+    })
+    expect('delete' in SlotApi).toBe(false)
+  })
 })

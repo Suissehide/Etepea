@@ -125,8 +125,8 @@ const EVENTS: {
   {
     key: 'planning',
     group: 'Créneaux',
-    label: 'Planning modifié',
-    description: 'Un collègue modifie le planning (administrateurs).',
+    label: 'Modifications du planning',
+    description: 'Pour les administrateurs',
   },
 ]
 
@@ -157,6 +157,12 @@ export function NotificationPrefs() {
   const { data } = useNotificationPrefsQuery()
   const services = useAccountServices()
   const email = useAuthStore((state) => state.user?.email)
+  // Une ligne réservée aux administrateurs : masquée aux autres, sa valeur stockée reste intacte.
+  const isAdmin = useAuthStore(
+    (state) =>
+      state.user?.establishments.some((e) => e.role === 'ADMIN') ?? false,
+  )
+  const events = EVENTS.filter((e) => e.key !== 'planning' || isAdmin)
   const update = useUpdateNotificationPrefs()
   const queryClient = useQueryClient()
   // Dernière valeur confirmée par le serveur : un retour arrière n'écrase pas un PUT suivant déjà réussi.
@@ -189,6 +195,11 @@ export function NotificationPrefs() {
     })
   }
 
+  const keepHidden = (
+    next: Record<NotificationPrefKey, boolean>,
+    stored: Record<NotificationPrefKey, boolean>,
+  ) => (isAdmin ? next : { ...next, planning: stored.planning })
+
   const setLevel = (level: NotificationLevel) =>
     save(
       level === 'custom'
@@ -196,8 +207,11 @@ export function NotificationPrefs() {
         : {
             ...data,
             level,
-            app: allOn(),
-            mail: level === 'all' ? allOn() : essentialMail(),
+            app: keepHidden(allOn(), data.app),
+            mail: keepHidden(
+              level === 'all' ? allOn() : essentialMail(),
+              data.mail,
+            ),
           },
     )
 
@@ -304,52 +318,54 @@ export function NotificationPrefs() {
             <h4 className="text-xs uppercase text-text-light mt-3 mb-1">
               {group}
             </h4>
-            {EVENTS.filter((e) => e.group === group).map((e) => (
-              <div
-                key={e.key}
-                className="grid grid-cols-[minmax(0,1fr)_110px_110px] items-center gap-4 py-2 border-t border-border first:border-t-0"
-              >
-                <div className="min-w-0">
-                  <div className="text-[15px] font-medium text-foreground">
-                    {e.label}
-                  </div>
-                  <div className="text-[13px] text-text-light">
-                    {e.description}
-                  </div>
-                  {e.key === 'reminder' && (
-                    <div className="flex gap-1.5 mt-2">
-                      {DELAYS.map(({ delay, label }) => {
-                        const active = data.reminderDelay === delay
-                        return (
-                          <button
-                            key={delay}
-                            type="button"
-                            aria-pressed={active}
-                            onClick={() => setDelay(delay)}
-                            className={`cursor-pointer h-[26px] px-2.5 rounded-full text-xs border ${active ? 'border-primary bg-blue-50 text-primary' : 'border-border bg-white text-text-dark'}`}
-                          >
-                            {label}
-                          </button>
-                        )
-                      })}
+            {events
+              .filter((e) => e.group === group)
+              .map((e) => (
+                <div
+                  key={e.key}
+                  className="grid grid-cols-[minmax(0,1fr)_110px_110px] items-center gap-4 py-2 border-t border-border first:border-t-0"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[15px] font-medium text-foreground">
+                      {e.label}
                     </div>
-                  )}
+                    <div className="text-[13px] text-text-light">
+                      {e.description}
+                    </div>
+                    {e.key === 'reminder' && (
+                      <div className="flex gap-1.5 mt-2">
+                        {DELAYS.map(({ delay, label }) => {
+                          const active = data.reminderDelay === delay
+                          return (
+                            <button
+                              key={delay}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() => setDelay(delay)}
+                              className={`cursor-pointer h-[26px] px-2.5 rounded-full text-xs border ${active ? 'border-primary bg-blue-50 text-primary' : 'border-border bg-white text-text-dark'}`}
+                            >
+                              {label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <Switch
+                    aria-label={`${e.label} dans l'app`}
+                    checked={data.app[e.key]}
+                    onCheckedChange={() => toggleEvent(e.key, 'app')}
+                    className="justify-self-center"
+                  />
+                  <Switch
+                    aria-label={`${e.label} par e-mail`}
+                    checked={data.mail[e.key]}
+                    disabled={!data.app[e.key]}
+                    onCheckedChange={() => toggleEvent(e.key, 'mail')}
+                    className="justify-self-center"
+                  />
                 </div>
-                <Switch
-                  aria-label={`${e.label} dans l'app`}
-                  checked={data.app[e.key]}
-                  onCheckedChange={() => toggleEvent(e.key, 'app')}
-                  className="justify-self-center"
-                />
-                <Switch
-                  aria-label={`${e.label} par e-mail`}
-                  checked={data.mail[e.key]}
-                  disabled={!data.app[e.key]}
-                  onCheckedChange={() => toggleEvent(e.key, 'mail')}
-                  className="justify-self-center"
-                />
-              </div>
-            ))}
+              ))}
           </div>
         ))}
       </div>

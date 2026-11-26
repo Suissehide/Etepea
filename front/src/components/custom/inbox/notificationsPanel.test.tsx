@@ -13,6 +13,7 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { InboxApi } from '@/api/inbox.api.ts'
+import { PlanningRestoreApi } from '@/api/planningRestore.api.ts'
 import type { InboxNotification, InboxService } from '@/queries/useInbox.ts'
 import type { NotificationType } from '@/types/task.ts'
 import { NotificationsPanel } from './notificationsPanel.tsx'
@@ -118,5 +119,62 @@ describe('NotificationsPanel', () => {
     ).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/user/notifications')
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('une suppression du planning propose Restaurer, une modification Voir le planning', async () => {
+    const planning = (id: string, action: string) =>
+      notif(id, 'PLANNING_CHANGED', {
+        actorId: 'u1',
+        activityLogId: `log-${id}`,
+        action,
+        entityType: 'slot',
+        detail: 'Atelier',
+      })
+    await renderPanel(
+      <NotificationsPanel
+        services={[service]}
+        notifications={[
+          planning('p1', 'planning.deleted'),
+          planning('p2', 'planning.updated'),
+        ]}
+        onOpenNotification={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+    expect(
+      await screen.findByRole('button', { name: 'Restaurer' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Voir le planning')).toBeInTheDocument()
+  })
+
+  it('Restaurer appelle la route du service de la notification puis marque lue', async () => {
+    const restore = vi
+      .spyOn(PlanningRestoreApi, 'restore')
+      .mockResolvedValue(undefined)
+    const u = userEvent.setup()
+    const onOpen = vi.fn()
+    await renderPanel(
+      <NotificationsPanel
+        services={[service]}
+        notifications={[
+          notif('p1', 'PLANNING_CHANGED', {
+            actorId: 'u1',
+            activityLogId: 'log-1',
+            action: 'planning.deleted',
+            entityType: 'slot',
+            detail: 'Atelier',
+          }),
+        ]}
+        onOpenNotification={onOpen}
+        onClose={vi.fn()}
+      />,
+    )
+    await u.click(await screen.findByRole('button', { name: 'Restaurer' }))
+    expect(restore).toHaveBeenCalledWith(
+      expect.objectContaining({ establishmentId: 'e1', serviceId: 's1' }),
+      'log-1',
+    )
+    await vi.waitFor(() => expect(InboxApi.markRead).toHaveBeenCalled())
+    expect(onOpen).not.toHaveBeenCalled()
   })
 })

@@ -12,6 +12,8 @@ export type ActivityLog = {
   // Ce que la ligne designe, en clair. Absent du detail d'etablissement du super-admin.
   detail?: string | null
   createdAt: string
+  // Pour une suppression du planning : quand elle a ete restauree.
+  restoredAt?: string | null
 }
 
 export type ActivityLogsResponse = {
