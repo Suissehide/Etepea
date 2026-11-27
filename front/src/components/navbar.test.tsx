@@ -348,7 +348,7 @@ describe('onglets de la barre de navigation', () => {
     })
     expect(menus()).toEqual(['Administration'])
 
-    // Le menu ouvert : ses six ecrans, en sous-categories, dont Membres, Soignants et Salles (propres au
+    // Le menu ouvert : ses six ecrans, ranges en familles, dont Membres, Soignants et Salles (propres au
     // service depuis le 2026-09-29).
     await userEvent.click(
       screen.getByRole('button', { name: 'Administration' }),
@@ -363,12 +363,17 @@ describe('onglets de la barre de navigation', () => {
       sousCategories.map((lien) => lien.querySelector('span')?.textContent),
     ).toEqual([
       'Planning',
-      'Membres',
       'Thématiques',
       'Soignants',
       'Salles',
       'Diagnostics éducatifs',
+      'Membres',
     ])
+    // Rangés par famille, chacune sous son titre.
+    expect(screen.getByText('Organisation')).toBeInTheDocument()
+    expect(screen.getByText('Équipe')).toBeInTheDocument()
+    // « Patients » : l'onglet du quotidien, et la famille du menu.
+    expect(screen.getAllByText('Patients')).toHaveLength(2)
   })
 
   it('ne montre a l intervenant que les quatre onglets du quotidien, sans bouton Administration', async () => {
