@@ -1,5 +1,17 @@
 import { Link, useMatchRoute, useRouterState } from '@tanstack/react-router'
-import { ChevronDown, Globe, Menu, PanelLeft, Settings2 } from 'lucide-react'
+import {
+  ArrowRight,
+  CalendarDays,
+  ChevronDown,
+  Clock,
+  Globe,
+  type LucideIcon,
+  Menu,
+  PanelLeft,
+  Route,
+  Settings2,
+  Users,
+} from 'lucide-react'
 import { Fragment } from 'react'
 
 import { Logo } from '@/components/custom/logo'
@@ -9,6 +21,8 @@ import {
   MENU_GROUPS,
   NAVIGATION,
   type NavItem,
+  parRubrique,
+  type Rubrique,
   TAB_MENU_GROUPS,
   useCurrentScale,
 } from '../navigation/navigation.ts'
@@ -45,18 +59,28 @@ const TAB_CLASS = `relative cursor-pointer transition-colors duration-300
 export const cle = (item: NavItem) => `${item.to}${item.params?.setId ?? ''}`
 
 // L'administration du service : un bouton a droite de la barre, hors des onglets du quotidien.
-// Ses ecrans sont des SOUS-CATEGORIES, alignees sur le titre du menu (pas de decalage).
+// Ses ecrans sont ranges en familles (`RUBRIQUES`, maquette 23b) sous un titre discret ; une
+// tache temporaire (sans famille) ferme le menu en encart ambre, avec ce qu'il reste a faire.
+const ICONE_RUBRIQUE: Record<Rubrique, LucideIcon> = {
+  Organisation: CalendarDays,
+  Patients: Route,
+  Équipe: Users,
+}
+
 function MenuAdministration({
   titre,
   items,
   actif,
   params,
+  rdvAReporter,
 }: {
   titre: string
   items: NavItem[]
   actif: boolean
   params: object
+  rdvAReporter?: number
 }) {
+  const { rubriques, temporaires } = parRubrique(items)
   return (
     <PopoverRoot>
       <PopoverTrigger asChild>
@@ -71,34 +95,68 @@ function MenuAdministration({
           <ChevronDown className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={6} className="w-80 p-2">
-        <p className="px-3 pt-1 pb-2 text-xs font-semibold uppercase tracking-wide text-text-light">
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        className="w-80 p-2 max-h-[calc(100vh-5rem)] overflow-y-auto"
+      >
+        <p className="px-3 pt-1 pb-1 text-xs font-semibold uppercase tracking-wide text-text-light">
           {titre}
         </p>
-        <PopoverSubGroup className="ml-0">
-          {items.map((item) => (
-            <PopoverClose asChild key={cle(item)}>
-              <Link
-                to={item.to}
-                params={{ ...params, ...item.params }}
-                className="flex flex-col gap-0.5 rounded-md px-3 py-2 hover:bg-primary/10 focus-visible:bg-primary/10 outline-none"
-                activeProps={{
-                  'aria-current': 'page',
-                  className: 'bg-primary/10',
-                }}
-              >
-                <span className="text-sm font-medium text-text-dark">
-                  {item.label}
+        {rubriques.map((rubrique) => {
+          const Icone = ICONE_RUBRIQUE[rubrique.nom]
+          return (
+            <PopoverSubGroup key={rubrique.nom} className="ml-0">
+              <p className="flex items-center gap-1.5 px-3 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                <Icone aria-hidden="true" className="w-3 h-3" />
+                {rubrique.nom}
+              </p>
+              {rubrique.items.map((item) => (
+                <PopoverClose asChild key={cle(item)}>
+                  <Link
+                    to={item.to}
+                    params={{ ...params, ...item.params }}
+                    className="flex flex-col rounded-md px-3 py-1.5 hover:bg-primary/10 focus-visible:bg-primary/10 outline-none"
+                    activeProps={{
+                      'aria-current': 'page',
+                      className: 'bg-primary/10',
+                    }}
+                  >
+                    <span className="text-sm font-medium text-text-dark">
+                      {item.label}
+                    </span>
+                    {item.description && (
+                      <span className="text-xs text-text-light">
+                        {item.description}
+                      </span>
+                    )}
+                  </Link>
+                </PopoverClose>
+              ))}
+            </PopoverSubGroup>
+          )
+        })}
+        {temporaires.map((item) => (
+          <PopoverClose asChild key={cle(item)}>
+            <Link
+              to={item.to}
+              params={{ ...params, ...item.params }}
+              className="mt-2 flex items-center gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-a-saisir-texte hover:bg-amber-100 outline-none focus-visible:ring-1 focus-visible:ring-a-saisir"
+              activeProps={{ 'aria-current': 'page' }}
+            >
+              <Clock aria-hidden="true" className="w-4 h-4 shrink-0" />
+              <span className="flex flex-1 flex-col">
+                <span className="text-sm font-semibold">{item.label}</span>
+                <span className="text-xs">
+                  {rdvAReporter
+                    ? `${rdvAReporter} rendez-vous à reporter · temporaire`
+                    : 'Temporaire'}
                 </span>
-                {item.description && (
-                  <span className="text-xs text-text-light">
-                    {item.description}
-                  </span>
-                )}
-              </Link>
-            </PopoverClose>
-          ))}
-        </PopoverSubGroup>
+              </span>
+              <ArrowRight aria-hidden="true" className="w-4 h-4 shrink-0" />
+            </Link>
+          </PopoverClose>
+        ))}
       </PopoverContent>
     </PopoverRoot>
   )
@@ -183,6 +241,7 @@ export function useOnglets() {
   const { data: legacyRdv } = useLegacyAppointmentsQuery(
     courant?.scale === 'service' && can(context, 'appointment:create'),
   )
+  const rdvAReporter = legacyRdv?.filter((rdv) => !rdv.reportedAt).length
   const visible = (item: NavItem) =>
     courant?.scale === 'platform'
       ? user?.isSuperAdmin === true
@@ -243,6 +302,7 @@ export function useOnglets() {
     administration,
     estActif,
     nomDuService,
+    rdvAReporter,
   }
 }
 
@@ -256,6 +316,7 @@ function Navbar({ toggleSidebar }: NavbarProps) {
     administration,
     estActif,
     nomDuService,
+    rdvAReporter,
   } = useOnglets()
 
   // Le logo ramene au tableau de bord : celui du service courant, sinon du dernier visite.
@@ -349,6 +410,7 @@ function Navbar({ toggleSidebar }: NavbarProps) {
               items={administration}
               actif={administration.some(estActif)}
               params={params}
+              rdvAReporter={rdvAReporter}
             />
           </div>
         )}

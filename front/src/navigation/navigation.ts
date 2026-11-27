@@ -42,10 +42,28 @@ export type NavItem = {
   params?: { setId: string }
   // Entree affichee seulement si la fonctionnalite est activee pour le service.
   feature?: 'legacy-rdv'
+  // Famille dans le menu Administration (titre discret au-dessus de ses ecrans). Absente : une
+  // tache temporaire, rendue en encart sous les familles plutot que comme un reglage.
+  rubrique?: Rubrique
 }
 
-// Groupes affiches en menu deroulant plutot qu'en onglets : l'administration du service tient sept
-// ecrans, qui en onglets satureraient la barre, et releve d'un autre travail que le quotidien.
+// Familles du menu Administration, dans l'ordre d'affichage (maquette 23b, 2026-11-27).
+export const RUBRIQUES = ['Organisation', 'Patients', 'Équipe'] as const
+export type Rubrique = (typeof RUBRIQUES)[number]
+
+// Les ecrans d'administration ranges par famille, familles vides omises ; les entrees sans
+// famille (temporaires) a part.
+export function parRubrique(items: readonly NavItem[]) {
+  const rubriques = RUBRIQUES.map((nom) => ({
+    nom,
+    items: items.filter((item) => item.rubrique === nom),
+  })).filter((rubrique) => rubrique.items.length > 0)
+  const temporaires = items.filter((item) => item.rubrique === undefined)
+  return { rubriques, temporaires }
+}
+
+// Groupes affiches en menu deroulant plutot qu'en onglets : l'administration du service tient une
+// douzaine d'ecrans, ranges en familles (`RUBRIQUES`), qui en onglets satureraient la barre, et releve d'un autre travail que le quotidien.
 export const MENU_GROUPS: ReadonlySet<string> = new Set(['Administration'])
 
 // Groupes affiches comme UN onglet a menu, a leur place parmi les onglets ; reduits a un onglet
@@ -105,30 +123,16 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
       to: '/e/$establishmentId/s/$serviceId/planning',
       permission: ['planning:write', 'pathway-templates:write'],
       group: 'Administration',
+      rubrique: 'Organisation',
       description: 'Semaines types et créneaux des parcours',
-    },
-    {
-      label: 'Membres',
-      to: '/e/$establishmentId/s/$serviceId/members',
-      // La MEME permission que le `beforeLoad` de l'ecran (MDS-17) : un onglet garde autrement
-      // mene a une redirection, et l'ecart ne se verrait qu'au clic.
-      permission: 'service-members:manage',
-      group: 'Administration',
-      description: "L'équipe du service : inviter, changer un rôle, retirer",
-    },
-    {
-      label: 'Rôles',
-      to: '/e/$establishmentId/s/$serviceId/roles',
-      permission: 'roles:manage',
-      group: 'Administration',
-      description: 'Droits de chaque rôle du service',
     },
     {
       label: 'Thématiques',
       to: '/e/$establishmentId/s/$serviceId/thematic',
       permission: 'thematics:write',
       group: 'Administration',
-      description: "Ateliers d'éducation et soignants habilités",
+      rubrique: 'Organisation',
+      description: 'Ateliers et soignants habilités',
     },
     // Propres a chaque service depuis le 2026-09-29 : un soignant est un metier du service, une
     // salle un lieu du service.
@@ -137,42 +141,74 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
       to: '/e/$establishmentId/s/$serviceId/soignant',
       permission: 'soignants:write',
       group: 'Administration',
-      description: 'Métiers qui interviennent dans le service',
+      rubrique: 'Organisation',
+      description: 'Métiers du service',
     },
     {
       label: 'Salles',
       to: '/e/$establishmentId/s/$serviceId/location',
       permission: 'locations:write',
       group: 'Administration',
-      description: 'Lieux où se tiennent les séances',
-    },
-    {
-      label: 'Diagnostics éducatifs',
-      to: '/e/$establishmentId/s/$serviceId/diagnostic-template',
-      permission: 'diagnostic-templates:write',
-      group: 'Administration',
-      description: 'Modèles de bilan du service',
-    },
-    {
-      label: 'Document patient',
-      to: '/e/$establishmentId/s/$serviceId/pdf-patient',
-      permission: 'pdf-design:write',
-      group: 'Administration',
-      description: 'Mise en page du programme remis au patient',
+      rubrique: 'Organisation',
+      description: 'Lieux des séances',
     },
     {
       label: 'Fiche patient',
       to: '/e/$establishmentId/s/$serviceId/fiche-patient',
       permission: 'patient-form:write',
       group: 'Administration',
+      rubrique: 'Patients',
       description: 'Champs des onglets Parcours et Sortie',
+    },
+    {
+      label: 'Diagnostics éducatifs',
+      to: '/e/$establishmentId/s/$serviceId/diagnostic-template',
+      permission: 'diagnostic-templates:write',
+      group: 'Administration',
+      rubrique: 'Patients',
+      description: 'Modèles de bilan',
+    },
+    {
+      label: 'Document patient',
+      to: '/e/$establishmentId/s/$serviceId/pdf-patient',
+      permission: 'pdf-design:write',
+      group: 'Administration',
+      rubrique: 'Patients',
+      description: 'Programme remis au patient',
     },
     {
       label: 'Indicateurs',
       to: '/e/$establishmentId/s/$serviceId/indicateurs',
       permission: 'stats:write',
       group: 'Administration',
+      rubrique: 'Patients',
       description: "Jeux d'indicateurs et réglages de l'Activité",
+    },
+    {
+      label: 'Membres',
+      to: '/e/$establishmentId/s/$serviceId/members',
+      // La MEME permission que le `beforeLoad` de l'ecran (MDS-17) : un onglet garde autrement
+      // mene a une redirection, et l'ecart ne se verrait qu'au clic.
+      permission: 'service-members:manage',
+      group: 'Administration',
+      rubrique: 'Équipe',
+      description: 'Inviter, changer un rôle, retirer',
+    },
+    {
+      label: 'Rôles',
+      to: '/e/$establishmentId/s/$serviceId/roles',
+      permission: 'roles:manage',
+      group: 'Administration',
+      rubrique: 'Équipe',
+      description: 'Droits de chaque rôle',
+    },
+    {
+      label: "Journal d'activité",
+      to: '/e/$establishmentId/s/$serviceId/activity-log',
+      permission: 'service-journal:read',
+      group: 'Administration',
+      rubrique: 'Équipe',
+      description: 'Qui a fait quoi, et quand',
     },
     {
       label: "RDV de l'ancienne app",
@@ -181,13 +217,6 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
       group: 'Administration',
       description: "Rendez-vous créés dans l'ancienne app, à reporter",
       feature: 'legacy-rdv',
-    },
-    {
-      label: "Journal d'activité",
-      to: '/e/$establishmentId/s/$serviceId/activity-log',
-      permission: 'service-journal:read',
-      group: 'Administration',
-      description: 'Qui a fait quoi dans le service, et quand',
     },
   ],
   establishment: [
