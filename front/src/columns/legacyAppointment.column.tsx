@@ -35,7 +35,7 @@ export const getLegacyAppointmentColumns = ({
     header: 'Date',
     size: 150,
     cell: ({ row }) => (
-      <span className="first-letter:uppercase tabular-nums">
+      <span className="first-letter:uppercase tabular-nums whitespace-nowrap">
         {dayjs.utc(row.original.date).format('ddd DD/MM/YY')}{' '}
         {row.original.time}
       </span>
