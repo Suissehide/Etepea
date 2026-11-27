@@ -34,6 +34,9 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_FROM=${SMTP_FROM}
+      - LEGACY_RDV_TOKEN=${LEGACY_RDV_TOKEN}
+      - LEGACY_RDV_ESTABLISHMENT_ID=${LEGACY_RDV_ESTABLISHMENT_ID}
+      - LEGACY_RDV_SERVICE_ID=${LEGACY_RDV_SERVICE_ID}
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:${PORT}/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 30s
