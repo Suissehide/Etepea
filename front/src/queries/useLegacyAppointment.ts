@@ -5,11 +5,13 @@ import { LEGACY_APPOINTMENT } from '../constants/process.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 
-export const useLegacyAppointmentsQuery = () =>
+// `enabled` laisse la barre de navigation n'interroger que sous un service.
+export const useLegacyAppointmentsQuery = (enabled = true) =>
   useQuery({
     queryKey: [LEGACY_APPOINTMENT.GET_ALL],
     queryFn: LegacyAppointmentApi.getAll,
     retry: 0,
+    enabled,
   })
 
 export const useSetLegacyAppointmentReported = () => {

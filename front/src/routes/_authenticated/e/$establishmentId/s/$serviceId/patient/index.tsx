@@ -266,6 +266,20 @@ function PatientList() {
                 isLoading={isPending}
                 isRowMuted={(patient) => Boolean(patient.exitDate)}
                 onRowClick={(patient) => handleRedirectPatient(patient.id)}
+                emptyState={
+                  errorsOnly && byTagsAndStatus.length > 0 ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <span>Aucun patient en erreur</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setErrorsOnly(false)}
+                      >
+                        Afficher tous les patients
+                      </Button>
+                    </div>
+                  ) : undefined
+                }
                 toolbar={
                   <>
                     <Input

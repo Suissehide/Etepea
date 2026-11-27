@@ -50,7 +50,6 @@ import { Route as AuthenticatedEEstablishmentIdSServiceIdActiviteRouteImport } f
 import { Route as AuthenticatedEEstablishmentIdSServiceIdAgendaRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/agenda'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdDashboardRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/dashboard'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/indicateurs-ars'
-import { Route as AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSuiviRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/suivi'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsActivityLogRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/activity-log'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsDiagnosticTemplateRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/diagnostic-template'
@@ -59,6 +58,7 @@ import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsIndicateursRout
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsLocationRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/location'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/members'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/planning'
+import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/rdv-ancienne-app'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/roles'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/soignant'
 import { Route as AuthenticatedEEstablishmentIdSServiceIdSettingsThematicRouteImport } from './routes/_authenticated/e/$establishmentId/s/$serviceId/_settings/thematic'
@@ -303,12 +303,6 @@ const AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute =
     path: '/indicateurs-ars',
     getParentRoute: () => AuthenticatedEEstablishmentIdSServiceIdRoute,
   } as any)
-const AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute =
-  AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRouteImport.update({
-    id: '/rdv-ancienne-app',
-    path: '/rdv-ancienne-app',
-    getParentRoute: () => AuthenticatedEEstablishmentIdSServiceIdRoute,
-  } as any)
 const AuthenticatedEEstablishmentIdSServiceIdSuiviRoute =
   AuthenticatedEEstablishmentIdSServiceIdSuiviRouteImport.update({
     id: '/suivi',
@@ -363,6 +357,15 @@ const AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute =
     path: '/planning',
     getParentRoute: () => AuthenticatedEEstablishmentIdSServiceIdSettingsRoute,
   } as any)
+const AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute =
+  AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRouteImport.update(
+    {
+      id: '/rdv-ancienne-app',
+      path: '/rdv-ancienne-app',
+      getParentRoute: () =>
+        AuthenticatedEEstablishmentIdSServiceIdSettingsRoute,
+    } as any,
+  )
 const AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute =
   AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRouteImport.update({
     id: '/roles',
@@ -467,7 +470,6 @@ export interface FileRoutesByFullPath {
   '/e/$establishmentId/s/$serviceId/agenda': typeof AuthenticatedEEstablishmentIdSServiceIdAgendaRoute
   '/e/$establishmentId/s/$serviceId/dashboard': typeof AuthenticatedEEstablishmentIdSServiceIdDashboardRoute
   '/e/$establishmentId/s/$serviceId/indicateurs-ars': typeof AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute
-  '/e/$establishmentId/s/$serviceId/rdv-ancienne-app': typeof AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute
   '/e/$establishmentId/s/$serviceId/suivi': typeof AuthenticatedEEstablishmentIdSServiceIdSuiviRoute
   '/e/$establishmentId/s/$serviceId/': typeof AuthenticatedEEstablishmentIdSServiceIdIndexRoute
   '/e/$establishmentId/s/$serviceId/activity-log': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsActivityLogRoute
@@ -477,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/e/$establishmentId/s/$serviceId/location': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsLocationRoute
   '/e/$establishmentId/s/$serviceId/members': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRoute
   '/e/$establishmentId/s/$serviceId/planning': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute
+  '/e/$establishmentId/s/$serviceId/rdv-ancienne-app': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute
   '/e/$establishmentId/s/$serviceId/roles': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute
   '/e/$establishmentId/s/$serviceId/soignant': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRoute
   '/e/$establishmentId/s/$serviceId/thematic': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsThematicRoute
@@ -524,7 +527,6 @@ export interface FileRoutesByTo {
   '/e/$establishmentId/s/$serviceId/agenda': typeof AuthenticatedEEstablishmentIdSServiceIdAgendaRoute
   '/e/$establishmentId/s/$serviceId/dashboard': typeof AuthenticatedEEstablishmentIdSServiceIdDashboardRoute
   '/e/$establishmentId/s/$serviceId/indicateurs-ars': typeof AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute
-  '/e/$establishmentId/s/$serviceId/rdv-ancienne-app': typeof AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute
   '/e/$establishmentId/s/$serviceId/suivi': typeof AuthenticatedEEstablishmentIdSServiceIdSuiviRoute
   '/e/$establishmentId/s/$serviceId/activity-log': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsActivityLogRoute
   '/e/$establishmentId/s/$serviceId/diagnostic-template': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsDiagnosticTemplateRoute
@@ -533,6 +535,7 @@ export interface FileRoutesByTo {
   '/e/$establishmentId/s/$serviceId/location': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsLocationRoute
   '/e/$establishmentId/s/$serviceId/members': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRoute
   '/e/$establishmentId/s/$serviceId/planning': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute
+  '/e/$establishmentId/s/$serviceId/rdv-ancienne-app': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute
   '/e/$establishmentId/s/$serviceId/roles': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute
   '/e/$establishmentId/s/$serviceId/soignant': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRoute
   '/e/$establishmentId/s/$serviceId/thematic': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsThematicRoute
@@ -585,7 +588,6 @@ export interface FileRoutesById {
   '/_authenticated/e/$establishmentId/s/$serviceId/agenda': typeof AuthenticatedEEstablishmentIdSServiceIdAgendaRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/dashboard': typeof AuthenticatedEEstablishmentIdSServiceIdDashboardRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/indicateurs-ars': typeof AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute
-  '/_authenticated/e/$establishmentId/s/$serviceId/rdv-ancienne-app': typeof AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/suivi': typeof AuthenticatedEEstablishmentIdSServiceIdSuiviRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/': typeof AuthenticatedEEstablishmentIdSServiceIdIndexRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/activity-log': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsActivityLogRoute
@@ -595,6 +597,7 @@ export interface FileRoutesById {
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/location': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsLocationRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/members': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/planning': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute
+  '/_authenticated/e/$establishmentId/s/$serviceId/_settings/rdv-ancienne-app': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/roles': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/soignant': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRoute
   '/_authenticated/e/$establishmentId/s/$serviceId/_settings/thematic': typeof AuthenticatedEEstablishmentIdSServiceIdSettingsThematicRoute
@@ -646,7 +649,6 @@ export interface FileRouteTypes {
     | '/e/$establishmentId/s/$serviceId/agenda'
     | '/e/$establishmentId/s/$serviceId/dashboard'
     | '/e/$establishmentId/s/$serviceId/indicateurs-ars'
-    | '/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
     | '/e/$establishmentId/s/$serviceId/suivi'
     | '/e/$establishmentId/s/$serviceId/'
     | '/e/$establishmentId/s/$serviceId/activity-log'
@@ -656,6 +658,7 @@ export interface FileRouteTypes {
     | '/e/$establishmentId/s/$serviceId/location'
     | '/e/$establishmentId/s/$serviceId/members'
     | '/e/$establishmentId/s/$serviceId/planning'
+    | '/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
     | '/e/$establishmentId/s/$serviceId/roles'
     | '/e/$establishmentId/s/$serviceId/soignant'
     | '/e/$establishmentId/s/$serviceId/thematic'
@@ -703,7 +706,6 @@ export interface FileRouteTypes {
     | '/e/$establishmentId/s/$serviceId/agenda'
     | '/e/$establishmentId/s/$serviceId/dashboard'
     | '/e/$establishmentId/s/$serviceId/indicateurs-ars'
-    | '/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
     | '/e/$establishmentId/s/$serviceId/suivi'
     | '/e/$establishmentId/s/$serviceId/activity-log'
     | '/e/$establishmentId/s/$serviceId/diagnostic-template'
@@ -712,6 +714,7 @@ export interface FileRouteTypes {
     | '/e/$establishmentId/s/$serviceId/location'
     | '/e/$establishmentId/s/$serviceId/members'
     | '/e/$establishmentId/s/$serviceId/planning'
+    | '/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
     | '/e/$establishmentId/s/$serviceId/roles'
     | '/e/$establishmentId/s/$serviceId/soignant'
     | '/e/$establishmentId/s/$serviceId/thematic'
@@ -763,7 +766,6 @@ export interface FileRouteTypes {
     | '/_authenticated/e/$establishmentId/s/$serviceId/agenda'
     | '/_authenticated/e/$establishmentId/s/$serviceId/dashboard'
     | '/_authenticated/e/$establishmentId/s/$serviceId/indicateurs-ars'
-    | '/_authenticated/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
     | '/_authenticated/e/$establishmentId/s/$serviceId/suivi'
     | '/_authenticated/e/$establishmentId/s/$serviceId/'
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/activity-log'
@@ -773,6 +775,7 @@ export interface FileRouteTypes {
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/location'
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/members'
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/planning'
+    | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/rdv-ancienne-app'
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/roles'
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/soignant'
     | '/_authenticated/e/$establishmentId/s/$serviceId/_settings/thematic'
@@ -1081,13 +1084,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRouteImport
       parentRoute: typeof AuthenticatedEEstablishmentIdSServiceIdRoute
     }
-    '/_authenticated/e/$establishmentId/s/$serviceId/rdv-ancienne-app': {
-      id: '/_authenticated/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
-      path: '/rdv-ancienne-app'
-      fullPath: '/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
-      preLoaderRoute: typeof AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRouteImport
-      parentRoute: typeof AuthenticatedEEstablishmentIdSServiceIdRoute
-    }
     '/_authenticated/e/$establishmentId/s/$serviceId/suivi': {
       id: '/_authenticated/e/$establishmentId/s/$serviceId/suivi'
       path: '/suivi'
@@ -1142,6 +1138,13 @@ declare module '@tanstack/react-router' {
       path: '/planning'
       fullPath: '/e/$establishmentId/s/$serviceId/planning'
       preLoaderRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRouteImport
+      parentRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRoute
+    }
+    '/_authenticated/e/$establishmentId/s/$serviceId/_settings/rdv-ancienne-app': {
+      id: '/_authenticated/e/$establishmentId/s/$serviceId/_settings/rdv-ancienne-app'
+      path: '/rdv-ancienne-app'
+      fullPath: '/e/$establishmentId/s/$serviceId/rdv-ancienne-app'
+      preLoaderRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRouteImport
       parentRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRoute
     }
     '/_authenticated/e/$establishmentId/s/$serviceId/_settings/roles': {
@@ -1273,6 +1276,7 @@ interface AuthenticatedEEstablishmentIdSServiceIdSettingsRouteChildren {
   AuthenticatedEEstablishmentIdSServiceIdSettingsLocationRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsLocationRoute
   AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRoute
   AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute
+  AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute
   AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute
   AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRoute
   AuthenticatedEEstablishmentIdSServiceIdSettingsThematicRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSettingsThematicRoute
@@ -1296,6 +1300,8 @@ const AuthenticatedEEstablishmentIdSServiceIdSettingsRouteChildren: Authenticate
       AuthenticatedEEstablishmentIdSServiceIdSettingsMembersRoute,
     AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute:
       AuthenticatedEEstablishmentIdSServiceIdSettingsPlanningRoute,
+    AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute:
+      AuthenticatedEEstablishmentIdSServiceIdSettingsRdvAncienneAppRoute,
     AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute:
       AuthenticatedEEstablishmentIdSServiceIdSettingsRolesRoute,
     AuthenticatedEEstablishmentIdSServiceIdSettingsSoignantRoute:
@@ -1319,7 +1325,6 @@ interface AuthenticatedEEstablishmentIdSServiceIdRouteChildren {
   AuthenticatedEEstablishmentIdSServiceIdAgendaRoute: typeof AuthenticatedEEstablishmentIdSServiceIdAgendaRoute
   AuthenticatedEEstablishmentIdSServiceIdDashboardRoute: typeof AuthenticatedEEstablishmentIdSServiceIdDashboardRoute
   AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute: typeof AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute
-  AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute: typeof AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute
   AuthenticatedEEstablishmentIdSServiceIdSuiviRoute: typeof AuthenticatedEEstablishmentIdSServiceIdSuiviRoute
   AuthenticatedEEstablishmentIdSServiceIdIndexRoute: typeof AuthenticatedEEstablishmentIdSServiceIdIndexRoute
   AuthenticatedEEstablishmentIdSServiceIdIndicateursSetIdRoute: typeof AuthenticatedEEstablishmentIdSServiceIdIndicateursSetIdRoute
@@ -1340,8 +1345,6 @@ const AuthenticatedEEstablishmentIdSServiceIdRouteChildren: AuthenticatedEEstabl
       AuthenticatedEEstablishmentIdSServiceIdDashboardRoute,
     AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute:
       AuthenticatedEEstablishmentIdSServiceIdIndicateursArsRoute,
-    AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute:
-      AuthenticatedEEstablishmentIdSServiceIdRdvAncienneAppRoute,
     AuthenticatedEEstablishmentIdSServiceIdSuiviRoute:
       AuthenticatedEEstablishmentIdSServiceIdSuiviRoute,
     AuthenticatedEEstablishmentIdSServiceIdIndexRoute:

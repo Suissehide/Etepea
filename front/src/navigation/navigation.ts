@@ -40,6 +40,8 @@ export type NavItem = {
   parJeu?: boolean
   // Parametres propres a l'entree, en plus de ceux de l'echelle (le jeu d'une entree depliee).
   params?: { setId: string }
+  // Entree affichee seulement si la fonctionnalite est activee pour le service.
+  feature?: 'legacy-rdv'
 }
 
 // Groupes affiches en menu deroulant plutot qu'en onglets : l'administration du service tient sept
@@ -173,6 +175,14 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
       description: "Jeux d'indicateurs et réglages de l'Activité",
     },
     {
+      label: "RDV de l'ancienne app",
+      to: '/e/$establishmentId/s/$serviceId/rdv-ancienne-app',
+      permission: 'appointment:create',
+      group: 'Administration',
+      description: "Rendez-vous créés dans l'ancienne app, à reporter",
+      feature: 'legacy-rdv',
+    },
+    {
       label: "Journal d'activité",
       to: '/e/$establishmentId/s/$serviceId/activity-log',
       permission: 'service-journal:read',
@@ -228,8 +238,6 @@ export const NAVIGATION: Record<Scale, readonly NavItem[]> = {
 // entree dit d'ou. Ajouter un ecran de section ici plutot que dans `NAVIGATION` le rendrait
 // introuvable : c'est exactement ce que cette liste doit rester incapable de cacher.
 export const HORS_ONGLETS: Readonly<Partial<Record<RoutePath, string>>> = {
-  '/e/$establishmentId/s/$serviceId/rdv-ancienne-app':
-    "rendez-vous de l'ancienne app, bouton de l'Agenda (temporaire)",
   '/e/$establishmentId/s/$serviceId/patient/$patientID':
     'fiche patient, depuis la liste Patients',
   '/e/$establishmentId/s/$serviceId/patient/$patientID/acces':

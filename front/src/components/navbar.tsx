@@ -13,6 +13,7 @@ import {
   useCurrentScale,
 } from '../navigation/navigation.ts'
 import { useIndicatorSetsQuery } from '../queries/useIndicatorSet.ts'
+import { useLegacyAppointmentsQuery } from '../queries/useLegacyAppointment.ts'
 import { useAuthStore } from '../store/useAuthStore.ts'
 import { serviceDeRetour } from '../utils/tenant-context.ts'
 import { FilAriane } from './custom/filAriane.tsx'
@@ -178,10 +179,15 @@ export function useOnglets() {
         ? { establishmentId: courant.establishmentId }
         : {}
 
+  // Garde de ROUTE, comme les jeux : un 404 (fonctionnalite eteinte) rend null.
+  const { data: legacyRdv } = useLegacyAppointmentsQuery(
+    courant?.scale === 'service' && can(context, 'appointment:create'),
+  )
   const visible = (item: NavItem) =>
     courant?.scale === 'platform'
       ? user?.isSuperAdmin === true
-      : item.permission === undefined || can(context, item.permission)
+      : (item.permission === undefined || can(context, item.permission)) &&
+        (item.feature !== 'legacy-rdv' || !!legacyRdv)
 
   // Garde de ROUTE : hors service, aucune requete.
   const { sets } = useIndicatorSetsQuery(
