@@ -124,6 +124,32 @@ describe('Rendez-vous de l ancienne app', () => {
       payload: { reported: true },
     })
     expect(patch.statusCode).toBe(404)
+    const del = await testApp.app.inject({
+      method: 'DELETE',
+      url: tenantUrl(
+        scenario.est.id,
+        scenario.serviceB.id,
+        `/legacy-appointments/${row?.id}`,
+      ),
+      cookies: scenario.cookiesB,
+    })
+    expect(del.statusCode).toBe(404)
+  })
+
+  it('supprime un rendez-vous', async () => {
+    const [row] = (await list(scenario.serviceA.id, scenario.cookiesA)).json()
+    const url = tenantUrl(
+      scenario.est.id,
+      scenario.serviceA.id,
+      `/legacy-appointments/${row.id}`,
+    )
+    const del = () =>
+      testApp.app.inject({ method: 'DELETE', url, cookies: scenario.cookiesA })
+    expect((await del()).statusCode).toBe(204)
+    expect(
+      (await list(scenario.serviceA.id, scenario.cookiesA)).json(),
+    ).toEqual([])
+    expect((await del()).statusCode).toBe(404)
   })
 
   it('refuse un corps invalide', async () => {

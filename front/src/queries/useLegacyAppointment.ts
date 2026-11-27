@@ -34,3 +34,23 @@ export const useSetLegacyAppointmentReported = () => {
       }),
   })
 }
+
+export const useDeleteLegacyAppointment = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  return useMutation({
+    mutationKey: [LEGACY_APPOINTMENT.DELETE],
+    mutationFn: LegacyAppointmentApi.delete,
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors de la suppression',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: [LEGACY_APPOINTMENT.GET_ALL],
+      }),
+  })
+}

@@ -276,4 +276,5 @@ export const ACTIVITY = {
 export const LEGACY_APPOINTMENT = {
   GET_ALL: 'get_all_legacy_appointments',
   SET_REPORTED: 'set_reported_legacy_appointment',
+  DELETE: 'delete_legacy_appointment',
 }

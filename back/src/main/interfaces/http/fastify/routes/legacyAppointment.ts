@@ -95,6 +95,18 @@ const legacyAppointmentRouter: FastifyPluginAsync = (fastify) => {
         request.body.reported,
       ),
   )
+
+  fastify.delete<{ Params: LegacyAppointmentParams }>(
+    '/:id',
+    {
+      schema: { params: legacyAppointmentParamsSchema },
+      config: { permission: 'appointment:create' },
+    },
+    async (request, reply) => {
+      await legacyAppointmentRepository.delete(request.params.id)
+      return await reply.code(204).send()
+    },
+  )
   return Promise.resolve()
 }
 

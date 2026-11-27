@@ -18,4 +18,5 @@ export interface LegacyAppointmentRepositoryInterface {
     id: string,
     reported: boolean,
   ) => Promise<LegacyAppointmentEntityRepo>
+  delete: (id: string) => Promise<void>
 }

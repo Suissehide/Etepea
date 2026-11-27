@@ -91,6 +91,19 @@ class LegacyAppointmentRepository
       })
     }
   }
+
+  async delete(id: string): Promise<void> {
+    try {
+      await this.prisma.legacyAppointment.delete({
+        where: { id_serviceId: { id, serviceId: this.scope.serviceId } },
+      })
+    } catch (err) {
+      throw this.errorHandler.boomErrorFromPrismaError({
+        entityName: 'LegacyAppointment',
+        error: err,
+      })
+    }
+  }
 }
 
 export { LegacyAppointmentRepository }

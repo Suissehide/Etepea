@@ -1,11 +1,13 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 import { getLegacyAppointmentColumns } from '@/columns/legacyAppointment.column.tsx'
+import { ConfirmDeleteForm } from '@/components/custom/popup/confirmDeleteForm.tsx'
 import DashboardLayout from '@/components/dashboard.layout.tsx'
 import ReactTable from '@/components/table/reactTable.tsx'
 import { can } from '@/hooks/useCan.ts'
 import {
+  useDeleteLegacyAppointment,
   useLegacyAppointmentsQuery,
   useSetLegacyAppointmentReported,
 } from '@/queries/useLegacyAppointment.ts'
@@ -35,6 +37,8 @@ const ordre = (a: LegacyAppointment, b: LegacyAppointment) =>
 function RdvAncienneApp() {
   const { data, isPending } = useLegacyAppointmentsQuery()
   const setReported = useSetLegacyAppointmentReported()
+  const deleteRdv = useDeleteLegacyAppointment()
+  const [aSupprimer, setASupprimer] = useState<LegacyAppointment | null>(null)
   const pendingId = setReported.isPending
     ? (setReported.variables?.id ?? null)
     : null
@@ -47,6 +51,7 @@ function RdvAncienneApp() {
       getLegacyAppointmentColumns({
         onToggleReported: (r) =>
           setReported.mutate({ id: r.id, reported: r.reportedAt === null }),
+        onDelete: setASupprimer,
         pendingId,
       }),
     [setReported.mutate, pendingId],
@@ -74,6 +79,24 @@ function RdvAncienneApp() {
           isRowMuted={(r) => r.reportedAt !== null}
           fixedLayout
           emptyState="Aucun rendez-vous reçu de l'ancienne app"
+        />
+
+        <ConfirmDeleteForm
+          open={!!aSupprimer}
+          setOpen={(open) => {
+            if (!open) {
+              setASupprimer(null)
+            }
+          }}
+          onConfirm={() => {
+            if (aSupprimer) {
+              deleteRdv.mutate(aSupprimer.id)
+            }
+            setASupprimer(null)
+          }}
+          loading={deleteRdv.isPending}
+          title="Supprimer le rendez-vous"
+          description={`Le rendez-vous de ${aSupprimer?.patientName ?? ''} disparaîtra de cette liste. Il ne revient que si l'ancienne app le renvoie.`}
         />
       </div>
     </DashboardLayout>

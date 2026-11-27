@@ -44,4 +44,14 @@ export const LegacyAppointmentApi = {
     }
     return response.json()
   },
+
+  delete: async (id: string): Promise<void> => {
+    const response = await fetchWithAuth(
+      `${tenantApiUrl()}/legacy-appointments/${id}`,
+      { method: 'DELETE' },
+    )
+    if (!response.ok) {
+      handleHttpError(response, {}, 'Impossible de supprimer le rendez-vous')
+    }
+  },
 }

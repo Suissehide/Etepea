@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import dayjs from 'dayjs'
+import { Trash2 } from 'lucide-react'
 
 import { Etiquette } from '../components/table/etiquette.tsx'
 import type { Features } from '../components/table/features.ts'
@@ -11,9 +12,11 @@ const columnHelper = createColumnHelper<Features, LegacyAppointment>()
 
 export const getLegacyAppointmentColumns = ({
   onToggleReported,
+  onDelete,
   pendingId,
 }: {
   onToggleReported: (row: LegacyAppointment) => void
+  onDelete: (row: LegacyAppointment) => void
   pendingId: string | null
 }) => [
   columnHelper.accessor((r) => (r.reportedAt ? 'Reporté' : 'À reporter'), {
@@ -30,10 +33,10 @@ export const getLegacyAppointmentColumns = ({
   columnHelper.accessor((r) => `${r.date.slice(0, 10)} ${r.time}`, {
     id: 'date',
     header: 'Date',
-    size: 220,
+    size: 150,
     cell: ({ row }) => (
-      <span className="first-letter:uppercase">
-        {dayjs.utc(row.original.date).format('ddd D MMM YYYY')} à{' '}
+      <span className="first-letter:uppercase tabular-nums">
+        {dayjs.utc(row.original.date).format('ddd DD/MM/YY')}{' '}
         {row.original.time}
       </span>
     ),
@@ -73,20 +76,31 @@ export const getLegacyAppointmentColumns = ({
   columnHelper.display({
     id: 'actions',
     header: '',
-    size: 120,
+    size: 160,
     meta: { align: 'right' },
     cell: ({ row }) => {
       const reporte = row.original.reportedAt !== null
       return (
-        <Button
-          size="sm"
-          variant={reporte ? 'outline' : 'default'}
-          isLoading={pendingId === row.original.id}
-          title={reporte ? 'Remettre à reporter' : undefined}
-          onClick={() => onToggleReported(row.original)}
-        >
-          {reporte ? 'Annuler' : 'Reporté'}
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant={reporte ? 'outline' : 'default'}
+            isLoading={pendingId === row.original.id}
+            title={reporte ? 'Remettre à reporter' : undefined}
+            onClick={() => onToggleReported(row.original)}
+          >
+            {reporte ? 'Annuler' : 'Reporté'}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            title="Supprimer"
+            aria-label={`Supprimer le rendez-vous de ${row.original.patientName}`}
+            onClick={() => onDelete(row.original)}
+          >
+            <Trash2 className="w-3 h-3 text-destructive" />
+          </Button>
+        </div>
       )
     },
   }),
