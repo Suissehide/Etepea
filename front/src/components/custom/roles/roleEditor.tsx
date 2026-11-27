@@ -46,12 +46,7 @@ export function RoleEditor({
   const conflit = findNameConflict(name, autres, undefined, role?.id)
   const pending = createRole.isPending || updateRole.isPending
   const enregistrer = () => {
-    // Les soignants masqués se règlent sur la page Soignants : on renvoie ceux du modèle.
-    const input = {
-      name: name.trim(),
-      permissions,
-      hiddenSoignantIds: modele?.hiddenSoignantIds ?? [],
-    }
+    const input = { name: name.trim(), permissions }
     if (role) {
       updateRole.mutate({ id: role.id, ...input })
     } else {

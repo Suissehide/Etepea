@@ -22,7 +22,6 @@ const membre = (permissions: string[]): User => ({
           roleId: 'r1',
           roleName: 'Sur mesure',
           permissions,
-          hiddenSoignantIds: [],
         },
       ],
     },

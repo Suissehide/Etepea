@@ -48,7 +48,6 @@ const rolesOf = (serviceId: string) =>
     name,
     preset,
     permissions: [],
-    hiddenSoignantIds: [],
     memberCount: 0,
     archivedAt: null,
   }))
@@ -172,7 +171,6 @@ beforeEach(() => {
       serviceId: null,
       establishmentRole: 'ADMIN',
       servicePermissions: null,
-      hiddenSoignantIds: [],
       soignantId: null,
     },
   })

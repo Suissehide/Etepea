@@ -41,7 +41,6 @@ export const SERVICE_MODELS: readonly string[] = [
   'PdfDesign',
   'PdfAsset',
   'ServiceRoleDef',
-  'ServiceRoleHiddenSoignant',
   'LegacyAppointment',
 ]
 
@@ -149,7 +148,6 @@ export const NESTED_RELATIONS: Record<string, Record<string, string>> = {
   },
   ServiceFieldDefinition: { choices: 'ServiceFieldChoice' },
   IndicatorSet: { indicators: 'Indicator' },
-  ServiceRoleDef: { hiddenSoignants: 'ServiceRoleHiddenSoignant' },
 }
 
 // Relations d'un modèle global qui exposent des données de tenant. Un include/select dessus n'est
@@ -343,12 +341,7 @@ export const MODEL_RELATIONS: Record<string, Record<string, ModelRelation>> = {
   ServiceRoleDef: {
     service: one('Service'),
     memberships: many('ServiceMembership'),
-    hiddenSoignants: many('ServiceRoleHiddenSoignant'),
     defaultOfSoignants: many('Soignant'),
-  },
-  ServiceRoleHiddenSoignant: {
-    role: one('ServiceRoleDef'),
-    soignant: one('Soignant'),
   },
   // `ActivityLog` ne déclare aucune relation dans le schéma : tout include y est donc refusé.
   ActivityLog: {},
@@ -419,7 +412,6 @@ export const MODEL_RELATIONS: Record<string, Record<string, ModelRelation>> = {
     thematicLinks: many('SoignantThematic'),
     serviceMemberships: many('ServiceMembership'),
     taskTags: many('TaskSoignant'),
-    hiddenFromRoles: many('ServiceRoleHiddenSoignant'),
     defaultRole: one('ServiceRoleDef'),
   },
   PdfDesign: {

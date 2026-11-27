@@ -6,7 +6,6 @@ export type ServiceRoleEntityDomain = ServiceRoleEntityRepo
 export type ServiceRoleCreateDomain = {
   name: string
   permissions: ServicePermission[]
-  hiddenSoignantIds?: string[]
 }
 
 export type ServiceRoleUpdateDomain = Partial<ServiceRoleCreateDomain>

@@ -9,7 +9,6 @@ const admin = (id: string) => ({
   roleId: null,
   roleName: 'Administrateur',
   permissions: ALL_SERVICE_PERMISSIONS,
-  hiddenSoignantIds: [],
 })
 
 const maintenant = new Date('2026-09-25T12:00:00Z')
@@ -208,7 +207,6 @@ describe('effectiveMemberships', () => {
                 name: 'Coordinateur',
                 preset: 'COORDINATEUR',
                 permissions: [],
-                hiddenSoignantIds: [],
               },
               soignantId: null,
               createdAt: maintenant,
@@ -232,7 +230,6 @@ describe('effectiveMemberships', () => {
                 name: 'Lecture seule',
                 preset: 'LECTURE',
                 permissions: [],
-                hiddenSoignantIds: [],
               },
               soignantId: null,
               createdAt: maintenant,
@@ -412,7 +409,6 @@ describe('effectiveMemberships', () => {
                 name: 'Accueil',
                 preset,
                 permissions,
-                hiddenSoignantIds: ['so1'],
               },
               soignantId: null,
               createdAt: maintenant,
@@ -431,7 +427,6 @@ describe('effectiveMemberships', () => {
         roleId: 'r9',
         roleName: 'Accueil',
         permissions: ['agenda:read'],
-        hiddenSoignantIds: ['so1'],
       },
     ])
   })

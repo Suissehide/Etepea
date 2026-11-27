@@ -2525,7 +2525,6 @@ describe('UserRepository.findByID, roles des affectations', () => {
     name: true,
     preset: true,
     permissions: true,
-    hiddenSoignants: { select: { soignantId: true } },
   }
 
   it('lit les roles sous systeme, bornes aux seuls roleId des affectations du compte', async () => {
@@ -2551,14 +2550,12 @@ describe('UserRepository.findByID, roles des affectations', () => {
               name: 'Agenda',
               preset: null,
               permissions: ['agenda:read'],
-              hiddenSoignants: [{ soignantId: 'so1' }],
             },
             {
               id: 'r2',
               name: 'Lecture seule',
               preset: 'LECTURE',
               permissions: [],
-              hiddenSoignants: [],
             },
           ])
         },
@@ -2581,7 +2578,6 @@ describe('UserRepository.findByID, roles des affectations', () => {
       name: 'Agenda',
       preset: null,
       permissions: ['agenda:read'],
-      hiddenSoignantIds: ['so1'],
     })
   })
 

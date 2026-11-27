@@ -19,7 +19,6 @@ const monter = async (servicePermissions: ServicePermission[]) => {
       serviceId: 's1',
       establishmentRole: 'MEMBER',
       servicePermissions,
-      hiddenSoignantIds: [],
       soignantId: null,
     },
   })

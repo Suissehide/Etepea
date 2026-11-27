@@ -6,7 +6,6 @@ export type Role = {
   name: string
   preset: RolePreset | null
   permissions: string[]
-  hiddenSoignantIds: string[]
   memberCount: number
   archivedAt: string | null
 }

@@ -18,7 +18,6 @@ const withoutService = {
   ...withService,
   serviceId: null,
   servicePermissions: null,
-  hiddenSoignantIds: [],
 }
 
 describe('fabriques d URL', () => {

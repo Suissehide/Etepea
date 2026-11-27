@@ -13,7 +13,6 @@ const commeAdministrateur = (id: string): EffectiveService => ({
   roleId: null,
   roleName: 'Administrateur',
   permissions: ALL_SERVICE_PERMISSIONS,
-  hiddenSoignantIds: [],
 })
 
 // Un octroi est vivant s'il n'a été ni révoqué ni atteint son terme, jugé contre l'horloge
@@ -96,7 +95,6 @@ const appartenancesReelles = (
                 roleId: roleDef.id,
                 roleName: roleDef.name,
                 permissions: parsePermissions(roleDef.permissions),
-                hiddenSoignantIds: roleDef.hiddenSoignantIds,
               })),
       origine: 'reelle' as const,
     }))

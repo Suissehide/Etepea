@@ -3,29 +3,20 @@ import type { ReactNode } from 'react'
 
 import { NO_SOIGNANT_KEY } from '../../../constants/soignant.constant.ts'
 import { useSoignantQueries } from '../../../queries/useSoignant.ts'
-import { useAuthStore } from '../../../store/useAuthStore.ts'
 import { useSoignantStore } from '../../../store/useSoignantStore.ts'
 import { selectionPillClass } from './sidebarFilter.styles.ts'
 
 interface SoignantFilterSectionProps {
   /** Titre de la section : texte simple ou sélecteur de mode. */
   title: ReactNode
-  /** Dashboard : masque aussi les soignants que le rôle du compte masque. */
-  appliquerMasquesDuRole?: boolean
 }
 
-function SoignantFilterSection({
-  title,
-  appliquerMasquesDuRole = false,
-}: SoignantFilterSectionProps) {
+function SoignantFilterSection({ title }: SoignantFilterSectionProps) {
   useSoignantQueries()
-  const masquesDuRole = useAuthStore((state) =>
-    appliquerMasquesDuRole ? state.context?.hiddenSoignantIds : undefined,
-  )
 
   const tous = useSoignantStore((state) => state.soignants)
   const soignants = [
-    ...tous.filter((s) => !s.hidden && !masquesDuRole?.includes(s.id)),
+    ...tous.filter((s) => !s.hidden),
     { id: NO_SOIGNANT_KEY, name: 'Sans soignant' },
   ]
   const toggleSoignant = useSoignantStore((state) => state.toggleSoignant)

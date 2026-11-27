@@ -26,7 +26,6 @@ const contextFor = (permissions: string[]) => ({
               roleId: 'r',
               roleName: 'R',
               permissions,
-              hiddenSoignantIds: [],
             },
           ],
         },

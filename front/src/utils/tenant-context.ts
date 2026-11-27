@@ -62,7 +62,6 @@ export const resolveTenantContext = (
     serviceId: service.id,
     establishmentRole: establishment.role,
     servicePermissions: parsePermissions(service.permissions),
-    hiddenSoignantIds: service.hiddenSoignantIds,
     // Porté par l'affectation de service depuis le 2026-09-29 (soignants propres à chaque service).
     soignantId: service.soignantId ?? null,
     serviceName: service.name,
@@ -84,7 +83,6 @@ export const resolveEstablishmentContext = (
     serviceId: null,
     establishmentRole: establishment.role,
     servicePermissions: null,
-    hiddenSoignantIds: [],
     // Aucun service, donc aucun soignant : ils sont propres à chaque service.
     soignantId: null,
   }

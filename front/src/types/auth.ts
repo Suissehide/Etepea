@@ -23,7 +23,6 @@ export type User = {
       roleId: string | null
       roleName: string
       permissions: string[]
-      hiddenSoignantIds: string[]
       soignantId?: string | null
       // Vraie affectation : faux pour le coordinateur implicite ou un octroi.
       affecte?: boolean
@@ -52,7 +51,6 @@ export type TenantContext = {
   serviceName?: string | null
   establishmentRole: EstablishmentRole
   servicePermissions: readonly ServicePermission[] | null
-  hiddenSoignantIds: string[]
   soignantId: string | null
 }
 

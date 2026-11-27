@@ -67,7 +67,6 @@ describe('chef d etablissement', () => {
         roleId: null,
         roleName: 'Administrateur',
         permissions: ALL_SERVICE_PERMISSIONS,
-        hiddenSoignantIds: [],
         soignantId: null,
         affecte: false,
       },

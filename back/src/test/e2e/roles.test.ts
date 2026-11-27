@@ -15,7 +15,6 @@ type RoleDto = {
   name: string
   preset: string | null
   permissions: string[]
-  hiddenSoignantIds: string[]
   memberCount: number
   archivedAt: string | null
 }
@@ -377,13 +376,9 @@ describe('roles de service : liste et attribution par roleId', () => {
     })
 
     it('cree un role, permissions dedoublonnees et nom rogne', async () => {
-      const soignant = await testDb.soignant.create({
-        data: { name: 'Infirmiere', serviceId: A, establishmentId: E },
-      })
       const res = await roles('POST', '', {
         name: '  Diététicien  ',
         permissions: ['patient:read', 'patient:read', 'agenda:read'],
-        hiddenSoignantIds: [soignant.id],
       })
       expect(res.statusCode).toBe(201)
       const role = res.json() as RoleDto
@@ -392,7 +387,6 @@ describe('roles de service : liste et attribution par roleId', () => {
         'agenda:read',
         'patient:read',
       ])
-      expect(role.hiddenSoignantIds).toEqual([soignant.id])
       expect(role.preset).toBeNull()
       expect(role.memberCount).toBe(0)
     })
@@ -412,74 +406,17 @@ describe('roles de service : liste et attribution par roleId', () => {
       expect(renomme.statusCode).toBe(409)
     })
 
-    it('refuse (400) un soignant masque d un autre service', async () => {
-      const etranger = await testDb.soignant.create({
-        data: { name: 'Etranger', serviceId: B, establishmentId: E },
-      })
-      const res = await roles('POST', '', {
-        name: 'Masque etranger',
-        permissions: [],
-        hiddenSoignantIds: [etranger.id],
-      })
-      expect(res.statusCode).toBe(400)
-    })
-
-    it('ignore un soignant masque supprime : lecture filtree, enregistrement toujours possible', async () => {
-      const [actif, parti] = await Promise.all(
-        ['Actif', 'Parti'].map((name) =>
-          testDb.soignant.create({
-            data: { name, serviceId: A, establishmentId: E },
-          }),
-        ),
-      )
-      const cree = (
-        await roles('POST', '', {
-          name: 'Masque avec depart',
-          permissions: ['agenda:read'],
-          hiddenSoignantIds: [actif.id, parti.id],
-        })
-      ).json() as RoleDto
-      await testDb.soignant.update({
-        where: { id: parti.id },
-        data: { archivedAt: new Date() },
-      })
-      const liste = (
-        await t.app.inject({
-          method: 'GET',
-          url: tenantUrl(E, A, '/roles'),
-          cookies: admin,
-        })
-      ).json() as RoleDto[]
-      expect(liste.find((r) => r.id === cree.id)?.hiddenSoignantIds).toEqual([
-        actif.id,
-      ])
-      const res = await roles('PATCH', `/${cree.id}`, {
-        hiddenSoignantIds: [actif.id, parti.id],
-      })
-      expect(res.statusCode).toBe(200)
-      expect((res.json() as RoleDto).hiddenSoignantIds).toEqual([actif.id])
-    })
-
-    it('remplace les soignants masques et journalise role.updated avec le nom', async () => {
-      const s1 = await testDb.soignant.create({
-        data: { name: 'S1', serviceId: A, establishmentId: E },
-      })
-      const s2 = await testDb.soignant.create({
-        data: { name: 'S2', serviceId: A, establishmentId: E },
-      })
+    it('renomme un role sans toucher a ses permissions et journalise role.updated avec le nom', async () => {
       const cree = (
         await roles('POST', '', {
           name: 'Masquage',
           permissions: ['agenda:read'],
-          hiddenSoignantIds: [s1.id],
         })
       ).json() as RoleDto
       const res = await roles('PATCH', `/${cree.id}`, {
         name: 'Masquage renommé',
-        hiddenSoignantIds: [s2.id],
       })
       expect(res.statusCode).toBe(200)
-      expect((res.json() as RoleDto).hiddenSoignantIds).toEqual([s2.id])
       expect((res.json() as RoleDto).permissions).toEqual(['agenda:read'])
 
       let ligne = null

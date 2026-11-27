@@ -16,7 +16,6 @@ export type MembershipRole = {
   name: string
   preset: ServiceRole | null
   permissions: string[]
-  hiddenSoignantIds: string[]
 }
 export type UserWithMemberships = User & {
   establishmentMemberships: (EstablishmentMembership & {

@@ -74,7 +74,6 @@ const routeRoles: Route = {
         name: 'Intervenant',
         preset: 'INTERVENANT',
         permissions: [],
-        hiddenSoignantIds: [],
         memberCount: 0,
         archivedAt: null,
       },
@@ -83,7 +82,6 @@ const routeRoles: Route = {
         name: 'Équipe SMCP',
         preset: null,
         permissions: [],
-        hiddenSoignantIds: [],
         memberCount: 0,
         archivedAt: null,
       },
@@ -252,7 +250,6 @@ describe('InviteServiceMemberForm', () => {
     ].map((r) => ({
       ...r,
       preset: null,
-      hiddenSoignantIds: [],
       memberCount: 0,
       archivedAt: null,
     }))

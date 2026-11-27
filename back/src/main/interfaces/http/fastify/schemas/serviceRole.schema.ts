@@ -10,7 +10,6 @@ export const serviceRoleResponseSchema = z.object({
     .enum(['COORDINATEUR', 'INTERVENANT', 'SECRETARIAT', 'LECTURE'])
     .nullable(),
   permissions: z.array(z.string()),
-  hiddenSoignantIds: z.array(z.string()),
   memberCount: z.number().int(),
   archivedAt: z.coerce.date().nullable(),
 })
@@ -26,7 +25,6 @@ export type ListServiceRolesQuery = z.infer<typeof listServiceRolesQuerySchema>
 export const createServiceRoleSchema = z.object({
   name: z.string().trim().min(1).max(60),
   permissions: z.array(z.enum(SERVICE_PERMISSION_KEYS)),
-  hiddenSoignantIds: z.array(cuid()).optional(),
 })
 
 export type CreateServiceRoleBody = z.infer<typeof createServiceRoleSchema>

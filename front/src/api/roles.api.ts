@@ -9,7 +9,6 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 export type RoleInput = {
   name: string
   permissions: string[]
-  hiddenSoignantIds: string[]
 }
 
 const fetchRoles = async (url: string): Promise<Role[]> => {

@@ -15,7 +15,6 @@ const contextWith = (
   serviceId: 's',
   establishmentRole: 'MEMBER',
   servicePermissions,
-  hiddenSoignantIds: [],
   soignantId: null,
 })
 

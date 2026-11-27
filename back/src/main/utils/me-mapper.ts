@@ -22,7 +22,6 @@ export type MeResponse = {
       roleId: string | null
       roleName: string
       permissions: string[]
-      hiddenSoignantIds: string[]
       soignantId: string | null
       // Vraie affectation ; faux pour le coordinateur implicite (chef d'etablissement) ou un octroi.
       affecte: boolean
@@ -39,7 +38,6 @@ const roleFields = (service: EffectiveService) => ({
   roleId: service.roleId,
   roleName: service.roleName,
   permissions: [...service.permissions],
-  hiddenSoignantIds: service.hiddenSoignantIds,
 })
 
 // Arbre des appartenances EFFECTIVES (réelles + octrois vivants), actives seulement — un
