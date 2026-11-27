@@ -35,5 +35,4 @@ export type EffectiveService = {
   roleId: string | null
   roleName: string
   permissions: readonly ServicePermission[]
-  hiddenSoignantIds: string[]
 }

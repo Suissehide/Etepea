@@ -102,7 +102,6 @@ describe('visibilite des entrees par permission', () => {
     serviceId: 's',
     establishmentRole: 'MEMBER',
     servicePermissions,
-    hiddenSoignantIds: [],
     soignantId: null,
   })
 

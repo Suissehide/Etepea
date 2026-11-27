@@ -10,7 +10,6 @@ const context = (servicePermissions: TenantContext['servicePermissions']) =>
     serviceId: 's1',
     establishmentRole: 'MEMBER',
     servicePermissions,
-    hiddenSoignantIds: [],
     soignantId: null,
   }) satisfies TenantContext
 

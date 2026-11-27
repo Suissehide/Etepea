@@ -6,7 +6,6 @@ export type ServiceRoleEntityRepo = {
   name: string
   preset: ServiceRole | null
   permissions: string[]
-  hiddenSoignantIds: string[]
   memberCount: number
   archivedAt: Date | null
 }
@@ -14,7 +13,6 @@ export type ServiceRoleEntityRepo = {
 export type ServiceRoleWriteEntityRepo = {
   name?: string
   permissions?: ServicePermission[]
-  hiddenSoignantIds?: string[]
   archived?: boolean
 }
 
@@ -27,10 +25,6 @@ export interface ServiceRoleRepositoryInterface {
     name: string,
     exceptId?: string,
   ) => Promise<{ id: string } | null>
-  // Soignants du service courant parmi ces ids, supprimés compris.
-  findSoignants: (
-    soignantIds: string[],
-  ) => Promise<{ id: string; archivedAt: Date | null }[]>
   countDefaultOfActiveSoignants: (roleId: string) => Promise<number>
   create: (
     params: Required<Omit<ServiceRoleWriteEntityRepo, 'archived'>>,

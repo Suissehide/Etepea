@@ -96,7 +96,6 @@ model ServiceRoleDef {
 
   service            Service                     @relation(fields: [serviceId, establishmentId], references: [id, establishmentId])
   memberships        ServiceMembership[]
-  hiddenSoignants    ServiceRoleHiddenSoignant[]
   defaultOfSoignants Soignant[]                  @relation("SoignantDefaultRole")
 
   @@unique([id, serviceId])
@@ -104,19 +103,6 @@ model ServiceRoleDef {
 }
 
 // Soignants masqués pour un rôle (cascade des deux côtés).
-model ServiceRoleHiddenSoignant {
-  roleId          String
-  soignantId      String
-  serviceId       String
-  establishmentId String
-
-  role     ServiceRoleDef @relation(fields: [roleId, serviceId], references: [id, serviceId], onDelete: Cascade)
-  soignant Soignant       @relation(fields: [soignantId, serviceId], references: [id, serviceId], onDelete: Cascade)
-
-  @@id([roleId, soignantId])
-  @@index([serviceId])
-}
-
 model EstablishmentMembership {
   id              String            @id @default(cuid())
   userId          String
@@ -392,7 +378,6 @@ model Soignant {
   thematicLinks      SoignantThematic[]
   serviceMemberships ServiceMembership[]
   taskTags           TaskSoignant[]
-  hiddenFromRoles    ServiceRoleHiddenSoignant[]
   defaultRoleId      String?
   defaultRole        ServiceRoleDef?             @relation("SoignantDefaultRole", fields: [defaultRoleId, serviceId], references: [id, serviceId], onDelete: Restrict)
 

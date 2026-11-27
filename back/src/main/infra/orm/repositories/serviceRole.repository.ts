@@ -17,10 +17,6 @@ const roleSelect = {
   preset: true,
   permissions: true,
   archivedAt: true,
-  hiddenSoignants: {
-    where: { soignant: { archivedAt: null } },
-    select: { soignantId: true },
-  },
 } as const
 
 class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
@@ -47,10 +43,9 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
         select: { roleId: true },
       }),
     ])
-    return roles.map(({ hiddenSoignants, permissions, ...role }) => ({
+    return roles.map(({ permissions, ...role }) => ({
       ...role,
       permissions: [...parsePermissions(permissions)],
-      hiddenSoignantIds: hiddenSoignants.map((h) => h.soignantId),
       memberCount: affectations.filter((a) => a.roleId === role.id).length,
     }))
   }
@@ -82,15 +77,6 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
     })
   }
 
-  async findSoignants(
-    soignantIds: string[],
-  ): Promise<{ id: string; archivedAt: Date | null }[]> {
-    return await this.prisma.soignant.findMany({
-      where: { ...this.tenantContext.scope(), id: { in: soignantIds } },
-      select: { id: true, archivedAt: true },
-    })
-  }
-
   async countDefaultOfActiveSoignants(roleId: string): Promise<number> {
     return await this.prisma.soignant.count({
       where: {
@@ -101,11 +87,6 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
     })
   }
 
-  private hidden(soignantIds: string[]) {
-    const { establishmentId } = this.tenantContext.scope()
-    return soignantIds.map((soignantId) => ({ soignantId, establishmentId }))
-  }
-
   async create(
     params: Required<Omit<ServiceRoleWriteEntityRepo, 'archived'>>,
   ): Promise<ServiceRoleEntityRepo> {
@@ -114,7 +95,6 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
         ...this.tenantContext.scope(),
         name: params.name,
         permissions: params.permissions,
-        hiddenSoignants: { create: this.hidden(params.hiddenSoignantIds) },
       },
       select: { id: true },
     })
@@ -133,12 +113,6 @@ class ServiceRoleRepository implements ServiceRoleRepositoryInterface {
         permissions: params.permissions,
         ...(params.archived !== undefined && {
           archivedAt: params.archived ? new Date() : null,
-        }),
-        ...(params.hiddenSoignantIds && {
-          hiddenSoignants: {
-            deleteMany: {},
-            create: this.hidden(params.hiddenSoignantIds),
-          },
         }),
       },
       select: { id: true },

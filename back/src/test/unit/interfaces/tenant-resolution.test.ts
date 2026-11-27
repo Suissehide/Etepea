@@ -13,7 +13,6 @@ const roleDef = (id: string, permissions: string[]) => ({
   name: id,
   preset: null,
   permissions,
-  hiddenSoignantIds: [],
 })
 
 const now = new Date()

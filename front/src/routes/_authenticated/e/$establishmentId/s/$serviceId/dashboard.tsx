@@ -114,6 +114,9 @@ function filterSlotsByLocations(slots: Slot[], locationIDs: string[]) {
 const VIEW_STORAGE_KEY = 'dashboard/view'
 const DASHBOARD_VIEWS = ['timeGridWeek', 'timeGridDay', 'listWeek']
 
+// Masqué sur la page Soignants : absent du Dashboard et de ses filtres.
+const estMasque = (s: { hidden?: boolean }) => !!s.hidden
+
 function Dashboard() {
   const [initialView] = useState(() => {
     const stored = localStorage.getItem(VIEW_STORAGE_KEY)
@@ -124,15 +127,6 @@ function Dashboard() {
   const [openEventId, setOpenEventId] = useState('')
   const selection = useSoignantStore((state) => state.selectedSoignantIDs)
   const soignants = useSoignantStore((state) => state.soignants)
-  const hiddenSoignantIds = useAuthStore(
-    (state) => state.context?.hiddenSoignantIds,
-  )
-  // Masqué par le soignant lui-même ou par le rôle du compte.
-  const estMasque = useCallback(
-    (s: { id: string; hidden?: boolean }) =>
-      !!s.hidden || !!hiddenSoignantIds?.includes(s.id),
-    [hiddenSoignantIds],
-  )
   // Un soignant masqué reste dans la sélection mémorisée mais ne filtre plus rien.
   const selectedIDs = useMemo(
     () =>
@@ -140,14 +134,14 @@ function Dashboard() {
         const s = soignants.find((x) => x.id === id)
         return !(s && estMasque(s))
       }),
-    [selection, soignants, estMasque],
+    [selection, soignants],
   )
   const unselectSoignant = useSoignantStore((state) => state.unselectSoignant)
   const savedDate = usePlanningStore((state) => state.viewStart)
   const selectedSoignants = soignants.filter((s) => selectedIDs.includes(s.id))
   const visibleSoignantIDs = useMemo(
     () => soignants.filter((s) => !estMasque(s)).map((s) => s.id),
-    [soignants, estMasque],
+    [soignants],
   )
   const toggleSoignant = useSoignantStore((state) => state.toggleSoignant)
   const { establishmentId, serviceId } = Route.useParams()
@@ -169,7 +163,7 @@ function Dashboard() {
     if (selectedIDs.length === 0 && !(moi && estMasque(moi))) {
       toggleSoignant(mySoignantId)
     }
-  }, [mySoignantId, selectedIDs.length, toggleSoignant, soignants, estMasque])
+  }, [mySoignantId, selectedIDs.length, toggleSoignant, soignants])
 
   const mode = useDashboardFilterStore((state) => state.mode)
   const selectedPathwayTemplateIDs = useDashboardFilterStore(

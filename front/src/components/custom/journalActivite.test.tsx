@@ -88,7 +88,6 @@ describe('JournalActivite, restauration', () => {
         serviceId: null,
         establishmentRole: 'ADMIN',
         servicePermissions: null,
-        hiddenSoignantIds: [],
         soignantId: null,
       },
     })

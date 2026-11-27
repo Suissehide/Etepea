@@ -6,14 +6,12 @@ const administrateur = {
   roleId: null,
   roleName: 'Administrateur',
   permissions: [...ALL_SERVICE_PERMISSIONS],
-  hiddenSoignantIds: [],
 }
 const roleDef = (id: string, permissions: string[]) => ({
   id,
   name: `Rôle ${id}`,
   preset: null,
   permissions,
-  hiddenSoignantIds: [],
 })
 
 const base = {
@@ -165,7 +163,6 @@ describe('toMeResponse', () => {
                 name: 'Agenda seul',
                 preset: null,
                 permissions: ['agenda:read', 'patient:fly'],
-                hiddenSoignantIds: ['so7'],
               },
             },
           ],
@@ -179,7 +176,6 @@ describe('toMeResponse', () => {
         roleId: 'r9',
         roleName: 'Agenda seul',
         permissions: ['agenda:read'],
-        hiddenSoignantIds: ['so7'],
         soignantId: null,
         affecte: true,
       },

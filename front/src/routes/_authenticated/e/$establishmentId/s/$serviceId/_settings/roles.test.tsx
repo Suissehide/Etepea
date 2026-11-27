@@ -73,22 +73,16 @@ const role = (id: string, name: string, rest: Partial<Role> = {}): Role => ({
   name,
   preset: null,
   permissions: [...DEFAULT_ROLE_PERMISSIONS.LECTURE],
-  hiddenSoignantIds: [],
   memberCount: 0,
   archivedAt: null,
   ...rest,
 })
 
 const actifs = [
-  role('r1', 'Coordinateur', { memberCount: 2, hiddenSoignantIds: ['k1'] }),
+  role('r1', 'Coordinateur', { memberCount: 2 }),
   role('r2', 'Lecture seule'),
 ]
 const supprimes = [role('r3', 'Ancien rôle', { archivedAt: '2026-11-01' })]
-const soignants = [
-  { id: 'k1', name: 'Kiné 1' },
-  { id: 'k2', name: 'Kiné 2' },
-]
-
 type Appel = { url: string; method: string; body: unknown }
 
 const reponse = (
@@ -105,9 +99,6 @@ const reponse = (
   }
   if (method !== 'GET') {
     return {}
-  }
-  if (pathname.endsWith('/soignant')) {
-    return soignants
   }
   if (!pathname.endsWith('/roles')) {
     return []
@@ -179,7 +170,6 @@ beforeEach(() => {
       serviceId: 's1',
       establishmentRole: 'ADMIN',
       servicePermissions: null,
-      hiddenSoignantIds: [],
       soignantId: null,
     },
   })
@@ -263,18 +253,6 @@ describe('écran Rôles', () => {
     )
     expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled()
     expect(ecritures(appels)).toHaveLength(0)
-  })
-
-  it('garde les soignants masqués du rôle (réglés sur la page Soignants)', async () => {
-    const appels = monter()
-    await ouvrir('Coordinateur')
-    await userEvent.click(await screen.findByLabelText('Exporter en PDF'))
-    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-
-    await waitFor(() => expect(ecritures(appels)).toHaveLength(1))
-    expect(ecritures(appels)[0].body).toMatchObject({
-      hiddenSoignantIds: ['k1'],
-    })
   })
 
   it("désactive la suppression d'un rôle attribué et l'explique", async () => {
@@ -373,7 +351,6 @@ describe('écran Rôles', () => {
     expect(ecriture.body).toEqual({
       name: 'Copie de Lecture seule',
       permissions: [...DEFAULT_ROLE_PERMISSIONS.LECTURE],
-      hiddenSoignantIds: [],
     })
   })
 

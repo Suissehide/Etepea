@@ -90,7 +90,6 @@ describe('beforeLoad du layout d etablissement', () => {
       serviceId: null,
       establishmentRole: 'ADMIN',
       servicePermissions: null,
-      hiddenSoignantIds: [],
       soignantId: null,
     })
     // Un contexte sans service ne designe aucun service : il ne doit jamais

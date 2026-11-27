@@ -88,14 +88,6 @@ describe('taches partagees et mentions', () => {
         },
       })
     ).id
-    await testDb.serviceRoleHiddenSoignant.create({
-      data: {
-        roleId: agendaRole,
-        soignantId: psychologue,
-        serviceId: A,
-        establishmentId: E,
-      },
-    })
     agenda = (
       await createUser({
         email: 'agenda@t.fr',
@@ -432,7 +424,6 @@ describe('taches partagees et mentions', () => {
         roleId: agendaRole,
         roleName: 'Agenda seul',
         permissions: ['agenda:read'],
-        hiddenSoignantIds: [psychologue],
       }),
     ])
     expect(
@@ -446,7 +437,6 @@ describe('taches partagees et mentions', () => {
         roleId: null,
         roleName: 'Administrateur',
         permissions: ALL_SERVICE_PERMISSIONS,
-        hiddenSoignantIds: [],
       }),
     )
   })

@@ -303,19 +303,10 @@ class UserRepository implements UserRepositoryInterface {
             name: true,
             preset: true,
             permissions: true,
-            hiddenSoignants: { select: { soignantId: true } },
           },
         }),
     )
-    return new Map(
-      rows.map(({ hiddenSoignants, ...role }) => [
-        role.id,
-        {
-          ...role,
-          hiddenSoignantIds: hiddenSoignants.map((h) => h.soignantId),
-        },
-      ]),
-    )
+    return new Map(rows.map((role) => [role.id, role]))
   }
 
   // Services actuels de ces comptes, tous etablissements : lecture systeme bornee aux comptes, rien n'en sort.

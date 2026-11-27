@@ -35,13 +35,9 @@ class ServiceRoleDomain implements ServiceRoleDomainInterface {
     params: ServiceRoleCreateDomain,
   ): Promise<ServiceRoleEntityDomain> {
     await this.assertNameFree(params.name)
-    const hiddenSoignantIds = await this.checkedSoignants(
-      params.hiddenSoignantIds ?? [],
-    )
     const role = await this.serviceRoleRepository.create({
       name: params.name,
       permissions: parsePermissions(params.permissions),
-      hiddenSoignantIds,
     })
     this.emit('role.created', role)
     return role
@@ -58,9 +54,6 @@ class ServiceRoleDomain implements ServiceRoleDomainInterface {
     const role = await this.serviceRoleRepository.update(roleId, {
       name: params.name,
       permissions: params.permissions && parsePermissions(params.permissions),
-      hiddenSoignantIds:
-        params.hiddenSoignantIds &&
-        (await this.checkedSoignants(params.hiddenSoignantIds)),
     })
     this.emit('role.updated', role)
     return role
@@ -98,15 +91,6 @@ class ServiceRoleDomain implements ServiceRoleDomainInterface {
     if (await this.serviceRoleRepository.findActiveByName(name, exceptId)) {
       throw Boom.conflict(`Un rôle s'appelle déjà « ${name} ».`)
     }
-  }
-
-  private async checkedSoignants(soignantIds: string[]): Promise<string[]> {
-    const uniques = [...new Set(soignantIds)]
-    const trouves = await this.serviceRoleRepository.findSoignants(uniques)
-    if (trouves.length !== uniques.length) {
-      throw Boom.badRequest('Soignant inconnu dans ce service')
-    }
-    return trouves.filter((s) => s.archivedAt === null).map((s) => s.id)
   }
 
   private emit(

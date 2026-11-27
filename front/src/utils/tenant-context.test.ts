@@ -107,7 +107,6 @@ describe('resolveEstablishmentContext', () => {
       serviceId: null,
       establishmentRole: 'ADMIN',
       servicePermissions: null,
-      hiddenSoignantIds: [],
       soignantId: null,
     })
   })

@@ -38,7 +38,6 @@ const sansService: TenantContext = {
   ...serviceA,
   serviceId: null,
   servicePermissions: null,
-  hiddenSoignantIds: [],
 }
 
 const soignantDuServiceA: Soignant = { id: 'so1', name: 'Dupont' }
