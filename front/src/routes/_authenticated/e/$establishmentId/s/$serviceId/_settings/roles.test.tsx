@@ -8,7 +8,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -80,7 +80,7 @@ const role = (id: string, name: string, rest: Partial<Role> = {}): Role => ({
 })
 
 const actifs = [
-  role('r1', 'Coordinateur', { memberCount: 2 }),
+  role('r1', 'Coordinateur', { memberCount: 2, hiddenSoignantIds: ['k1'] }),
   role('r2', 'Lecture seule'),
 ]
 const supprimes = [role('r3', 'Ancien rôle', { archivedAt: '2026-11-01' })]
@@ -161,6 +161,14 @@ const monter = (listeFigee = false) => {
 
 const ecritures = (appels: Appel[]) => appels.filter((a) => a.method !== 'GET')
 
+// Ouvre un rôle depuis la liste de gauche (son nom figure aussi dans l'aperçu).
+const ouvrir = async (nom: string) => {
+  const liste = await screen.findByRole('complementary')
+  await userEvent.click(
+    await within(liste).findByRole('button', { name: new RegExp(`^${nom}`) }),
+  )
+}
+
 beforeEach(() => {
   useToastStore.setState({ toasts: [] })
   useAuthStore.setState({
@@ -180,13 +188,44 @@ beforeEach(() => {
 describe('écran Rôles', () => {
   it('liste les rôles avec leur nombre de membres', async () => {
     monter()
-    expect(await screen.findByText('2 membres')).toBeInTheDocument()
-    expect(screen.getByText('Lecture seule')).toBeInTheDocument()
+    const liste = await screen.findByRole('complementary')
+    expect(await within(liste).findByText('2 membres')).toBeInTheDocument()
+    expect(screen.getAllByText('Lecture seule').length).toBeGreaterThan(0)
+  })
+
+  it("montre l'aperçu par défaut, et un clic sur un rôle l'ouvre", async () => {
+    monter()
+    expect(
+      await screen.findByRole('heading', { name: 'Aperçu des rôles' }),
+    ).toBeInTheDocument()
+    const tableau = screen.getByRole('table')
+    await userEvent.click(
+      await within(tableau).findByRole('button', { name: /^Lecture seule/ }),
+    )
+    expect(await screen.findByLabelText('Nom du rôle')).toHaveValue(
+      'Lecture seule',
+    )
+  })
+
+  it('résume les changements non enregistrés et les annule', async () => {
+    monter()
+    await ouvrir('Lecture seule')
+    await screen.findByLabelText('Nom du rôle')
+    expect(screen.queryByText(/non enregistrée/)).toBeNull()
+
+    await userEvent.click(screen.getByLabelText('Exporter en PDF'))
+    expect(
+      screen.getByText(/1 modification non enregistrée/).parentElement,
+    ).toHaveTextContent('Exporter en PDF : ajouté')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(screen.queryByText(/non enregistrée/)).toBeNull()
+    expect(screen.getByLabelText('Exporter en PDF')).not.toBeChecked()
   })
 
   it('coche une permission et enregistre', async () => {
     const appels = monter()
-    await userEvent.click(await screen.findByText('Lecture seule'))
+    await ouvrir('Lecture seule')
     await userEvent.click(await screen.findByLabelText('Ajouter un patient'))
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
@@ -202,7 +241,7 @@ describe('écran Rôles', () => {
 
   it('renomme un rôle', async () => {
     const appels = monter()
-    await userEvent.click(await screen.findByText('Lecture seule'))
+    await ouvrir('Lecture seule')
     const champ = await screen.findByLabelText('Nom du rôle')
     await userEvent.clear(champ)
     await userEvent.type(champ, 'Direction')
@@ -214,7 +253,7 @@ describe('écran Rôles', () => {
 
   it('signale un nom déjà pris sans envoyer', async () => {
     const appels = monter()
-    await userEvent.click(await screen.findByText('Lecture seule'))
+    await ouvrir('Lecture seule')
     const champ = await screen.findByLabelText('Nom du rôle')
     await userEvent.clear(champ)
     await userEvent.type(champ, 'coordinateur')
@@ -226,22 +265,21 @@ describe('écran Rôles', () => {
     expect(ecritures(appels)).toHaveLength(0)
   })
 
-  it('envoie les soignants masqués choisis', async () => {
+  it('garde les soignants masqués du rôle (réglés sur la page Soignants)', async () => {
     const appels = monter()
-    await userEvent.click(await screen.findByText('Nouveau rôle'))
-    await userEvent.type(await screen.findByLabelText('Nom du rôle'), 'Cadre')
-    await userEvent.click(await screen.findByLabelText('Kiné 1'))
+    await ouvrir('Coordinateur')
+    await userEvent.click(await screen.findByLabelText('Exporter en PDF'))
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
     await waitFor(() => expect(ecritures(appels)).toHaveLength(1))
-    expect(ecritures(appels)[0]).toMatchObject({
-      method: 'POST',
-      body: { name: 'Cadre', hiddenSoignantIds: ['k1'] },
+    expect(ecritures(appels)[0].body).toMatchObject({
+      hiddenSoignantIds: ['k1'],
     })
   })
 
   it("désactive la suppression d'un rôle attribué et l'explique", async () => {
     monter()
+    await ouvrir('Coordinateur')
     const attribue = await screen.findByRole('button', {
       name: 'Supprimer le rôle Coordinateur',
     })
@@ -254,6 +292,7 @@ describe('écran Rôles', () => {
 
   it('supprime un rôle libre après confirmation', async () => {
     const appels = monter()
+    await ouvrir('Lecture seule')
     await userEvent.click(
       await screen.findByRole('button', {
         name: 'Supprimer le rôle Lecture seule',
@@ -288,6 +327,7 @@ describe('écran Rôles', () => {
     await userEvent.type(await screen.findByLabelText('Nom du rôle'), 'Diet')
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
     await screen.findByRole('button', { name: 'Dupliquer' })
+    await userEvent.click(screen.getByLabelText('Ajouter un patient'))
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
 
     await waitFor(() => expect(ecritures(appels)).toHaveLength(2))
@@ -318,7 +358,7 @@ describe('écran Rôles', () => {
 
   it('duplique un role : nouveau role pre-rempli de ses droits', async () => {
     const appels = monter()
-    await userEvent.click(await screen.findByText('Lecture seule'))
+    await ouvrir('Lecture seule')
     await userEvent.click(
       await screen.findByRole('button', { name: 'Dupliquer' }),
     )
@@ -337,18 +377,19 @@ describe('écran Rôles', () => {
     })
   })
 
-  it('signale que gerer l equipe demande aussi de voir les membres', async () => {
-    monter()
-    await userEvent.click(
-      await screen.findByRole('button', { name: /Nouveau rôle/ }),
-    )
-    await userEvent.click(
-      await screen.findByLabelText("Gérer l'équipe du service"),
-    )
-    expect(screen.getByText(/Nécessite aussi/)).toBeInTheDocument()
-    await userEvent.click(
-      screen.getByLabelText('Voir la liste des membres du service'),
-    )
-    expect(screen.queryByText(/Nécessite aussi/)).toBeNull()
+  it('« Gérer » les membres accorde aussi de les voir', async () => {
+    const appels = monter()
+    await ouvrir('Lecture seule')
+    const membres = await screen.findByLabelText('Membres du service')
+    await userEvent.click(within(membres).getByText('Gérer'))
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+    await waitFor(() => expect(ecritures(appels)).toHaveLength(1))
+    expect(ecritures(appels)[0].body).toMatchObject({
+      permissions: expect.arrayContaining([
+        'members:read',
+        'service-members:manage',
+      ]),
+    })
   })
 })
