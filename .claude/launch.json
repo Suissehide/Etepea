@@ -4,8 +4,36 @@
     {
       "name": "site-vitrine",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "site", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "site",
+        "run",
+        "dev"
+      ],
       "port": 4280
+    },
+    {
+      "name": "front",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "front",
+        "run",
+        "dev"
+      ],
+      "port": 4270,
+      "url": "http://etepea.localhost:4270"
+    },
+    {
+      "name": "back",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "back",
+        "run",
+        "dev"
+      ],
+      "port": 3000
     }
   ]
 }

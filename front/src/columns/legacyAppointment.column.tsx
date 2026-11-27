@@ -19,7 +19,7 @@ export const getLegacyAppointmentColumns = ({
   columnHelper.accessor((r) => (r.reportedAt ? 'Reporté' : 'À reporter'), {
     id: 'statut',
     header: 'Statut',
-    size: 120,
+    size: 100,
     cell: ({ row }) =>
       row.original.reportedAt ? (
         <Etiquette ton="succes">Reporté</Etiquette>
@@ -40,7 +40,7 @@ export const getLegacyAppointmentColumns = ({
   }),
   columnHelper.accessor('durationMinutes', {
     header: 'Durée',
-    size: 90,
+    size: 100,
     cell: ({ getValue }) => {
       const v = getValue()
       return v === null ? '' : `${v} min`
@@ -53,12 +53,12 @@ export const getLegacyAppointmentColumns = ({
   columnHelper.accessor((r) => r.thematic ?? '', {
     id: 'thematic',
     header: 'Thématique',
-    size: 200,
+    size: 140,
   }),
   columnHelper.accessor((r) => (r.type ? APPOINTMENT_TYPE[r.type] : ''), {
     id: 'type',
     header: 'Mode',
-    size: 140,
+    size: 120,
     cell: ({ row }) =>
       row.original.type ? (
         <Etiquette
@@ -70,15 +70,10 @@ export const getLegacyAppointmentColumns = ({
         <Etiquette ton="neutre">Non précisé</Etiquette>
       ),
   }),
-  columnHelper.accessor('receivedAt', {
-    header: 'Reçu le',
-    size: 150,
-    cell: ({ getValue }) => dayjs(getValue()).format('DD/MM/YYYY HH:mm'),
-  }),
   columnHelper.display({
     id: 'actions',
     header: '',
-    size: 190,
+    size: 120,
     meta: { align: 'right' },
     cell: ({ row }) => {
       const reporte = row.original.reportedAt !== null
@@ -87,9 +82,10 @@ export const getLegacyAppointmentColumns = ({
           size="sm"
           variant={reporte ? 'outline' : 'default'}
           isLoading={pendingId === row.original.id}
+          title={reporte ? 'Remettre à reporter' : undefined}
           onClick={() => onToggleReported(row.original)}
         >
-          {reporte ? 'Remettre à reporter' : 'Reporté'}
+          {reporte ? 'Annuler' : 'Reporté'}
         </Button>
       )
     },

@@ -72,6 +72,7 @@ function RdvAncienneApp() {
           filterId="legacy-appointment"
           isLoading={isPending}
           isRowMuted={(r) => r.reportedAt !== null}
+          fixedLayout
           emptyState="Aucun rendez-vous reçu de l'ancienne app"
         />
       </div>
